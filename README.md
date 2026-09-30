@@ -10,3 +10,5 @@ Verb keywords: install, remove, maintain
 ## Workflow
 
 - Run `scripts/auto-generate-skill-structure.py` in the end to generate structures for every SKILL.md.
+- Run `scripts/verify-skill-package.py skills/<name>` on the skills you touched (tree counts vs disk, and
+  pointers), then commit both in the same commit as the edit. Details: `scripts/README.md`.

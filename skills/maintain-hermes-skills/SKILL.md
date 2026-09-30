@@ -32,6 +32,7 @@ reference states its own evidence and its own re-checks.
 | "I published a skill on GitHub and added a tap — why does `search` not find it?" — also: what the tap actually feeds, and what to use instead | `references/FAQs-on-hermes-skills-tap.md` |
 | "My bundled/built-in skills are missing or never update", "where do bundled skills come from", "I edited a built-in skill and now it never updates — get the stock copy back", "how do I stop (or restore) seeding in a profile" | `references/maintain-hermes-bundled-skills.md` |
 | "why does the Skills page list N skills", "why can't I turn this one off", "where did this hub entry come from", "is there a skill for X" — every store that answers it, the provenance rules, the venv-python probe that reproduces a UI toggle, and the four levers that mutate a skills tree with no user action | `references/maintain-hermes-skills-inventory-and-availability.md` |
+| how to write or extend a skill *in this pack* — prose and evidence rules, the pack's naming house style, description triggering, the frontmatter failures, pointer linting, commit and report discipline | `references/maintain-hermes-skills-authoring-conventions.md` |
 | how to *install*, *update* or *remove* a skill | the sibling skills `install-hermes-skills`, `update-hermes-skills`, `remove-hermes-skills` |
 
 ## Two facts that resolve most of these questions
@@ -64,10 +65,11 @@ personal tap. Both halves, with the numbers and the code sites, are in
 
 ```
 maintain-hermes-skills/
-├── SKILL.md  (74 lines)
+├── SKILL.md  (76 lines)
 └── references/
     ├── FAQs-on-hermes-skills-tap.md  (189 lines)
     ├── maintain-hermes-bundled-skills.md  (429 lines)
+    ├── maintain-hermes-skills-authoring-conventions.md  (141 lines)
     └── maintain-hermes-skills-inventory-and-availability.md  (354 lines)
 ```
 
