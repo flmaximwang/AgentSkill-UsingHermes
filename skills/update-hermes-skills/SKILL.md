@@ -63,6 +63,15 @@ So `update_available` plus a silent skip is a coherent pair rather than a bug, a
 still exits 0**. A related measured fact: forging only `source_revision` back to an older commit
 leaves `check` at `up_to_date` — the revision is a fast-path shortcut, **the hash is the decision**.
 
+**A blocked delivery lies in its closing line.** `hermes skills update <name>` against a bundle the scan
+refuses prints `Not installed: the security scan found 1 high-risk pattern(s) in … Hermes never installs
+unverified skills with high-risk findings, even with --force.` and then *still* ends `Updated 1 skill(s).`
+with exit 0 — measured twice (2026-09-30: session `20260930_162008_8587d70c` on `remove-hermes-skills`,
+1 finding; sessions `20260930_152412_ccb1545a` and `20260930_154259_24a59f` on `install-hermes-skills`,
+5 findings). So the summary line is not the outcome: read the whole output, and treat the *previous
+revision still being installed* as the truth — a non-empty `diff -rq` against the clone, and a
+`metadata.source_revision` older than the push.
+
 ## What `update` does per skill, in order (source-verified)
 
 1. `check_for_skill_updates(name)` — keep only the `update_available` rows
@@ -147,6 +156,10 @@ hermes skills reset <name> [--restore]     # bundled: re-baseline tracking / rev
 hermes -p <profile> skills check|update    # the lock is per profile
 ```
 
+**Pass one name per command.** The CLI takes a single positional — `hermes skills update alpha beta` exits 2
+with `hermes: error: unrecognized arguments: beta` and updates nothing (measured 2026-09-30), so a batch of
+names is one invocation per name.
+
 Measured `hermes skills update --help` on this machine (2026-09-30):
 
 ```
@@ -188,7 +201,7 @@ In a session the same work is `/skills update <name> [--force]`; `/skills check`
 
 ```
 update-hermes-skills/
-├── SKILL.md  (201 lines)
+├── SKILL.md  (214 lines)
 ├── references/
 │   ├── update-hermes-built-in-skills.md  (174 lines)
 │   ├── update-hermes-clawhub-skills.md  (121 lines)
