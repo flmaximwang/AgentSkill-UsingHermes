@@ -239,13 +239,13 @@ install-hermes-skills/
 ├── references/
 │   ├── install-hermes-skills-diagnosis.md  (219 lines)
 │   ├── install-hermes-skills-external-pack-adoption.md  (105 lines)
-│   ├── install-hermes-skills-from-clawhub.md  (72 lines)
-│   ├── install-hermes-skills-from-github.md  (447 lines)
-│   ├── install-hermes-skills-from-names.md  (181 lines)
+│   ├── install-hermes-skills-from-clawhub.md  (87 lines)
+│   ├── install-hermes-skills-from-github.md  (464 lines)
+│   ├── install-hermes-skills-from-names.md  (185 lines)
 │   ├── install-hermes-skills-from-npx.md  (166 lines)
 │   ├── install-hermes-skills-from-skill-sh.md  (193 lines)
 │   ├── install-hermes-skills-github-sources.md  (130 lines)
-│   ├── install-hermes-skills-registry-routes.md  (440 lines)
+│   ├── install-hermes-skills-registry-routes.md  (442 lines)
 │   └── install-hermes-skills-repo-structure-routing.md  (76 lines)
 └── scripts/
     └── lock-provenance.py  (83 lines)

@@ -234,6 +234,23 @@ Files: SKILL.md, assets/darwin-card-20260930.png, scripts/organize.sh,
   `unicode_escape_chain` ×1). **medium ≠ blocked**: community + safe is allowed outright; only
   caution/dangerous goes through `--force`.
 
+### The ref rung 1 fetches is the repo's **default branch**
+
+The identifier grammar has no slot for a ref: the `skills.sh` / GitHub route reads
+`repos/<owner>/<repo>/contents/<path>` **without** a `ref`, i.e. whatever the default branch is.
+Check that before blaming the path:
+
+```bash
+gh repo view <owner>/<repo> --json defaultBranchRef --jq .defaultBranchRef.name
+```
+
+Measured 2026-09-30 on `flmaximwang/AgentSkill-ObsidianManagement`: its GitHub default was
+`optimize/organize-obsidian-notes` (an empty repo takes the **first branch pushed** as default), so a
+skill living only on `main` 404s through rung 1 while an older skill on that branch installs fine.
+The fix is repo-side, not route-side — fast-forward `main` and make it the default
+(`gh api -X PATCH repos/<owner>/<repo> -f default_branch=main`). A `tree/<ref>` link does not rescue
+it: rung 1's conversion deletes the ref, and `blob` links are unusable.
+
 ### Want it searchable too? add a tap (optional, does not change the install)
 
 ```bash

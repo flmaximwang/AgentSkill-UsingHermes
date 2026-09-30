@@ -430,7 +430,9 @@ skill list the user is looking at (`hermes -p <name> skills list`).
 ## Which command governs which skill
 
 - Hub-installed (A/B/C): `list`, `check`, `update`, `audit`, `uninstall`, `inspect`, `search`, `browse`, `config`, `snapshot export/import`, `publish`.
-- Bundled only: `diff`, `reset`, `list-modified`, `repair-official`, `opt-out`, `opt-in`.
+- Bundled only: `diff`, `reset`, `list-modified`, `repair-official`, `opt-out`, `opt-in`. In `reset`,
+  only `--restore` reverts to the stock copy (plain `reset` re-baselines *your* edited copy and keeps it,
+  and neither form backs your copy up) — the procedure lives in `maintain-hermes-skills`.
 - Repo-local skill dirs: `trust` / `untrust`.
 - No lock entry of its own: none of the above — `Source: local / Trust: local`, `check` reports
   `No hub-installed skills to check.`, `uninstall` errors. That covers a hand copy, a skill installed

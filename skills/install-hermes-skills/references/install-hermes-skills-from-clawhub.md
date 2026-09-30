@@ -55,6 +55,21 @@ Maintenance uses the same commands as any hub skill (`check` / `update` / `audit
    **`list` matches by name, so a mismatched name makes the hub entry invisible in the listing** —
    name-based commands use the lock key, the agent's own skill calls use the frontmatter name.
    Anything you script should match on the lock key.
+   - **The directory name is the slug, and no flag can change it.** Measured on this machine:
+     `hermes skills install "@dxy0905/darwin-skill-qszf" --category agent-evolution -y` created
+     `skills/agent-evolution/darwin-skill-qszf/`, lock key `darwin-skill-qszf`, while the frontmatter
+     `name:` is `darwin-skill`. `--name darwin-skill` changes nothing: `_resolve_url_bundle_name`
+     (`hermes_cli/skills_hub.py:530`) early-returns unless `bundle.source == "url"`, so for clawhub the
+     flag is silently ignored (its `--help` says as much — "useful when installing from a URL").
+     Consequence, both measured: `hermes skills list` shows `darwin-skill | agent-evolution | local |
+     local | enabled` (misleading), `check darwin-skill` → `No hub-installed skills to check.`, while
+     `check darwin-skill-qszf` → `clawhub | up_to_date`. **Address ClawHub skills by slug, not by the
+     name in `list`.**
+   - **Do not "fix" it by renaming the directory.** `_normalize_lock_install_path`
+     (`tools/skills_hub_models.py:239`) requires the last segment of `install_path` to equal the lock
+     name, so a renamed dir invalidates the entry (`Unsafe install path`) and breaks update/uninstall.
+     Slug-named dir + slug lock key is the only consistent state the official route can produce; when
+     the two names differ, say so and name the slug instead of hand-editing `.hub/lock.json`.
 3. **Don't count on search.** The catalog walk has a **12 s budget** for 50k+ skills fetched
    sequentially (`CATALOG_WALK_BUDGET_SECONDS = 12`): measured
    `hermes skills search cangjie --source clawhub` → `No skills found matching your query.`, while

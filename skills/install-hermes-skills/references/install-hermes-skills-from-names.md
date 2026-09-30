@@ -38,7 +38,11 @@ from the current code root's `skills/` into the profile's `<HERMES_HOME>/skills/
 
 - **A copy you edited is never overwritten** — the sync prints `user-modified, skipping`, and
   `hermes update` likewise keeps it. `hermes skills list-modified` lists those, `diff` shows how they
-  differ, `reset` clears the modified tracking.
+  differ. The skip is **sticky** (the manifest keeps the *old* origin hash, so the copy can never match
+  it again), and the two exits are opposites: `reset <name>` keeps your copy and re-baselines it, while
+  `reset <name> --restore` **deletes** your copy and re-copies stock — keeping no backup of its own.
+  Procedure, the two failure exits and the hash check:
+  `maintain-hermes-skills/references/maintain-hermes-bundled-skills.md`.
 - **If the code root has no `skills/` directory, seeding silently copies 0 files** —
   `sync_skills()` early-returns on `if not bundled_dir.exists()`, so it looks like "already up to
   date" when in fact there was no source. (Measured on this machine: two `installs/…/workspace/`
