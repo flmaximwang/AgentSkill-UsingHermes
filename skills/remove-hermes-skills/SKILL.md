@@ -145,6 +145,15 @@ result.
   gateway or desktop session needs `/reload-skills` (or a new session) before the skill is gone from its
   list.
 
+## When the removal refuses — trigger / first fix / fallback
+
+| Trigger | First fix | If it still fails |
+|---|---|---|
+| `Error: '<name>' is not a hub-installed skill (may be a builtin)` | read `skills/.hub/lock.json` yourself — no entry means the copy is local or bundled, and that message names the wrong kind | local: delete the directory; bundled: `hermes skills opt-out --remove` |
+| `hermes skills check <name>` → `orphaned` | `hermes skills uninstall <name> -y` clears the stale entry (no network is spent on those) | the missing directory is already gone — the entry was the last thing left |
+| `hermes skills list` shows the name as `local` although only the parent was ever installed | it is a nested child: remove the **parent** by its lock key | confirm with `ls -d` and the `list` footer that the children went with it |
+| the skill is back after a clean removal | something re-created it: check `.bundled_manifest`, then the lock, then `~/.agents/.skill-lock.json` | the re-creating route is the one to switch off, not the copy to delete again |
+
 ## Prove it went
 
 Three cheap checks, in this order — the first one alone is not proof:
@@ -183,7 +192,7 @@ and a `list` footer that went `1 hub-installed` → `0 hub-installed`.
 
 ```
 remove-hermes-skills/
-├── SKILL.md  (195 lines)
+├── SKILL.md  (204 lines)
 ├── test-prompts.json  (12 lines)
 └── references/
     ├── remove-hermes-built-in-skills.md  (151 lines)
