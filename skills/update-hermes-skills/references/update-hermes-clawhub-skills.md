@@ -75,8 +75,31 @@ frontmatter name, so the hub entry looks unmanaged — while `hermes skills chec
 - **hub commands (`check`, `update`, `audit`, `uninstall`) take the lock key** — the slug;
 - **the agent's own skill list takes the frontmatter `name`**.
 
-Renaming the directory/lock key to match the frontmatter is a real option but a separate decision; back
-up the lock first.
+**Do not rename the directory to match the frontmatter.** `_normalize_lock_install_path`
+(`tools/skills_hub_models.py:239`) requires the last segment of `install_path` to equal the lock key, so
+renaming the directory alone invalidates the entry (`Unsafe install path` on check/update/uninstall);
+renaming both is hand surgery on the ledger **and is undone by the next `update`**, which re-installs
+under the bundle name (the slug) and rewrites the key. Slug-named dir + slug key is the only state the
+official route keeps — when the two names differ, address the skill by its slug and say so.
+
+## Moving a ClawHub install to its upstream — the measured case
+
+ClawHub is a repackaging layer, so the same skill usually exists upstream on a far bigger base, and
+`update` cannot cross that boundary (see the sibling skill's "A source change is uninstall + install").
+Measured (2026-09-30) on `darwin-skill`, three bloodlines:
+
+| bloodline | signals |
+|---|---|
+| installed ClawHub fork `@dxy0905/darwin-skill-qszf` | 7 installs / 607 downloads, 3 files |
+| ClawHub `darwin-skill` | 103 installs, 8-dim rubric, untouched since `2026-05-11` |
+| upstream `alchaincyf/darwin-skill` | `6132★`, pushed `2026-09-18`, skills.sh `Installs 10.7K` |
+
+The move: `hermes skills uninstall darwin-skill-qszf -y` (the slug key) then `hermes skills install
+"skills-sh/alchaincyf/darwin-skill/darwin-skill" --category agent-evolution -y` → 37 files / 5.1 MB,
+verdict `SAFE`, and the new lock key is `darwin-skill`, which now matches the display name, so
+`check darwin-skill` → `skills.sh | up_to_date`. The scan **rules** listed `oversized_file,
+oversized_skill, unpinned_pip_install` while the **verdict/decision** was `SAFE — ALLOWED`: findings are
+not a block, read the decision line.
 
 ## Update mechanics — the shared ones
 

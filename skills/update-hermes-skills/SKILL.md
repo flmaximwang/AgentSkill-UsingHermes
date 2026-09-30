@@ -82,6 +82,22 @@ leaves `check` at `up_to_date` — the revision is a fast-path shortcut, **the h
      `SKILL.md` bundles all move together.
 4. Prints `Updated N skill(s).`, or the kept-your-local-edits lines above.
 
+## A source change is uninstall + install — never an update
+
+`do_update` re-fetches the **recorded** `source` + `identifier` (`do_install(..., source_id=<lock's
+source>)`, `hermes_cli/skills_hub.py:937`), so an update only ever moves a skill forward inside its own
+bloodline; it cannot move it to a better one. Measured (2026-09-30): a ClawHub fork of `darwin-skill`
+(7 installs) and the upstream `alchaincyf/darwin-skill` (`6132★`, skills.sh `Installs 10.7K`) are two
+different lock entries, and no `update` on the fork produces the upstream one.
+
+The move is four steps: rank the candidates (`install-hermes-skills` →
+`references/install-hermes-skills-from-names.md`), prove the winner installs in a throwaway
+`HERMES_HOME`, `hermes skills uninstall <lock key> -y` (the **lock key** — for ClawHub the slug, not the
+name `list` prints), then `hermes skills install "<winner>" --category <same category> -y`, because the
+category is only read at install time and is not inherited. Verify with `list`, the lock entry and
+`check <new key>` → `up_to_date`; a same-name fork under the same name makes a failed move look
+successful, so report the identifier you installed.
+
 ## What no update command can reach
 
 - **Bundled skills** are not hub entries: `hermes skills update` never lists them. `hermes update`
@@ -153,7 +169,7 @@ In a session the same work is `/skills update <name> [--force]`; `/skills check`
 | a bundled / built-in skill never changes, what `hermes update` printed, `list-modified`, `diff`, `reset`, `repair-official` | `references/update-hermes-built-in-skills.md` + `scripts/restore_builtin_skills.py` (the re-seed half) |
 | a three-segment identifier or a tap skill (the common case), the revision fast path, nested sub-skill trees, an update skipped because of a self-authored skill inside the bundle | `references/update-hermes-skill-sh-skills.md` |
 | an `npx skills add` install of the same registry | `references/update-hermes-skill-sh-skills.md` |
-| a `@publisher/slug` ClawHub skill, version vs hash, same-slug-different-lineage risk | `references/update-hermes-clawhub-skills.md` |
+| a `@publisher/slug` ClawHub skill, version vs hash, same-slug-different-lineage risk, moving a ClawHub install to its upstream | `references/update-hermes-clawhub-skills.md` |
 | a raw-URL skill, a `check` stuck on `unavailable`, floating refs | `references/update-hermes-url-skills.md` |
 | installing, removing, seeding on/off, or a search that cannot find your skill | the siblings `install-hermes-skills`, `remove-hermes-skills`, `maintain-hermes-skills` |
 | an error string from any `hermes skills` command, or "how was this installed / why did it need `--force`" | `install-hermes-skills` → `references/install-hermes-skills-diagnosis.md` |
@@ -172,10 +188,10 @@ In a session the same work is `/skills update <name> [--force]`; `/skills check`
 
 ```
 update-hermes-skills/
-├── SKILL.md  (185 lines)
+├── SKILL.md  (201 lines)
 ├── references/
 │   ├── update-hermes-built-in-skills.md  (174 lines)
-│   ├── update-hermes-clawhub-skills.md  (98 lines)
+│   ├── update-hermes-clawhub-skills.md  (121 lines)
 │   ├── update-hermes-skill-sh-skills.md  (168 lines)
 │   └── update-hermes-url-skills.md  (133 lines)
 └── scripts/
