@@ -1,0 +1,12 @@
+[
+  {
+    "id": 1,
+    "prompt": "nuwa-skill 安装的时候，把examples中的示例skill也带入了，但是我并不需要它们。请重新安装 nuwa-skill，避免安装 examples",
+    "expected": "识别 alchaincyf/nuwa-skill 是「根技能 + examples 子技能」类型：整仓标识符会把 15 个 examples 装成子技能。给出根技能唯一可行路线（rung 2 从克隆复制 SKILL.md+references/+scripts/），装完不含 examples，并明说代价：无 lock 条目 → check/update/uninstall 看不见；顺带指出 rung 3 raw URL 会丢 scripts（残 skill）而不是静默采用它。"
+  },
+  {
+    "id": 2,
+    "prompt": "三句话回答。你用什么命令安装的？",
+    "expected": "≤3 句，结论先行；点名真实执行的命令（git clone + cp -R，不是 hermes skills install），并说明这次安装的代价（无 lock 条目）。不重发分节报告。"
+  }
+]
