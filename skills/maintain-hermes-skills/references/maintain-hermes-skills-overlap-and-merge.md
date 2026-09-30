@@ -90,3 +90,23 @@ placed.
 - **Prior-session measurements as if they were re-run.** Every measured claim that enters the package must
   either be re-run now (never against the live profile) or be cited with the session and message id that
   produced it; a number carried across from a local skill loses its receipt in the move.
+
+## 6. A first delivery into a *new* pack is a move by default
+
+Two same-day migrations into brand-new per-topic packs both ended with the repo as the **sole** source of
+truth and the profile left with **zero** directories of that name: `AgentSkill-JobHunt` ←
+`biotech-career-analysis` (thread 迁移 biotech-career-analysis skill 到 AgentSkill-JobHunt, 2026-09-30) and
+`AgentSkill-ObsidianForLab` ← `zsqlab-lab-records` (`@session:default/20260930_171923_8170df20` msgs
+56320/56332 — "这只是文档里的落点，本次不安装", then the delete assertion counts 0). The pack README carries
+the install command instead of the profile carrying the skill.
+
+So §1's create-and-install is not the automatic landing for a new pack. Settle the wanted end state — repo
+only, or repo + an installed copy (the Obsidian pack's 12 skills are that case) — **before** the install, and
+say which copy the retirement step will then act on:
+
+- no install: the original is a lockless directory and a plain delete retires it;
+- install first: the copy that gets retired is the one just installed, so it goes through
+  `hermes skills uninstall <lock key>` (§4). Measured twice: installing into the *same* `--category` the
+  lockless copy already occupies replaces that directory in place, so the "original" is consumed by the
+  install rather than left beside it — a state that reads as "the profile copy is gone" only if you look at
+  the directory that is now the installed tree.
