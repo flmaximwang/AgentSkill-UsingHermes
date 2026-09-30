@@ -325,3 +325,105 @@ Keep the two knobs apart when answering: the marker is a **profile** decision ("
 env var is a **packaging / chain** decision ("the source lives over there"). A user asking "how do I stop
 bundled skills" wants the marker; a user asking "why does my `hermes` not seed" wants the env var or a
 different launch chain.
+
+---
+
+## Getting an edited copy back to stock — `reset` versus `reset --restore`
+
+The skip above is **sticky**: the manifest keeps the *old* origin hash, so a copy that has diverged can
+never match it again — it is reported `user-modified` on every later sync and `hermes update` keeps
+skipping it. A bundled skill you once edited therefore stops receiving upstream changes *permanently*, with
+no error anywhere. Clearing the manifest entry is what breaks the loop, and there are two opposite ways to
+do it (`tools/skills_sync_bundled_ops.py:17-58`; CLI `hermes_cli/skills_hub.py:988-1004`):
+
+| Command | What it does | What you end up with |
+|---|---|---|
+| `hermes skills reset <name>` | clears the manifest entry, then syncs | **your** copy is re-baselined as the origin — your edits survive, stock is never fetched |
+| `hermes skills reset <name> --restore` | rmtrees your copy **first**, then clears the entry and syncs | the stock copy, re-copied from the code root's `skills/` — your edits are **gone** |
+
+`hermes skills list-modified` prints that distinction in its footer — `reset <name>` = *"keep your copy,
+re-baseline"*, `reset <name> --restore` = *"revert to stock"* — and the plain form's own message agrees:
+*"Cleared manifest entry for `<name>`. Future `hermes update` runs will re-baseline against your current
+copy and accept upstream changes."* So plain `reset` is **not** a revert; "give me the stock version
+back" is `--restore`.
+
+### `--restore` keeps no backup
+
+`--restore` calls `_rmtree_writable(dest)` — an outright delete with no `.bak` sibling (that dance belongs
+to the *update* path, `_replace_skill_dir`). The prompt says so verbatim: *"Restore `<name>` from bundled
+source? This will DELETE your current copy and re-copy the bundled version."* Copy the directory aside
+yourself before running it; if it held notes that exist nowhere else, that copy is the only one left. The
+same delete is why the code runs it *before* writing the manifest — a failed rmtree then leaves the entry
+intact instead of stranding the skill in a manifest-less limbo (#34972).
+
+### The tested procedure — measured 2026-09-30 on the launcher chain `~/.hermes/hermes-agent`
+
+```bash
+hermes skills list-modified                      # what is stuck (here: computer-use, hermes-agent, obsidian)
+hermes skills diff hermes-agent                  # what you would lose — file-by-file unified diff
+cp -R ~/.hermes/skills/autonomous-ai-agents/hermes-agent \
+      ~/.hermes/backups/hermes-agent-user-copy-$(date +%Y%m%d_%H%M%S)/   # your own backup
+hermes skills reset hermes-agent --restore --yes
+```
+
+Measured output of that last line, complete:
+
+```
+Restored 'hermes-agent' from bundled source.
+Copied: hermes-agent
+```
+
+`--yes` is needed only because `--restore` prompts (plain `reset` never prompts). `diff` summarised the
+delta in one header line — `'hermes-agent' differs from the stock version in 29 file(s).` — then, per file,
+either a unified diff or `+ only in your copy: <rel>` / `- only in stock: <rel>`. Nine references existed
+only in the stale local copy and the stock tree carried its own, different set: that is why `--restore`
+replaces the **whole directory**, not just `SKILL.md`.
+
+### Verify — three checks, not the exit code
+
+Exit code 0 also covers the re-baseline case, and a printed `Copied:` line alone does not prove the tree is
+stock. Check all three:
+
+1. `hermes skills list-modified` — the name is gone from the list.
+2. `diff -r <code root>/skills/<category>/<name> <HERMES_HOME>/skills/<category>/<name>` prints nothing.
+   The code root is the *launch chain's* (see §1); on this machine's app/gateway chain that is
+   `~/.hermes/hermes-agent/skills/`.
+3. The copy's directory hash equals the manifest's recorded hash — recompute the sync's own `_dir_hash`
+   (md5 over each file's `relative_path` bytes + the file bytes, runtime-cache files excluded):
+
+```python
+import hashlib, pathlib
+def dir_hash(d):                      # mirrors tools/skills_sync.py::_dir_hash
+    h = hashlib.md5()
+    for f in sorted(pathlib.Path(d).rglob("*")):
+        if f.is_file():
+            h.update(str(f.relative_to(d)).encode()); h.update(f.read_bytes())
+    return h.hexdigest()
+
+home = pathlib.Path.home() / ".hermes/skills"
+manifest = dict(l.split(":", 1) for l in (home / ".bundled_manifest").read_text().splitlines() if ":")
+print(dir_hash(pathlib.Path.home() / ".hermes/hermes-agent/skills/autonomous-ai-agents/hermes-agent"))
+print(dir_hash(home / "autonomous-ai-agents/hermes-agent"))
+print(manifest.get("hermes-agent"))
+```
+
+Measured after the reset above: all three printed `37da26e707faa89f36cfb5ffe6dd5bb5`. The pre-reset copy's
+`SKILL.md` alone hashed `d4492e5b962d1f8847a85485ab326065`, declared `version: 2.1.0` and carried 22 files,
+against the stock copy's `version: 3.2.0`. Equal hashes are the proof that the copy is package-owned again —
+which is also what the next `hermes update` reads.
+
+### When it is not `--restore`
+
+- **The name is hub-installed, not bundled** → `'<name>' is not a tracked bundled skill. Nothing to reset.
+  (Hub-installed skills use `hermes skills uninstall`.)` The sibling `remove-hermes-skills` owns that path.
+- **Upstream dropped the skill** → `bundled_missing`: *"has no bundled source — manifest entry preserved but
+  cannot restore from bundled (skill was removed upstream)"*; restore from your own backup instead.
+- **The delete fails** (permissions, immutable source) → `not_reset`: *"Could not delete user copy at …"*,
+  the manifest entry is preserved and **nothing was changed** — fix permissions and retry.
+- **Upstream renamed or recategorised it** is a second trigger for the same flag. The sync prints
+  `⚠ <name>: upstream moved this skill to <new>, but your modified copy at <old> was kept — it will not
+  receive updates. Run 'hermes skills reset <name> --restore' to move to the new location.`
+  (`tools/skills_sync.py:246-251`), and the stale path stays where it is until you run it.
+- **You meant to keep the edit** → do not leave the copy diverged. Port the change into the source the
+  skill ships from and copy it in, or the copy silently stops tracking upstream forever. Same rule as
+  "hand copies have no lock entry": a diverged copy has no path back to updates.
