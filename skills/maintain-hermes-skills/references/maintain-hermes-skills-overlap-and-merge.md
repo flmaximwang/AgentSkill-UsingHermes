@@ -61,10 +61,12 @@ delivery read-backs — belong to the sibling that already owns them (`install-h
 `remove-hermes-skills`, `update-hermes-skills`). Sending mechanics into this body duplicates an owner that
 exists, and this skill's own scope note would then disclaim itself.
 
-The merge is not done when the file lands: the route row **and** the `description:` of the receiving skill
-have to name the new entry point in the same edit
-(`references/maintain-hermes-skills-authoring-conventions.md` § Structure and house style). Depth behind a
-route row nobody reads never loads.
+The merge is not done when the file lands: 🔴 CHECKPOINT — the landing place and the retirement scope go to
+the user in ONE `clarify` (recommended option first) *before* anything is written, because the receiving
+skill's own routes are what decide whether a block merges into an existing reference or needs a new one.
+Then the route row **and** the `description:` of the receiving skill have to name the new entry point in
+the same edit (`references/maintain-hermes-skills-authoring-conventions.md` § Structure and house style).
+Depth behind a route row nobody reads never loads.
 
 ## 4. Deliver in the repo's order, retire last
 
@@ -74,10 +76,11 @@ commands are the sibling's: `install-hermes-skills` § Replacing an installed sk
 plus its relocation reference, and `update-hermes-skills` § Cost. Nothing reaches any profile until the
 update runs, so an edit that stops at the clone is not delivered.
 
-Retire the duplicate **only after** the delivery is verified: a local copy is a plain delete once the lock
-has been grepped to prove it holds no entry, a hub-installed one goes through
-`hermes skills uninstall <lock key>` (sibling `remove-hermes-skills`). Never delete content you have not
-placed.
+Retire the duplicate **only after** the delivery is verified: 🔴 CHECKPOINT — the read-back comes first
+(`hermes skills check <name>` → `up_to_date`, `diff -rq` repo vs installed empty), and only then does
+anything get deleted. A local copy is a plain delete once the lock has been grepped to prove it holds no
+entry, a hub-installed one goes through `hermes skills uninstall <lock key>` (sibling
+`remove-hermes-skills`). Never delete content you have not placed.
 
 ## 5. What the receiving side must not inherit
 
