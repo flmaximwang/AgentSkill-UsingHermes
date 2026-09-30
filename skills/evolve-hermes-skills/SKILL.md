@@ -146,8 +146,9 @@ a finding the user can drop.
 | Trigger | First fix | If it still fails |
 |---|---|---|
 | Two live sessions could own this transcript (concurrent threads) | resolve by `chat_id` = the request's channel; otherwise newest + assert the tail contains the request | list the 3 newest `id / title` pairs and ask which to evolve |
+| **Another evolve run is live in a sibling thread** (same machine, same pack clone) | `git status -sb` + `git fetch` before staging, and stage with a pathspec — the two runs interleave, and your unpushed commits can ride along in its push (measured 2026-09-30: this run's 5 local commits reached `origin/main` inside a sibling session's push, so `HEAD == origin/main` while `git log origin/main..HEAD` looked empty) | `git push` rejected non-fast-forward → `git pull --rebase` then push; confirm with `git merge-base --is-ancestor <your-commit> origin/main`, and re-run `hermes skills update <name>` so the profile gets the file you actually edited |
 | A finding carries no message id or quoted output | drop it; do not forward it to Phase 2 | if the whole report is like that, re-brief the subagent with the schema — do not edit anything on that run |
-| A reported skill is not on disk any more | check `.usage.json` `state` and `hermes curator list-archived`; if archived, `hermes curator restore <name>` first | report it as un-actionable and drop it |
+| A reported skill is not on disk any more | check `.usage.json` `state` and `hermes curator list-archived`; if archived, `hermes curator restore <name>` first | if `state` is still `active` with `archived_at: None`, a sibling session retired it mid-run (measured 2026-09-30: another evolve run merged `skill-library-consolidation` into the pack and deleted the loose copy while this run was still mining) — do not restore it; report the merge and where it landed |
 | A skill has no `lock.json` entry but the user says it has a repo | confirm the repo from `git remote get-url origin`; a repo the profile never installed from is rung 1 only after an install from it | edit rung 2 in place and offer promotion |
 | `hermes skills update <name>` answers `kept your local edits` | the installed copy drifted before this run — the clone is source of truth, so `--force` once the pushed edit is what you want | restore the installed copy from the clone and re-run the update |
 | darwin reports the skill is not in a git repo | run it against the clone (rung 1); for rung 2 use darwin's file-backup fallback | skip Phase 3 for that skill and say so — an unratcheted rewrite is not an optimisation |
@@ -188,7 +189,7 @@ a finding the user can drop.
 
 ```
 evolve-hermes-skills/
-├── SKILL.md  (199 lines)
+├── SKILL.md  (200 lines)
 ├── test-prompts.json  (12 lines)
 └── references/
     ├── evolve-hermes-skills-handoff-to-darwin.md  (125 lines)
