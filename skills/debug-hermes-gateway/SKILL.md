@@ -1,0 +1,302 @@
+---
+name: debug-hermes-gateway
+description: "Use when setting up or debugging a Hermes gateway bot. Standing a platform bot up from scratch, an existing bot that is offline, silent or ignoring one specific user, `hermes gateway status` showing a platform not connected, or a slash command answering with a stale skill list. Discord is covered in depth; the log-first workflow and layer table apply to every platform."
+---
+
+# Hermes gateway platform debug
+
+## When to Use
+
+Trigger: standing up a platform bot from scratch (**§0**), or an existing bot that is offline,
+silent, or ignores one specific user;
+`hermes gateway status` shows a platform not connected; or `gateway.log` reports a platform
+that `failed to start and are parked`; or a slash command answers with a stale or absent
+entry (`Unknown skill: …`, a skill missing from `/skill` autocomplete — §7). Discord is
+covered in depth (privileged intents,
+allowlists, guild membership, invite scopes, Portal-vs-client lists); the log-first workflow
+and layer table apply to every platform.
+
+A bot that "doesn't work" is almost never one problem. Diagnose in this order and name
+the layer explicitly — never infer the layer from what the UI shows.
+
+## 0. Setting up a bot from scratch (ordered path)
+
+1. <https://discord.com/developers/applications> → **New Application** → copy the **Application ID**
+   (it equals the bot user's id; confirm with `GET /users/@me`).
+2. **Bot** page → **Privileged Gateway Intents**: enable `MESSAGE_CONTENT` (mandatory) and
+   `GUILD_MEMBERS`, then click **Save Changes** (details and the Portal-free `PATCH` path in §3).
+3. Same page → **Reset Token** (shown once) → store as `DISCORD_BOT_TOKEN` in `~/.hermes/.env`.
+4. Invite with an explicit-scope URL (§6) — never the Portal-provided link.
+5. `hermes gateway setup` → Discord, which writes `DISCORD_BOT_TOKEN`, `DISCORD_ALLOWED_USERS`,
+   `DISCORD_HOME_CHANNEL`; then `hermes gateway restart` (parked platforms never self-retry).
+6. Verify with the four gates below, or run `scripts/discord_check.sh` (read-only, tested).
+
+### Four gates — stop at the first failure
+
+| Gate | Evidence | If it fails |
+|---|---|---|
+| 1 connected | `✓ discord connected` + `[Discord] Connected as <bot>#<nnnn>` | intents missing → §3, then restart |
+| 2 message arrives | `inbound message: platform=discord …` after you send | allowlist §4, or the mention was typed rather than picked |
+| 3 agent ran | `response ready: platform=discord … api_calls=N` | agent/tool error — read the log tail |
+| 4 reply visible | message in the channel **or the thread** | `Unknown Channel` → §4 home channel; else the thread |
+
+### Permission integers (decoded with `discord.Permissions`)
+
+| Tier | Integer | Permissions |
+|---|---|---|
+| minimal | `117760` | View Channels, Send Messages, Embed Links, Attach Files, Read Message History |
+| recommended | `274878286912` | + Add Reactions, Use External Emojis, Send Messages in Threads |
+
+The docs' prose lists 7 names for the recommended integer; the integer carries **8** (extra
+`USE_EXTERNAL_EMOJIS`, `1<<18` = `262144`). Trust the integer. Judge the bot's **managed role**,
+not effective permissions: the effective value is the union with `@everyone`
+(observed bot role 8 + `@everyone` 29 → effective 31), so a large number proves nothing — read
+per-role data from `GET /guilds/<id>/roles`.
+
+### Worked example (2026-09-29, verified end to end)
+
+| Item | Value |
+|---|---|
+| App / bot user id | `1554354291987451955` (`Hermes_WFL-MacBook2022`) |
+| Guild / text channel | `1554352200313085962` (`WFL-MacBook2022`) / `1554352200950612001` (`常规`) |
+| `flags` broken → fixed | `0` → `8945664` |
+| Failure chain | intents off → 4014 → parked; then the allowlist held the wrong user id; then a proxy outage swallowed the mention |
+
+## 1. Read the log first; it already has the answer
+
+`~/.hermes/logs/gateway.log` (same lines mirror into `errors.log` and
+`gateway.error.log`). Search for the platform name and for `parked`.
+
+A platform that failed to start is **parked**:
+
+```
+ERROR gateway.run: 1 configured platform(s) failed to start and are parked
+  (fix the reported error, then `hermes gateway restart`): <platform>: ...
+The gateway is DEGRADED — it serves the remaining platform(s) with those unserved.
+```
+
+Parked platforms do **not** retry on their own, and the other platforms keep working —
+"Hermes still answers on Feishu" does not mean Discord is fine. After fixing the cause,
+always `hermes gateway restart`.
+
+### Did the message arrive at all?
+
+Count the admission line before touching any config:
+
+```bash
+grep -c "inbound message: platform=discord" ~/.hermes/logs/gateway.log
+```
+
+**Zero occurrences across the whole log = the message never reached the gateway.** Allowlist,
+mention rules, the agent and reply delivery are all irrelevant until that line exists, so never
+start editing config on a bare "it doesn't reply" report. Rejected messages are dropped
+*silently* — no log line — so 0 is ambiguous between "never delivered" and "delivered but
+filtered"; separate them with one unmistakable input (a channel the bot provably sees + a
+**real** mention picked from autocomplete; typed `@Name` text is not a mention) and re-read the
+log immediately after. "Admitted" and "answered" are two more distinct layers: the reply is
+`response ready: platform=…`.
+
+### Transport liveness is not API reachability
+
+The gateway socket and the platform's REST API are separate transports: REST reads can return
+200 while the socket is dead. A gateway that reaches the platform through a local proxy loses
+the socket whenever the proxy blips — log signature `WebSocket unhealthy (socket_closed …)` →
+`Reconnect … failed … nodename nor servname provided` (the direct fallback cannot resolve the
+host) → `reconnected successfully` once the proxy is back, with elevated retry backoff in
+between. **Events sent during the gap are never replayed**, so an "offline for a minute"
+window costs those messages permanently. Check timestamps against when the user says they
+acted before concluding a message should have arrived — both the socket drop and the DNS
+failure hit every WS-based platform on the machine at once, not just the one being debugged.
+
+## 2. Separate the failure layers
+
+| Symptom | Layer |
+|---|---|
+| Bot shows **offline**; total silence | Platform never connected — handshake / auth / config |
+| Bot **online**, ignores everyone | Allowlist (§4) |
+| Online, answers others but not you | Allowlist, or mention rules |
+| Processed but you see no reply | Reply landed elsewhere (threading, §4) |
+
+## 3. Discord: privileged intents (the offline case)
+
+Discord closes the WS handshake with code **4014** when the bot requests a privileged
+intent that is not enabled in the app settings; discord.py raises
+`PrivilegedIntentsRequired` and Hermes parks the platform. It is a *handshake* refusal, so
+the symptom is **offline + total silence**, not "replies with empty content".
+
+Privileged intents (`GUILD_PRESENCES`, `GUILD_MEMBERS`, `MESSAGE_CONTENT`) need **both** the
+Portal toggle (Bot → Privileged Gateway Intents → **Save Changes**; toggling without saving
+changes nothing) and the declaration in code. Portal off + code on = 4014; portal on + code
+off = silently missing events.
+
+The Hermes Discord adapter always sets `intents.message_content = True`
+(`plugins/platforms/discord/adapter.py`), so Message Content is unconditionally required;
+`members` is requested only when allowlists need username resolution.
+
+Portal-free path — `PATCH /applications/@me` accepts `flags`, and **only the limited-intent
+bits are writable**: `GATEWAY_PRESENCE_LIMITED (1<<13 = 8192)`,
+`GATEWAY_GUILD_MEMBERS_LIMITED (1<<15 = 32768)`,
+`GATEWAY_MESSAGE_CONTENT_LIMITED (1<<19 = 524288)`. Unrelated badge bits may already share
+the integer, so compare **bits**, not the total — enabling members + message content observed
+`8945664`, i.e. the two target bits plus an unrelated badge bit, not the bare sum `557056`.
+Never quote a total as the expected result.
+
+```bash
+TOKEN=$(grep -m1 '^DISCORD_BOT_TOKEN' ~/.hermes/.env | cut -d= -f2- | tr -d '[:space:]\"' | tr -d "'")
+# read the current flags and OR the target bits in (557056 = members + message content)
+FLAGS=$(curl -s -H "Authorization: Bot $TOKEN" https://discord.com/api/v10/applications/@me \
+  | python3 -c 'import sys,json; print((json.load(sys.stdin).get("flags") or 0) | 557056)')
+curl -s -X PATCH -H "Authorization: Bot $TOKEN" -H "Content-Type: application/json" \
+  -d "{\"flags\": $FLAGS}" https://discord.com/api/v10/applications/@me | head -c 200
+hermes gateway restart
+```
+
+Never print the token: assign it inside the shell, filter whatever JSON you echo back.
+
+## 4. Discord: allowlist and threading (the "online but ignores me" cases)
+
+`DISCORD_ALLOWED_USERS` must contain the sender's user ID; a mismatch **silently drops**
+every message (`adapter.py::_discord_message_admission` → `return False, False`), with no
+user-visible error. `DISCORD_ALLOWED_ROLES` is the role-based alternative.
+
+Cross-check the allowlist against the person actually testing — the app owner is normally
+them:
+
+```bash
+curl -s -H "Authorization: Bot $TOKEN" https://discord.com/api/v10/applications/@me   # owner.id, flags
+curl -s -H "Authorization: Bot $TOKEN" https://discord.com/api/v10/users/@me/guilds   # guilds the bot joined
+```
+
+`GET /users/@me/guilds` is the real-time membership check. Do **not** trust
+`approximate_guild_count` — it lags and can read 0 while the bot is already in the server
+(`bot_approximate_guild_count` tracks closer; all three fields are explicitly "approximate").
+`GET /users/@me` returns the bot's own id/username and validates the token.
+
+Check the run's own settings before blaming Discord: `discord.allowed_channels` empty means
+"no channel restriction" (whitelist only when set), and `discord.auto_thread: true` puts the
+reply in a **thread** on the user's message — the channel shows only an "N replies" chip,
+which reads to the user as "no reply".
+
+`DISCORD_HOME_CHANNEL` must be a **channel** id. A guild/server id there makes every
+*proactive* send fail — shutdown notices, cron delivery — with
+`Failed to send Discord message: 404 Not Found (error code: 10003): Unknown Channel`
+(`adapter.py::_resolve_channel` → `fetch_channel`). Grep `Failed to send` when the bot replies
+interactively but never on a schedule; read the real channel ids from
+`GET /guilds/<guild_id>/channels`.
+
+## 5. Which list to send the user to
+
+The Developer Portal (`discord.com/developers/applications`) lists apps you **own** and is
+the only place to enumerate them — the Application Resource API has no list-all endpoint,
+only `GET`/`PATCH /applications/@me`. Apps installed to a **user account** appear in the
+Discord client under Settings → Authorized Apps (not in the Portal); server-installed apps
+appear in Server Settings → Integrations → Bots and Apps.
+
+## 6. Inviting a bot with the right scopes
+
+The Portal's "Discord Provided Link" installs with the app's **Default Install Settings**,
+which may omit the `bot` scope (giving a commands-only install with no bot member) and may
+carry `permissions=0`. Build the URL explicitly instead:
+
+```
+https://discord.com/oauth2/authorize?client_id=<APP_ID>&scope=bot+applications.commands&permissions=<INT>&integration_type=0
+```
+
+`integration_type=0` pins the guild context, suppressing Discord's "Add to my apps / Add to a
+server" chooser. That chooser appears when both installation contexts are enabled — check
+`integration_types_config` in `GET /applications/@me`. Recommended permission integer is
+`274878286912`, minimal is `117760`. There is no invite subcommand in `hermes gateway`
+(run/start/stop/restart/status/install/uninstall/list/setup/migrate-legacy/migrate/enroll) —
+build the URL by hand from the Application ID, which is also visible in the Portal URL.
+
+## 7. A gateway slash-command surface explains itself from a snapshot
+
+`/skill <name>` reads an **in-memory catalog**, not the disk. `_register_skill_group()`
+builds `self._skill_entries` / `self._skill_lookup` once at registration, and only
+`/reload-skills` re-runs the scan (`refresh_skill_group()` → `_refresh_skill_catalog_state`).
+So a skill installed — or removed — after the gateway process started is invisible on that
+surface: `/skill <name>` replies `Unknown skill: <name>. Start typing for autocomplete
+suggestions.` and the dropdown has no row for it, while the skill is perfectly fine on disk.
+
+Three read-only facts decide it. Read them, do not walk the call chain:
+
+```bash
+# 1. what the LIVE process believes, and when it last built the list (count + timestamp)
+grep "Registered /skill command" ~/.hermes/logs/gateway.log | tail -1
+# 2. when that process started (human-readable)
+ps -eo pid,lstart,command | grep "gateway run" | grep -v grep
+# 3. what DISK holds, via the same resolver the gateway calls
+cd ~/.hermes/hermes-agent && HERMES_HOME=$HOME/.hermes venv/bin/python3 -c "
+from hermes_cli.commands_platforms import discord_skill_commands_by_category as F
+c,u,h=F(set()); e=u+[x for v in c.values() for x in v]
+print(len(e), 'hidden:', h)
+print([n for n,_,_ in e if 'NEEDLE' in n.upper()])"
+```
+
+The log line's timestamp older than the skill's install mtime ⇒ stale snapshot, not a failed
+install. `gateway_state.json` `start_time` is an opaque liveness token — never do arithmetic on
+it; get the readable start time from `ps`.
+
+Fix: the user types **`/reload-skills`** in that chat. It rescans the dir and calls
+`refresh_skill_group()` on the adapters — no `gateway restart`, and no `tree.sync()` because
+Discord fetches autocomplete options per keystroke. It is a chat-side command you cannot send
+for them. Meanwhile the AGENT side (`skills_list` / `skill_view`) already sees the new skill,
+so "works for me" is expected and proves nothing about the gateway — say so instead of letting
+it read as the install having failed.
+
+## Answer shape (this user — non-negotiable)
+
+1. **How-do-I questions get the executable path first.** After a one-line reason, give one
+   command if the platform has an API for that setting, otherwise numbered clicks with the
+   exact on-screen labels and the final save/restart step. Mechanism goes after, or gets cut:
+   a mechanism-first answer to "how do I open X" comes back as "I still don't understand how
+   to do it", and the theory is then re-explained for nothing.
+2. **Name the step people skip** — a settings page's *Save Changes*, `hermes gateway restart`.
+   Toggling without saving is the single most common silent no-op.
+3. **One layer per round.** Fix the first broken layer, then re-test; an env/config change is
+   invisible until `hermes gateway restart`, so batch the edits and restart once — do not stack
+   changes and then guess which one mattered.
+4. **Forecast nothing you have not read.** Mark any predicted value (flag integers, counts) as
+   a prediction, verify it with a read, and correct it plainly when reality differs.
+5. **Diagnose read-only; hand over mutations.** Log greps, API reads and status commands are
+   yours to run. Anything that changes his app/account/server state — `PATCH` flags, posting a
+   test message, editing `.env` — goes to him as a command with expected output, or runs only
+   after an explicit yes. Read secrets from `.env` inside the shell and filter what you echo; a
+   token value must never reach the reply.
+6. **When he says stay on one path, stop probing** — kill the running check rather than letting
+   it finish "for completeness".
+7. Close with the question-format summary — 1 What I ask / 2 What you did / 3 Keypoints you
+   offer / 4 Questions to dig in — each point carrying the log line or API read that backs it,
+   and stating what was ruled out as well as what remains open.
+8. **A pasted error message is a "why" question: name the cause, name the fix, stop.** Read
+   only the artifacts that decide it (disk state + the live process's own log line) and answer
+   in a handful of lines, holding the code path in reserve — tracing the call chain across
+   files first gets read as "no need to investigate all files so deeply, just answer me why".
+   Deep reading is for when the cheap evidence conflicts, or when he asks for the mechanism.
+
+## Docs
+
+Fetch the authoritative pages with `terminal` curl — the `web_extract` tool refused these
+hosts as "private or internal network address":
+
+- `https://raw.githubusercontent.com/discord/discord-api-docs/main/developers/resources/application.mdx`
+  — install contexts, install links, `GET`/`PATCH /applications/@me` params, application
+  flags table with bit values
+- `https://raw.githubusercontent.com/discord/discord-api-docs/main/developers/topics/gateway.mdx`
+  — intents, privileged intents, close codes
+
+Hermes-side reference: `https://hermes-agent.nousresearch.com/docs/user-guide/messaging/discord`
+(add `?format=md` for clean markdown).
+
+## Skill Structure
+
+<!-- Generated by Scripts -->
+
+```
+debug-hermes-gateway/
+├── SKILL.md  (302 lines)
+└── scripts/
+    └── discord_check.sh  (93 lines)
+```
+
+<!-- Generated by Scripts -->
