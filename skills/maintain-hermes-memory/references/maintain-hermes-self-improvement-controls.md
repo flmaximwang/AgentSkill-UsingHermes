@@ -92,4 +92,4 @@ claiming the skills are being synced.
 <name>` (exempt one skill from every automatic transition), `curator.consolidate` (LLM umbrella pass,
 off by default; it is the only pass that rewrites skill content in place), `curator.prune_builtins`
 (false by default; true lets shipped built-ins age out into `.archive/`). Full lifecycle:
-`references/control-hermes-curator-archive-lifecycle.md`.
+`references/maintain-hermes-curator-archive-lifecycle.md`.

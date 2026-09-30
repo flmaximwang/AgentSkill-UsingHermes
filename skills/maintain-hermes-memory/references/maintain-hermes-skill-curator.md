@@ -2,7 +2,7 @@
 
 Read this when the write the user is unhappy about is a **skill**: a new `SKILL.md` appearing after
 a turn, an existing skill edited by the agent, or old self-created skills quietly aging out. The
-memory twins live in `control-hermes-memory-md.md`.
+memory twins live in `maintain-hermes-memory-md.md`.
 
 All `file:line` citations are from the source note, verified 2026-09-29 against
 `~/.hermes/hermes-agent/`.

@@ -1,6 +1,6 @@
 ---
 name: maintain-hermes-profile
-description: "Use when bulk-editing a profile's skills or config. Bulk enable/disable/delete of many skills, dead `skills.disabled` entries, edits to `config.yaml`, the `.archive/` lifecycle and the built-in restore path, adopting an external skill pack, which layer a rule comes from (SOUL.md vs built-in), and reading the session store to see what the agent actually did. Creating or switching profiles is `manage-hermes-profiles`; one skill's install/update/remove are the `install-`/`update-`/`remove-hermes-skills` siblings."
+description: "Use when bulk-editing a profile's skills or config. Bulk enable/disable/delete of many skills, dead `skills.disabled` entries, edits to `config.yaml`, the `.archive/` lifecycle and the built-in restore path, adopting an external skill pack, which layer a rule comes from (SOUL.md vs built-in), and reading the session store to see what the agent actually did. Creating or switching profiles is `maintain-hermes-profiles`; one skill's install/update/remove are the `install-`/`update-`/`remove-hermes-skills` siblings."
 ---
 
 # Hermes profile housekeeping
@@ -35,7 +35,7 @@ because the naive version silently does the wrong thing or destroys something un
 - The user asks what `.bundled_manifest` / `.curator_suppressed` actually record, or whether a skill
   "was ever installed here" (§16).
 - The **desktop app itself** is what misbehaves — a pane errors, a plugin's UI loads but its data
-  404s, a feature works on one profile and not another — use `diagnose-hermes-desktop-app` for
+  404s, a feature works on one profile and not another — use `maintain-hermes-desktop-app` for
   the Electron/app-level side (active profile, backend argv, per-profile plugin routes); this skill
   owns the files inside a profile.
 - Any bulk destructive file operation inside `~/.hermes/` needs a plan, a backup, and proof.
@@ -230,7 +230,7 @@ plus active/stale/archived counts; `.curator_state` holds last run and run count
   after taking your own tarball. Verify with `hermes curator list-archived` (expect
   `no archived skills`) **and** `hermes curator status` (expect `archived 0`).
 
-Dry-run recipe, command map, and the restore fallback: `control-hermes-memory` → `references/control-hermes-curator-archive-lifecycle.md`.
+Dry-run recipe, command map, and the restore fallback: `maintain-hermes-memory` → `references/maintain-hermes-curator-archive-lifecycle.md`.
 
 ## 9. "I can't turn this skill off" / "why does it list N skills?"
 
@@ -263,7 +263,7 @@ answer it with numbers from the same source the surface reads:
   `N = installed rows + same-name catalog rows + rows whose identifier is in the lock/official
   installed-identifier set`, with the collision rows broken down per publisher. Reproducible to the
   row by porting `mergeInstalled` + `isInstalled` against the four real payloads (recipe:
-  `manage-hermes-skills` → `references/manage-hermes-skills-inventory-and-availability.md`). The third term is the quiet one: a skill whose
+  `maintain-hermes-skills` → `references/maintain-hermes-skills-inventory-and-availability.md`). The third term is the quiet one: a skill whose
   directory is gone but whose `.hub/lock.json` entry survives counts through
   `installedIdentifiers.has(identifier)` with **no name collision against your tree at all**, so a
   two-term model lands short and its residue looks unexplained.
@@ -350,7 +350,7 @@ answer it with numbers from the same source the surface reads:
   what makes the label read `clawhub` again. A reinstall *and* an `update` re-normalize the strings by
   the registry slug, so re-apply after either. Two publishers can each hold the name, so a second row
   owned by *another* registry is legitimate and cannot be folded away. Audit + recipe:
-  `fix-hermes-skill-cards` → `scripts/check-lock-alignment.py`, `manage-hermes-skills` → `references/manage-hermes-skills-inventory-and-availability.md`.
+  `maintain-hermes-skill-cards` → `scripts/check-lock-alignment.py`, `maintain-hermes-skills` → `references/maintain-hermes-skills-inventory-and-availability.md`.
 - A skill NAME can appear once per publisher, so the same name in several rows is not a bug and
   the extras are not on disk. Say which one is the installed copy.
 - `ESSENTIAL_SKILLS = frozenset({"hermes-agent"})` (`agent/skill_utils.py`) is silently dropped
@@ -387,7 +387,7 @@ the running backend:
   claiming which profile something belongs to.
 
 Layers, provenance classification, the probe recipe, and the index/catalog layout:
-`manage-hermes-skills` → `references/manage-hermes-skills-inventory-and-availability.md`.
+`maintain-hermes-skills` → `references/maintain-hermes-skills-inventory-and-availability.md`.
 
 ## 10. Hub skills never update themselves, and one name can live in two homes
 
@@ -554,7 +554,7 @@ to stdout). The bundled tree is also the recovery source for a pruned skill (§8
   answer, then ask which one is meant rather than picking one for the user.
 
 Store-by-store commands, identifier forms, and the bundled-name-miss signature:
-`manage-hermes-skills` → `references/manage-hermes-skills-inventory-and-availability.md`.
+`maintain-hermes-skills` → `references/maintain-hermes-skills-inventory-and-availability.md`.
 
 ## 15. GitHub sources: direct paths and taps
 
@@ -728,7 +728,7 @@ skills — it is what produces an unasked-for "saved that as a skill". Three tie
   route the fork off the main-model replay instead of switching it off.
 
 Key table with defaults and read sites, plus the "did the new value take effect" check:
-`control-hermes-memory` → `references/control-hermes-self-improvement-controls.md`.
+`maintain-hermes-memory` → `references/maintain-hermes-self-improvement-controls.md`.
 
 ## 18. Is that rule built-in, or is it mine?
 
@@ -755,7 +755,7 @@ fix that moves nothing.
   in `lock.json` records nothing about use). Prove it from the load record, never from the prompt text you
   believe is loaded: `/Users/maxim/.hermes/state.db`, `SELECT content FROM messages WHERE
   tool_name='skill_view'`, JSON-parse each row for `name` (recipe + the prompt-hash join that dates which
-  `SOUL.md` text was active per session: `control-hermes-memory` → `references/control-hermes-session-store-forensics.md`).
+  `SOUL.md` text was active per session: `maintain-hermes-memory` → `references/maintain-hermes-session-store-forensics.md`).
 - Answer shape: **layer + file + gate key with its current value**, then the consequence. Read the files and
   run the gate probe; never reconstruct a prompt-layer answer from memory of the prompt. When the question
   is "did this rule/skill actually run", the evidence is the **load record** in the session store (plus a
@@ -774,11 +774,11 @@ it went to, and this table is the map:
 |---|---|
 | installing from a GitHub repo — direct identifier vs tap vs bare URL, identifier grammar, tap config, the two honest answers to "can it auto-update?" (§15) | `install-hermes-skills` → `references/install-hermes-skills-github-sources.md` |
 | adopting a third-party skill/plugin pack — manifest shim, loader probe, scan verdicts, index-size measurement, subsetting (§13) | `install-hermes-skills` → `references/install-hermes-skills-external-pack-adoption.md` |
-| the curator's `.archive/` — command map, what an archive record holds, the purge recipe (§8) | `control-hermes-memory` → `references/control-hermes-curator-archive-lifecycle.md` |
-| every mechanism that mutates a profile with no user command, with each lever's default and off switch (§10, §17) | `control-hermes-memory` → `references/control-hermes-self-improvement-controls.md` |
-| read-only SQL over a home's `state.db` — which skills loaded, which prompt text was active, dating an install (§18) | `control-hermes-memory` → `references/control-hermes-session-store-forensics.md` |
-| every store that answers "what skills does this profile have" **plus** the uninstalled stores that answer "is there a skill for X", the provenance rules, the venv-python probe that reproduces a UI toggle (§9, §14) | `manage-hermes-skills` → `references/manage-hermes-skills-inventory-and-availability.md` |
-| the read-only audit of a home's hub lock for the three-string agreement (lock key == `install_path` last segment == the skill's own name) | `fix-hermes-skill-cards` → `scripts/check-lock-alignment.py` |
+| the curator's `.archive/` — command map, what an archive record holds, the purge recipe (§8) | `maintain-hermes-memory` → `references/maintain-hermes-curator-archive-lifecycle.md` |
+| every mechanism that mutates a profile with no user command, with each lever's default and off switch (§10, §17) | `maintain-hermes-memory` → `references/maintain-hermes-self-improvement-controls.md` |
+| read-only SQL over a home's `state.db` — which skills loaded, which prompt text was active, dating an install (§18) | `maintain-hermes-memory` → `references/maintain-hermes-session-store-forensics.md` |
+| every store that answers "what skills does this profile have" **plus** the uninstalled stores that answer "is there a skill for X", the provenance rules, the venv-python probe that reproduces a UI toggle (§9, §14) | `maintain-hermes-skills` → `references/maintain-hermes-skills-inventory-and-availability.md` |
+| the read-only audit of a home's hub lock for the three-string agreement (lock key == `install_path` last segment == the skill's own name) | `maintain-hermes-skill-cards` → `scripts/check-lock-alignment.py` |
 | re-seeding bundled skills that were pruned or deleted from a home | `update-hermes-skills` → `scripts/restore_builtin_skills.py` |
 
 What stays here:
@@ -798,9 +798,9 @@ What stays here:
 ```
 maintain-hermes-profile/
 ├── SKILL.md  (806 lines)
-├── references/
-│   ├── maintain-hermes-profile-prompt-assembly-and-guidance-gates.md  (81 lines)
-│   └── maintain-hermes-profile-skills-tree-layout.md  (294 lines)
+└── references/
+    ├── maintain-hermes-profile-prompt-assembly-and-guidance-gates.md  (81 lines)
+    └── maintain-hermes-profile-skills-tree-layout.md  (294 lines)
 ```
 
 <!-- Generated by Scripts -->

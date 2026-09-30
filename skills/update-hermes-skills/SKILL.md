@@ -155,7 +155,7 @@ In a session the same work is `/skills update <name> [--force]`; `/skills check`
 | an `npx skills add` install of the same registry | `references/update-hermes-skill-sh-skills.md` |
 | a `@publisher/slug` ClawHub skill, version vs hash, same-slug-different-lineage risk | `references/update-hermes-clawhub-skills.md` |
 | a raw-URL skill, a `check` stuck on `unavailable`, floating refs | `references/update-hermes-url-skills.md` |
-| installing, removing, seeding on/off, or a search that cannot find your skill | the siblings `install-hermes-skills`, `remove-hermes-skills`, `manage-hermes-skills` |
+| installing, removing, seeding on/off, or a search that cannot find your skill | the siblings `install-hermes-skills`, `remove-hermes-skills`, `maintain-hermes-skills` |
 | an error string from any `hermes skills` command, or "how was this installed / why did it need `--force`" | `install-hermes-skills` → `references/install-hermes-skills-diagnosis.md` |
 
 ## When the new content takes effect

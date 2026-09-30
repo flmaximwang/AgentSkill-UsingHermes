@@ -38,7 +38,7 @@ gateway (or the Desktop app) so the new `active_profile` is the one read at star
 
 1. Switch in the CLI — `hermes profile use <name>` — then restart the gateway or the Desktop app.
 2. Point the Desktop at a **different Remote URL**: each profile's gateway listens on its own port,
-   so a per-profile port (see `manage-hermes-profiles-gateways.md`) reaches the instance you want
+   so a per-profile port (see `maintain-hermes-profiles-gateways.md`) reaches the instance you want
    without a GUI selector.
 3. Use the dashboard's `/chat` tab, which bypasses the gateway entirely and follows `--profile`.
 

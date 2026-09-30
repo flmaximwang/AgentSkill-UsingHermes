@@ -9,7 +9,7 @@ replaced on every run, so never hand-edit it.
 
     python3 scripts/auto-generate-skill-structure.py                 # every skill
     python3 scripts/auto-generate-skill-structure.py --check          # exit 1 if any is stale
-    python3 scripts/auto-generate-skill-structure.py manage-hermes-skills   # only these
+    python3 scripts/auto-generate-skill-structure.py maintain-hermes-skills   # only these
 
 Run it after adding, renaming or deleting any reference or script, so a skill's own
 inventory cannot drift from the files on disk. Line counts are included because they are

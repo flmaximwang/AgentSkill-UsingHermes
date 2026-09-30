@@ -100,7 +100,7 @@ default profile's Alias column showing `—`.
 ## Switch, and when it takes effect
 
 **CLI is the only working method** (the Desktop GUI has no switcher — see
-`manage-hermes-profiles-limitations.md`):
+`maintain-hermes-profiles-limitations.md`):
 
 ```bash
 # 切换 sticky default Profile

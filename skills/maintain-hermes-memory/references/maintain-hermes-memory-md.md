@@ -2,7 +2,7 @@
 
 Read this when the write the user is unhappy about is a **memory** write: a `MEMORY.md` / `USER.md`
 entry appearing on its own, the "memory updated" notice, or a `/memory pending` queue that fills up.
-The skill-write twins live in `control-hermes-skill-curator.md`.
+The skill-write twins live in `maintain-hermes-skill-curator.md`.
 
 All `file:line` citations are from the source note, verified 2026-09-29 against
 `~/.hermes/hermes-agent/`.

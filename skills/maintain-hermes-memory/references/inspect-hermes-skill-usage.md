@@ -2,8 +2,8 @@
 
 Read this when the complaint is a **skill that never fires**: *"did you ever load X?"*, *"why doesn't
 this skill trigger?"*, *"the description is broad, so why is it ignored?"*. The memory/skill **write**
-side (the fork, the curator, the approval queues) is `control-hermes-memory-md.md` and
-`control-hermes-skill-curator.md`; this reference is the **read** side — measuring what did or did
+side (the fork, the curator, the approval queues) is `maintain-hermes-memory-md.md` and
+`maintain-hermes-skill-curator.md`; this reference is the **read** side — measuring what did or did
 not load, finding what fired instead, and changing a description so it can fire.
 
 Every number below was measured on this machine **2026-09-30**, default profile, `~/.hermes`

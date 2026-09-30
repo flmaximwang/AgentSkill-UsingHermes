@@ -69,7 +69,7 @@ gateway:
 ```
 
 Distinct ports are also what lets the Desktop app reach a specific profile indirectly by Remote URL,
-since the GUI itself cannot select one (see `manage-hermes-profiles-limitations.md`).
+since the GUI itself cannot select one (see `maintain-hermes-profiles-limitations.md`).
 
 ## The dashboard `/chat` exception
 

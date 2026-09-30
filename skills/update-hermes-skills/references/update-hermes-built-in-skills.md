@@ -18,9 +18,9 @@ code root's skills/  ──►  sync_skills()  ──►  hash gate (.bundled_ma
 `sync_skills()` copies from the **current code root's** `skills/` into the **current profile's**
 `HERMES_HOME/skills/`, tracking each skill's origin hash in `<HERMES_HOME>/skills/.bundled_manifest`.
 Where that code root is — and therefore whether seeding has a source at all — is the sibling
-`manage-hermes-skills` skill's job: read its `manage-hermes-bundled-skills.md` reference (installed
-under `~/.hermes/skills/manage-hermes-skills/references/`, in the repository under
-`skills/manage-hermes-skills/references/`). Follow that diagnostic when the sync reports zero work.
+`maintain-hermes-skills` skill's job: read its `maintain-hermes-bundled-skills.md` reference (installed
+under `~/.hermes/skills/maintain-hermes-skills/references/`, in the repository under
+`skills/maintain-hermes-skills/references/`). Follow that diagnostic when the sync reports zero work.
 This reference covers only what the **update** does with what it finds.
 
 ## What `hermes update` prints about skills
@@ -140,15 +140,15 @@ your copy lost. When nothing differs, `diff` prints a green no-difference line a
 **Rung 2 — did the sync even have work to do?**
 Signal: `hermes update` printed `0 new / 0 updated`, or nothing at all, while the built-in skill is
 still old. That is not "already current" — a sync with no source to copy from early-returns and renders
-identically. Follow the sibling skill `manage-hermes-skills`, whose own reference
-`manage-hermes-bundled-skills.md` covers it (which chains/interpreters have a `skills/`, and
+identically. Follow the sibling skill `maintain-hermes-skills`, whose own reference
+`maintain-hermes-bundled-skills.md` covers it (which chains/interpreters have a `skills/`, and
 `HERMES_BUNDLED_SKILLS` when one does not).
 
 **Rung 3 — was this profile opted out?**
 Signal: the marker file exists, or `hermes update` printed the `opted out of bundled skills … seeding
 essential skills only` line. The marker means *essential only* (a singleton set,
 `ESSENTIAL_SKILLS = frozenset({"hermes-agent"})`, `agent/skill_utils.py:295`), never "seed nothing".
-Control and its two commands belong to `manage-hermes-skills`; do not duplicate them here.
+Control and its two commands belong to `maintain-hermes-skills`; do not duplicate them here.
 
 **Rung 4 — is it an official *optional* skill rather than a bundled one?**
 Signal: `list --source builtin` does not show it, but it is meant to come from upstream. `hermes skills
