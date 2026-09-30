@@ -1,0 +1,12 @@
+[
+  {
+    "id": 1,
+    "prompt": "我 push 完跑 hermes skills update <name>，输出里既有 Not installed: the security scan found 1 high-risk pattern(s) 又有 Updated 1 skill(s).，到底装上没有？",
+    "expected": "结论：没装上——被扫描拦下的投递会在结尾谎报（exit 0，本会话实测会话 20260930_162008_8587d70c）。判据不是那句总结，而是「上一版 revision 是否还在」：diff -rq 非空、metadata.source_revision 仍旧于 push；给出正确读法（读全输出 + 回读 lock/check）。"
+  },
+  {
+    "id": 2,
+    "prompt": "一次更新好几个 skill 怎么传参数？",
+    "expected": "一次一个 name：CLI 只收一个 positional，hermes skills update alpha beta 会 exit 2 报 unrecognized arguments: beta 且什么都不更新（本会话实跑）；批量就是逐名调用。"
+  }
+]

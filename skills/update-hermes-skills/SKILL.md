@@ -201,7 +201,8 @@ In a session the same work is `/skills update <name> [--force]`; `/skills check`
 
 ```
 update-hermes-skills/
-├── SKILL.md  (214 lines)
+├── SKILL.md  (215 lines)
+├── test-prompts.json  (12 lines)
 ├── references/
 │   ├── update-hermes-built-in-skills.md  (174 lines)
 │   ├── update-hermes-clawhub-skills.md  (121 lines)

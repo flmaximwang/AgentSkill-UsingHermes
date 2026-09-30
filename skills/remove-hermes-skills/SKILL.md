@@ -179,7 +179,8 @@ and a `list` footer that went `1 hub-installed` → `0 hub-installed`.
 
 ```
 remove-hermes-skills/
-├── SKILL.md  (190 lines)
+├── SKILL.md  (191 lines)
+├── test-prompts.json  (12 lines)
 └── references/
     ├── remove-hermes-built-in-skills.md  (151 lines)
     ├── remove-hermes-clawhub-skills.md  (115 lines)

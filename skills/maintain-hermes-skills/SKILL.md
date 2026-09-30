@@ -67,7 +67,8 @@ personal tap. Both halves, with the numbers and the code sites, are in
 
 ```
 maintain-hermes-skills/
-├── SKILL.md  (79 lines)
+├── SKILL.md  (80 lines)
+├── test-prompts.json  (17 lines)
 └── references/
     ├── FAQs-on-hermes-skills-tap.md  (189 lines)
     ├── maintain-hermes-bundled-skills.md  (429 lines)

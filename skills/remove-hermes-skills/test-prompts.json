@@ -1,0 +1,12 @@
+[
+  {
+    "id": 1,
+    "prompt": "删除 paper2agent 并重新安装到 agent-evolution category. /skill remove-hermes-skills. /skill install-hermes-skills.",
+    "expected": "识别为 category move = uninstall + install（无 move 动词，update 改不了 install_path）；先按 lock key 读条目，再审计本地 delta（按记录 revision 取上游 tarball 做 diff -r，噪声 vs 内容分类）并报告，双备份（snapshot 只有条目 / tar 才有文件），探针在 throwaway home 里验 hash 相等才算纯搬迁；卸载用 lock key；清理后回读 audit.log 的 UNINSTALL→INSTALL 对。"
+  },
+  {
+    "id": 2,
+    "prompt": "我删完之后 hermes skills check <name> 说 No hub-installed skills to check.，是不是整个 lock 都没了？",
+    "expected": "不是。check 是 name-addressed：名字不在 lock 里就答这句（本会话实测：删掉一个后 lock 仍有 31 条）；结论是去读 skills/.hub/lock.json 本身，而不是相信那句总结；顺带区分「名字不存在」与「文件不存在」两种状态。"
+  }
+]

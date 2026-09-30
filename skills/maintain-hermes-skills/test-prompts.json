@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "prompt": "本次会话修补了：skill-library-consolidation。我觉得这个功能应该在 maintain-hermes-skills 技能中。调用 evolve-hermes-skills 看看如何将它并入 maintain-hermes-skills",
+    "expected": "先按 lock.json 判容器，不按名字/目录：skill-library-consolidation 无 lock 条目 = profile-local，maintain-hermes-skills 是 repo-delivered；再逐条做 overlap 事实矩阵（claim 不拿词汇去 grep，两侧引 file:line），出「已有/净增」两张表，逐条点名落点；按 subject 分流——决定半进 maintain-hermes-skills 的新引用 + 路由行 + description，机制半交 install-/remove-/update- 兄弟；说清退役时机与「先交付验证再退役」。（本会话实测：22 条已覆盖里 6 条属 MH、12 条属兄弟、10 条重复丢弃。）"
+  },
+  {
+    "id": 2,
+    "prompt": "profile 里有个本地技能跟我仓库里交付的技能内容重叠，我是删掉它还是并进去？先说怎么判断。",
+    "expected": "不直接给结论：先读 lock 判两者容器（谁有 lock 条目谁是被交付的构建产物），然后按 claim 逐条比，报告分两张表（接收方已用 file:line 引证 / 净增量），并明确「标题或领域相同不等于重叠」；落点在写之前定：README 的动词词表 → 既有 umbrella 引用 → 才考虑新引用；不属于本技能的机制请交给 owns 它的兄弟。"
+  },
+  {
+    "id": 3,
+    "prompt": "并进去以后，原来那个本地技能呢？我还能 update 它吗？",
+    "expected": "关键结论：先交付验证（clone 改 → 生成器 → verify → commit → push → hermes skills update → 回读）再退役；本地副本无 lock 条目 → check/update/audit/uninstall 都看不见它，退役是纯删除（先 grep lock 证明无条目），hub 装的那个走 hermes skills uninstall <lock key>；并说明「没放进接收方的内容不许删」。"
+  }
+]
