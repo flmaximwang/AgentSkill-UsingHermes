@@ -315,6 +315,15 @@ state plainly when offering it:
 - **It has to exist in the fetched tree**, so it is a repo change (or a change to a fork the user
   installs from) — never a local setting. Offer it as a one-file upstream change with the before/after
   verdicts as its justification.
+- **On the GitHub / skills.sh route it cannot be in the fetched tree at all.** The ignore file is a
+  *root dotfile*, and the bundle builder drops root dotfiles before the scan: `_skip_bundle_file` tests
+  the basename (`tools/skills_hub_github.py:171-174`) and is applied to every bundle member
+  (`:338`), while `scan_skill` runs on the quarantine directory written from that bundle. So a committed
+  and pushed `.skillignore` never reaches the scan — the lever is real for a **local** scan (which files
+  drive a verdict) and is not how a published package clears a block. Code-verified, not yet reproduced
+  end to end; whether a ClawHub publish keeps `.clawhubignore` in its bundle is untested here. For a
+  package that has to install, change the literals:
+  `references/install-hermes-skills-scan-gate.md`.
 
 ## Update decision (`check_for_skill_updates`)
 
