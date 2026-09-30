@@ -55,7 +55,7 @@ layouts when the user asks whether an install is possible — the two lines are 
 
 | Pattern | Severity / class | Trigger in the pack |
 |---|---|---|
-| `echo_pipe_exec` | CRITICAL / obfuscation | a documented `echo '<json>' \| python scripts/rest_request.py` invocation |
+| `echo_pipe_exec` | CRITICAL / obfuscation | a documented invocation that pipes a JSON payload into a helper script (`… \| python scripts/rest_request.py`) |
 | `unpinned_pip_install` | MEDIUM / supply_chain | "if `requests` is missing, install it once" prose |
 | `python_environ_get_secret` | — | API-key env reads inside the pack's own scripts |
 | `python_subprocess` | safe | a script shelling out to a CLI |

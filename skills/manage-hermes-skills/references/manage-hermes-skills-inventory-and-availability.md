@@ -277,7 +277,7 @@ HERMES_HOME=<home> hermes skills install 'clawhub/@owner/slug' -y
 
 ### Never trust the shell's inherited HERMES_HOME
 
-Check `env | grep HERMES_HOME` before mutating anything: a gateway/agent session can carry a *different*
+Check the shell's inherited `HERMES_HOME` before mutating anything: a gateway/agent session can carry a *different*
 profile's home, so a bare `hermes skills uninstall/install` writes that other home's lock and `audit.log`
 while the conversation is about another one — and `Installed: …` in the output is no evidence about the home
 you meant. Pass `HERMES_HOME=<home>` (or `--profile`) explicitly, then confirm from the target home's
@@ -340,7 +340,7 @@ does not:
 
 ## Probing hub and catalog state without hanging
 
-- `env | grep HERMES_HOME` first; then pin the home explicitly on every read and every mutation.
+- read the shell's `HERMES_HOME` first; then pin the home explicitly on every read and every mutation.
 - HTTP probes: `curl -sS --max-time 20 -o <file> -w "http=%{http_code} bytes=%{size_download}\n" <url>`.
   The catalog snapshot is ~60 MB and lands in seconds; the docs domain redirects to the Pages host
   and both serve the same bytes, so compare `sha256` rather than believing a second URL is a second

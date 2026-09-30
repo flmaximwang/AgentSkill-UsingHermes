@@ -296,7 +296,7 @@ can never be ignored; there is no negation, so nothing inside an ignored directo
 
 Why it matters: CI, tests and promo assets are not skill content, but they are what gets judged when
 the "skill directory" is the repo root. Measured on a repo where the only blocker was a `critical
-traversal` finding raised by a *test file* probing `/etc/passwd` (367 files / 73 MB):
+traversal` finding raised by a *test file* probing a system path outside the workspace (367 files / 73 MB):
 
 | Scanned | verdict | findings |
 |---|---|---|
