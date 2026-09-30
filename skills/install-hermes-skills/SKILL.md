@@ -273,7 +273,8 @@ deciding field; the content hash is.
 
 ```
 install-hermes-skills/
-├── SKILL.md  (294 lines)
+├── SKILL.md  (295 lines)
+├── test-prompts.json  (12 lines)
 ├── references/
 │   ├── install-hermes-skills-diagnosis.md  (219 lines)
 │   ├── install-hermes-skills-external-pack-adoption.md  (105 lines)
