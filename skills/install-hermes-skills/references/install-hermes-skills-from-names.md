@@ -163,6 +163,23 @@ winner could not be installed at all while the loser installed cleanly:
   mac-openclaw-manager (改造版)`, and 6 files its body references (`templates/*.template`) were never
   published.
 
+Second measured case (`darwin-skill`, 2026-09-30) — here the winner **is** installable, and its route is
+skills.sh, not the registry copy the name search lists first:
+
+- **`alchaincyf/darwin-skill`** (upstream, MIT) — `6132★`, pushed `2026-09-18`; skills.sh page
+  `Installs 10.7K`, `GitHub Stars 6.1K`, `First Seen Apr 13, 2026`, SKILL.md `v2.1 · 2026-06-10`. → wins
+  both axes.
+- **ClawHub losers**: `darwin-skill` (103 installs / 3910 downloads, 8-dim, untouched since
+  `2026-05-11`) and `darwin-skill-qszf` (7 installs / 607 downloads, a 9-dim fork by a different author).
+  A plain `search darwin` lists **both ClawHub packages and never the GitHub repo**, so search ranks the
+  wrong bloodline first.
+- **Install**: `hermes skills install "skills-sh/alchaincyf/darwin-skill/darwin-skill" --category
+  agent-evolution -y` → `agent-evolution/darwin-skill`, **37 files / 5.1 MB**, verdict `SAFE`
+  (community → allowed), lock key `darwin-skill` (name matches, so `check`/`update`/`uninstall` work by
+  name: `check darwin-skill` → `skills.sh | up_to_date`). The scan **rules** were `oversized_file,
+  oversized_skill, unpinned_pip_install` while the **verdict** was `SAFE` — findings listed is not a
+  blocked install; read the verdict/decision line.
+
 So: rank first, then prove the winner installs, and when the popular/maintained bloodline cannot be
 installed, **say that** instead of quietly installing the fork under the same name — and never present a
 winner you have not tried. `install-hermes-skills-from-clawhub.md` covers the bloodline check on the

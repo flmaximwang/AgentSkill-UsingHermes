@@ -151,6 +151,25 @@ ways — see the github reference's "Error text → meaning" table):
 - a **two-segment** `owner/repo` → use `owner/repo/` (trailing slash) or a raw URL instead;
 - a `blob` link, or a three-segment identifier ending in `/SKILL.md`.
 
+## Replacing an installed skill with a better bloodline
+
+`hermes skills update` cannot do this: it re-fetches the **recorded** source + identifier, so it only
+moves a skill forward inside its own bloodline. Replacing one is an install operation (mechanics in
+`update-hermes-skills` → "A source change is uninstall + install"):
+
+1. **Rank** the candidates on popularity × recency (`references/install-hermes-skills-from-names.md`) —
+   a plain `search <name>` can list only the weaker registry copies and never the upstream repo.
+2. **Prove the winner installs** in a throwaway `HERMES_HOME` (non-negotiables above); a winner you have
+   not tried is not a recommendation.
+3. `hermes skills uninstall <lock key> -y` — the **lock key**, which for ClawHub is the slug, not the
+   name `hermes skills list` prints.
+4. `hermes skills install "<winner identifier>" --category <same category> -y`. **Re-supply the
+   category**: it is read at install time only, and the removed entry cannot hand its path over.
+
+Then verify the new entry — `hermes skills list` (category + `Source`), the lock's `identifier` /
+`install_path` / `content_hash`, and `check <new key>` → `up_to_date` — and name the identifier you
+installed, because a same-name fork would make a failed move look like a successful one.
+
 ## The commands
 
 ```bash
@@ -235,13 +254,13 @@ deciding field; the content hash is.
 
 ```
 install-hermes-skills/
-├── SKILL.md  (254 lines)
+├── SKILL.md  (273 lines)
 ├── references/
 │   ├── install-hermes-skills-diagnosis.md  (219 lines)
 │   ├── install-hermes-skills-external-pack-adoption.md  (105 lines)
 │   ├── install-hermes-skills-from-clawhub.md  (87 lines)
 │   ├── install-hermes-skills-from-github.md  (464 lines)
-│   ├── install-hermes-skills-from-names.md  (185 lines)
+│   ├── install-hermes-skills-from-names.md  (202 lines)
 │   ├── install-hermes-skills-from-npx.md  (166 lines)
 │   ├── install-hermes-skills-from-skill-sh.md  (193 lines)
 │   ├── install-hermes-skills-github-sources.md  (130 lines)
