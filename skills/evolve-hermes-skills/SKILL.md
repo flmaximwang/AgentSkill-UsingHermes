@@ -104,6 +104,13 @@ handed you a batch, and a batch is one decision. Ask about the mapping explicitl
 it, because "does this skill have an external repo" is exactly the question the user may answer with a repo
 you cannot see from the lock (a new one, or one not yet tapped).
 
+**A checkpoint that gets no answer is a hold, not a licence** (measured 2026-09-30: the per-skill
+checkpoint went unanswered for 10 minutes). The correct state then is: edits committed locally, **nothing
+pushed**, the next skill not started, and a status line naming the unpushed commits plus what one word
+would trigger. When the go-ahead finally arrives, re-check before pushing — `git fetch` and
+`git status -sb` — because a sibling run may have pushed in the meantime (that run's five commits were on
+`origin/main` already, so "commit" was satisfied before the push ran).
+
 Walking rung 1 (the complete route): edit the clone → run the generator → run
 `verify-skill-package.py` → commit with a pathspec → push `main` → `hermes skills update <name>` → read the
 update back. Nothing reaches the profile until the last step, so an edit that stops at the clone is not
@@ -189,7 +196,7 @@ a finding the user can drop.
 
 ```
 evolve-hermes-skills/
-├── SKILL.md  (200 lines)
+├── SKILL.md  (207 lines)
 ├── test-prompts.json  (12 lines)
 └── references/
     ├── evolve-hermes-skills-handoff-to-darwin.md  (125 lines)
