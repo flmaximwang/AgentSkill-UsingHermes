@@ -44,6 +44,9 @@ The two commands hash different things, and that is the trap this skill exists f
   recorded hash. Any drift means the skill was edited, and an update `rmtree`-replaces the directory,
   so it is **skipped** unless `--force` is passed (`hermes_cli/skills_hub.py:887-897`, `:928-932`).
 
+🔴 CHECKPOINT before `--force`: it `rmtree`-replaces the directory, so a copy holding content the clone
+lacks loses exactly that content — run the copy-ahead check first, and stop if the copy is ahead.
+
 Measured (sandbox, revision and hash both forged stale):
 
 ```
@@ -201,7 +204,7 @@ In a session the same work is `/skills update <name> [--force]`; `/skills check`
 
 ```
 update-hermes-skills/
-├── SKILL.md  (215 lines)
+├── SKILL.md  (218 lines)
 ├── test-prompts.json  (12 lines)
 ├── references/
 │   ├── update-hermes-built-in-skills.md  (174 lines)
