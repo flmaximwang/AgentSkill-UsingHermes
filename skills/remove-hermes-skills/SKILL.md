@@ -62,6 +62,10 @@ entry removes them all, the children carry no lock entry of their own, and they 
 
 ## Before you remove
 
+🔴 CHECKPOINT — a removal is the one operation here with no undo: the entry is read, the delta audited
+and the backup taken *before* the first `uninstall`, and a missing step stops the run instead of being
+worked around.
+
 1. **Read the entry**, so the report can name what went: `source`, `identifier`, `install_path`, `files`,
    `metadata.source_revision` (`scripts/lock-provenance.py` in the sibling `install-hermes-skills` prints
    exactly this). For a ClawHub skill read the directory's `_meta.json` too — the lock stores no version.
@@ -179,7 +183,7 @@ and a `list` footer that went `1 hub-installed` → `0 hub-installed`.
 
 ```
 remove-hermes-skills/
-├── SKILL.md  (191 lines)
+├── SKILL.md  (195 lines)
 ├── test-prompts.json  (12 lines)
 └── references/
     ├── remove-hermes-built-in-skills.md  (151 lines)
