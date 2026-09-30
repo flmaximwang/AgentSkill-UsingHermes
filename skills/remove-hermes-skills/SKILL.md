@@ -37,7 +37,15 @@ so the message never tells you which case you are in. Never report it as "the sk
 store's entry. The key is the lock key for a hub skill (a ClawHub slug, not the frontmatter `name`), the
 one in `.bundled_manifest` for a bundled skill, the CLI name for an npx install. `hermes skills check
 <name>` is the cheap probe for a hub skill — but note the trap it shares with `uninstall`: it is
-name-addressed too.
+name-addressed too, and for a name the lock does not hold it answers `No hub-installed skills to check.`,
+which reads as if every entry had vanished (measured 2026-09-30, session `20260930_164609_12e4ffd9`:
+after `UNINSTALL paper2agent`, that sentence appeared while the lock still held 31 entries). Read
+`skills/.hub/lock.json` itself before drawing a conclusion from any of it.
+
+**And when the target is a bundle with nested `SKILL.md` children, read
+`references/remove-hermes-skill-sh-skills.md` § Nested sub-skill trees *before* the first command** — one
+entry removes them all, the children carry no lock entry of their own, and they are listed under the
+**parent's** category.
 
 ## Disable is not removal
 
@@ -61,7 +69,19 @@ name-addressed too.
    (name, source, identifier, category), so bundled, local and npx installs are outside it.
 3. **`uninstall` has no local-edit guard.** Unlike `update`, it does not compare hashes: it `rmtree`s
    `install_path` as it stands. The only gate is the confirmation prompt, which `-y` skips — so if the
-   copy holds edits you made, that is the moment they die.
+   copy holds edits you made, that is the moment they die. **Audit the delta before deleting anything**,
+   and report it as part of the answer:
+
+   ```bash
+   curl -sL -o <home>/up.tgz "https://codeload.github.com/<owner>/<repo>/tar.gz/<pinned sha>"
+   mkdir -p <home>/up && tar -xzf <home>/up.tgz -C <home>/up
+   diff -r -x '.DS_Store' <home>/up/<repo>-<sha>/<path-in-repo> "<home>/skills/<install_path>"
+   ```
+
+   `.DS_Store` and `__pycache__/*.pyc` are noise; a directory carrying its own `SKILL.md` is content, and
+   the reinstall returns only upstream's files. Measured (2026-09-30, session `20260930_164609_12e4ffd9`):
+   the 69 upstream files were byte-identical and the entire delta was `.DS_Store`, three `__pycache__`
+   entries and one self-authored child skill.
 4. **A self-authored skill inside a hub bundle goes with the bundle.** It has no separate identity; the
    sibling `install-hermes-skills` calls the same fact out for updates.
 
@@ -104,6 +124,15 @@ result.
 - **It leaves the scaffolding behind.** The category directory survives its last skill; `taps.json`,
   `.hub/scan-cache/`, `.hub/index-cache/` and `.usage.json` are untouched — the usage ledger keeps a name
   after its files are gone, so it is never evidence that a skill exists.
+- **It leaves a dangling `skills.disabled` name.** Removing a skill that was *disabled* (a real case: an
+  official optional skill parked in `disabled` after a `dangerous` scan verdict, e.g. `comfyui`) does not
+  touch `config.yaml` — the name stays, the footer just goes `1 disabled` → `0 disabled`. Harmless now,
+  but it silently re-disables the skill if it is ever reinstalled. Clean it with
+  `hermes config set skills.disabled '[]'` (or the current list minus the name): the command prints
+  `⚠ 'skills.disabled' is not a recognized config key` and *does* write it — read back with
+  `hermes config get skills.disabled`. The agent's own `patch`/`write_file` tools **refuse** `config.yaml`
+  (`Refusing to write to Hermes config file … Agent cannot modify security-sensitive configuration`), so
+  the CLI is the only route.
 - **It is not undone by `update`.** `hermes skills update` re-fetches the *recorded* source + identifier,
   and the entry is gone. Getting the skill back is an install, and `--category` must be passed again
   because the category is read at install time only.
@@ -150,7 +179,7 @@ and a `list` footer that went `1 hub-installed` → `0 hub-installed`.
 
 ```
 remove-hermes-skills/
-├── SKILL.md  (161 lines)
+├── SKILL.md  (190 lines)
 └── references/
     ├── remove-hermes-built-in-skills.md  (151 lines)
     ├── remove-hermes-clawhub-skills.md  (115 lines)
