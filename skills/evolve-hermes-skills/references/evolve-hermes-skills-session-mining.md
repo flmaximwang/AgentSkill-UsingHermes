@@ -34,7 +34,10 @@ Resolution, in order:
 
 1. **By channel.** `chat_id` on this profile is the Discord channel/thread id (`sessions` also carries
    `thread_id` and `source`). Take the row whose `chat_id` equals the channel the evolve request arrived
-   in. One row per thread is the normal case.
+   in. One row per thread is the normal case. **That row is live while you work** — measured 2026-09-30:
+   `message_count` read `76` when the session was handed over, `82` when the child first counted it, `85`
+   at its last read, and the session was still appending. So pass the **id** (never a count) to the child,
+   tell it the numbers in the brief are stale by design, and re-count inside whatever cites a count.
 2. **By newest.** CLI sessions (`source` = `local`/`cli`) have no channel to match. Take the newest by
    `last_activity_at`, then **assert** it: the last few `user` messages must contain the evolve request.
 3. **By asking.** If the assertion fails — the newest session's tail is about something else — print the
