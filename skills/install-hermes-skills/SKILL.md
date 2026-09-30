@@ -1,6 +1,6 @@
 ---
 name: install-hermes-skills
-description: Install Hermes skills from GitHub, skills.sh, ClawHub and the official catalogs. Use when installing a skill into Hermes, or when the user hands you a skill source — a github.com / raw.githubusercontent.com link, an `npx skills add` command, an `owner/repo/path` identifier, a bare skill name to look up, or a clawhub `@publisher/slug`. Also covers any `hermes skills` question — inspect, search, tap, `--category`, trust and scan verdicts, why an install was blocked, or how to update/uninstall what is already installed. Routes by source first, then gives the exact tested commands.
+description: Install Hermes skills from GitHub, skills.sh, ClawHub and the official catalogs. Use when installing a skill into Hermes, or when the user hands you a skill source — a github.com / raw.githubusercontent.com link, an `npx skills add` command, an `owner/repo/path` identifier, a bare skill name to look up, or a clawhub `@publisher/slug`. Also covers any `hermes skills` question — inspect, search, tap, `--category`, trust and scan verdicts, why an install was blocked, how to update/uninstall what is already installed, or what it takes to move an installed skill to another category (`--category` is read at install time only, so a move is uninstall + install). Routes by source first, then gives the exact tested commands.
 ---
 
 # Install Hermes Skills
@@ -110,6 +110,12 @@ resolves to metadata without its files, so the failure only surfaces at `install
   `check` / `update` / `uninstall` never see it again: state that cost instead of shipping the copy
   as the answer. When the fix belongs in the repo (layout change, ignore file), say so and ask
   whether to open it upstream rather than silently substituting a workaround.
+- **Never pipe a long-running `hermes skills` command through `head` / `tail`.** `head -20` exits as soon
+  as it has its lines, the producer takes SIGPIPE and dies mid-operation — measured: an install stopped
+  between quarantine and write, while the visible output had already printed a scan verdict and a file
+  list, so the truncation read as progress and the failure surfaced later as a missing lock entry. Redirect
+  the full output to a log file and read it back, then confirm the result in the state store rather than in
+  the output.
 
 ## Trust × verdict — when an install is blocked
 
@@ -139,6 +145,7 @@ resolves to metadata without its files, so the failure only surfaces at `install
 | `npx skills add <repo> --skill <name>` (a skills.sh page or README command) | `references/install-hermes-skills-from-npx.md` |
 | `owner/repo/path`, or `skills.sh/<owner>/<repo>/<skill>` | `references/install-hermes-skills-from-skill-sh.md` |
 | a bare name / keyword, "the official X", a bundled or optional skill | `references/install-hermes-skills-from-names.md` |
+| "删除 X 并重新安装到 `<category>`", "move this skill to another category" — the same bloodline with a new `install_path` | `references/install-hermes-skills-relocating-a-skill.md` |
 | `@publisher/slug` (clawhub.ai) | `references/install-hermes-skills-from-clawhub.md` |
 | a lone `SKILL.md` with no repo behind it | the raw-URL route in the github reference |
 | a GitHub repo or a tap — direct path vs tap vs bare URL, identifier grammar, what "keep it current" costs | `references/install-hermes-skills-github-sources.md` |
@@ -273,7 +280,7 @@ deciding field; the content hash is.
 
 ```
 install-hermes-skills/
-├── SKILL.md  (295 lines)
+├── SKILL.md  (303 lines)
 ├── test-prompts.json  (12 lines)
 ├── references/
 │   ├── install-hermes-skills-diagnosis.md  (219 lines)
@@ -285,6 +292,7 @@ install-hermes-skills/
 │   ├── install-hermes-skills-from-skill-sh.md  (193 lines)
 │   ├── install-hermes-skills-github-sources.md  (130 lines)
 │   ├── install-hermes-skills-registry-routes.md  (451 lines)
+│   ├── install-hermes-skills-relocating-a-skill.md  (77 lines)
 │   ├── install-hermes-skills-renaming-a-skill-pack.md  (119 lines)
 │   ├── install-hermes-skills-repo-structure-routing.md  (76 lines)
 │   └── install-hermes-skills-scan-gate.md  (91 lines)
