@@ -42,6 +42,10 @@ def strip_fences(text: str) -> str:
 
 def check_tree(root: pathlib.Path) -> list[str]:
     text = (root / "SKILL.md").read_text(encoding="utf-8")
+    if not text.strip():
+        # A WIP skeleton, not drift: same classification as the generator, so a gate that
+        # would fail on the pack's placeholder never gets turned off.
+        return []
     parts = text.split(MARKER)
     if len(parts) < 3:
         return ["no generated section: SKILL.md carries fewer than two markers"]

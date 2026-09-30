@@ -101,7 +101,9 @@ Stdlib only, no dependencies, exit 1 on any problem and 2 when the directory has
 
 - **tree vs disk** — inside the marker block, every `(N lines)` entry must match the file's real line
   count and the tree heading must equal the directory name. The block is generated, so a mismatch is a
-  generator bug: re-run the generator, never hand-edit the block.
+  generator bug: re-run the generator, never hand-edit the block. A 0-byte / whitespace-only `SKILL.md`
+  is a WIP skeleton and reports clean — the generator's own classification, which is what keeps a
+  repo-wide run green on `remove-hermes-skills`, the pack's one placeholder.
 - **pointers** — every `references/<name>.md` named outside a fenced block must exist in this package **or
   in a sibling skill** under the skills root (`--skills-root`, default the parent of the skill dir), because
   that is how one skill in this pack points at another. Text inside ``` fences is ignored: a verbatim
