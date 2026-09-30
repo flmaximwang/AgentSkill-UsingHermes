@@ -298,8 +298,9 @@ skill is one **you intend to keep editing**.
 ```bash
 # 1. get the directory
 git clone <repo>            # or reuse an existing checkout
-# 1b. PROVE the clone BEFORE anything is uninstalled — `hermes skills uninstall` has no local-edit
-#     guard: it rmtree's the installed directory as it stands, and the lock entry is what you lose.
+# 1b. 🛑 STOP — PROVE the clone BEFORE anything is uninstalled. `hermes skills uninstall` has no
+#     local-edit guard: it rmtree's the installed directory as it stands, and the lock entry is what you
+#     lose. Do not run the uninstall until the diff below is empty.
 git -C <clone> log -1 --format=%H          # must equal metadata.source_revision in the lock entry
 hermes skills snapshot export "$HERMES_HOME/cache/lock-before-<name>.json"   # whole hub ledger
 python3 ~/.hermes/hermes-agent/venv/bin/python \

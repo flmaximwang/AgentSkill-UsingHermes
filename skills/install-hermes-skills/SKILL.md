@@ -31,7 +31,7 @@ resolves to metadata without its files, so the failure only surfaces at `install
 
 ## Non-negotiables (user rules)
 
-- **No identifier in the request = ask, then stop. Never mine archaeology for a target.** "装 1 个 skill" /
+- **🔴 No identifier in the request = ask, then stop. Never mine archaeology for a target.** "装 1 个 skill" /
   "install this skill" with no name, URL or path names a *count*, not a target, and which skill is meant
   exists only in the user's head. A 0-hit `search`, the session history, the repo's `git log` and the vault
   all answer "which skills exist", never "which one you want" — so running them buys nothing and a hit in
@@ -71,9 +71,9 @@ resolves to metadata without its files, so the failure only surfaces at `install
   'huashu-nuwa' is already installed at nuwa/huashu-nuwa` and never execute, while the run read as if
   the route had been tried. Test the name first (`[ -e "$SB" ] && echo REUSED`), or pick a fresh
   ordinal, and look for the `already installed` line before crediting any sandbox result.
-- **`inspect` before `install`, always.** It is read-only and prints `Source:` / `Trust:`.
-  Report those to the user before installing anything from a `community` source, and say what
-  the scan flagged — a `--force` past a caution verdict is the user's call, not yours.
+- **🔴 CHECKPOINT — `inspect` before `install`, always.** It is read-only and prints `Source:` / `Trust:`.
+  Report both to the user before installing anything from a `community` source, and say what the scan
+  flagged; a `--force` past a caution verdict is the user's call, not yours.
 - **Two packages for the same display name = ask, do not overwrite.** A registry package is
   often a third-party fork of a different lineage than the upstream repo. Compare `SKILL.md`
   frontmatter (`name:`, version, author) and the file inventory, then let the user choose which
@@ -279,7 +279,7 @@ install-hermes-skills/
 │   ├── install-hermes-skills-diagnosis.md  (219 lines)
 │   ├── install-hermes-skills-external-pack-adoption.md  (105 lines)
 │   ├── install-hermes-skills-from-clawhub.md  (87 lines)
-│   ├── install-hermes-skills-from-github.md  (526 lines)
+│   ├── install-hermes-skills-from-github.md  (527 lines)
 │   ├── install-hermes-skills-from-names.md  (202 lines)
 │   ├── install-hermes-skills-from-npx.md  (166 lines)
 │   ├── install-hermes-skills-from-skill-sh.md  (193 lines)
