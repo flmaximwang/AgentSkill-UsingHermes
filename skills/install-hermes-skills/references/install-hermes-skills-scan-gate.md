@@ -42,6 +42,7 @@ the meaning:
 | `dump_all_env` | high | a bare environment dump followed by a pipe — which also matches a profile-env operand inside a pipeline | quote the path (`"$HERMES_HOME/.env"`), or read the one variable by name |
 | `sudo_usage` | high | the privilege-escalation word anywhere on the line | describe the operation instead of naming the command |
 | `python_os_environ` | high | the interpreter's process-environment mapping named outside a comment or docstring — the bare mapping is what scores; a single-variable accessor read (`.get(…)` directly on it) is exempt, and a `#` anywhere earlier on the line exempts the line | read the one variable through the accessor form and require it to be exported, or keep the script outside the package — an uncommented mapping access cannot ship |
+| `destructive_home_rm` | critical | a recursive delete whose target is written home-relative (a tilde path), **including a fenced example in a reference** — measured on a removal skill's orphan recipe | write the target with the pack's profile placeholder (`<home>/skills/<name>`), which is the convention the rest of these references already follow |
 
 **This file is the worked example.** Its pattern table describes each trigger instead of reproducing it,
 which is why it scans `safe` inside `install-hermes-skills`; re-run the probe above after editing it —

@@ -269,7 +269,7 @@ install-hermes-skills/
 │   ├── install-hermes-skills-registry-routes.md  (451 lines)
 │   ├── install-hermes-skills-renaming-a-skill-pack.md  (119 lines)
 │   ├── install-hermes-skills-repo-structure-routing.md  (76 lines)
-│   └── install-hermes-skills-scan-gate.md  (90 lines)
+│   └── install-hermes-skills-scan-gate.md  (91 lines)
 └── scripts/
     └── lock-provenance.py  (83 lines)
 ```
