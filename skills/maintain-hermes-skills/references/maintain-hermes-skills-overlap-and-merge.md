@@ -77,7 +77,8 @@ cd ~/Repositories/<repo>
 python3 scripts/auto-generate-skill-structure.py <name>     # LAST step of the content edit
 python3 scripts/verify-skill-package.py skills/<name>       # exit 1 on any tree/pointer problem
 git add skills/<name>                                       # pathspec per skill: never `git add -A`
-git commit -m "docs(skills): <what changed>" && git push origin main
+git commit -m "docs(skills): <what changed>"   # Conventional Commits, Chinese subject (this repo)
+git push origin main
 hermes skills update <name>                                 # ONE name per command
 hermes skills check <name>                                  # expect up_to_date
 diff -rq skills/<name> "$HERMES_HOME/skills/<install_path>"  # prints nothing
@@ -92,6 +93,14 @@ Retire the duplicate **only after** the delivery is verified: 🔴 CHECKPOINT �
 anything get deleted. A local copy is a plain delete once the lock has been grepped to prove it holds no
 entry, a hub-installed one goes through `hermes skills uninstall <lock key>` (sibling
 `remove-hermes-skills`). Never delete content you have not placed.
+
+**A re-opened merge — the source skill is already gone.** The question often comes back after the retirement
+(a patch lands late, or the curator re-creates the same sibling under a new name). There is then nothing
+left to edit in the dead local copy: the landing place is the **reference inside the receiving pack**, and
+a Phase 1 miner will report the retired name as "not on disk" — that is a state, not a finding
+(`remove-hermes-skills` § When the removal refuses names the same distinction for the removal side). If the
+same material is re-created under a new name, treat it as a fresh candidate against §2's two lists rather
+than re-opening the old one: the pack copy is what shipped, and the local copy's receipts are gone.
 
 ## 5. What the receiving side must not inherit
 
