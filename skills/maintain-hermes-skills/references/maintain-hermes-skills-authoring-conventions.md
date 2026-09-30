@@ -30,6 +30,11 @@ convention layer over those.
 - **Do not restate the connected system's own docs.** Copying a tool's parameter list or a repo's file
   map into a skill duplicates always-loaded context and goes stale silently. Cite where the fact lives
   instead, and spend the skill's words on the workflow and the pitfalls.
+- **A measurement enters a delivered package only re-run or cited.** Every measured claim is re-run before
+  it goes in — never against the live profile, since a probe that mutates the real home makes the removal
+  or update it performs real and wrong — and never restated from memory. Where it cannot be re-run, write
+  it with the session and message id that produced it. A number carried over from a local skill loses its
+  receipt in the move, and prior-session measurements are the facts that quietly rot.
 
 ## Structure and house style
 
@@ -107,6 +112,14 @@ optimisation); this pack owns the Hermes-specific half.
 - **Assume more than one writer.** Check `git status --short` and file mtimes before and after a batch of
   edits; a write can be refused as unread-since-modified, and the fix is to re-read once and retry, not to
   force it. If the diff is larger than your change, say which files you did not touch.
+- **A profile copy that is *ahead* of the clone is content the repo lacks, and `update --force` deletes
+  exactly that.** Run `diff -rq <clone>/skills/<name> "$HERMES_HOME/skills/<install_path>"` immediately
+  before any force; when the installed copy holds the newer text, backport it *mechanically* — match the
+  block by a unique prefix, take the replacement's exact bytes from the copy so quoted measurements stay
+  byte-identical — and commit the backport **before** forcing. Measured 2026-09-30: an installed
+  `remove-hermes-skills/SKILL.md` carried a 9-line paragraph the clone did not (a session had edited the
+  installed tree directly); the byte-exact backport committed first, and the force that followed left no
+  drift. Name the foreign content in the report — never commit another writer's work silently.
 - **A token-like string in a file is masked in tool output, so a literal replace silently misses.** Output
   renders secret-shaped text (a `$TOKEN` interpolation, an auth header) as `***`; an edit keyed on the
   string you were shown then matches nothing and reads as "the file already says something else". Confirm
