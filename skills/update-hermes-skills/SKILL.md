@@ -75,6 +75,13 @@ with exit 0 — measured twice (2026-09-30: session `20260930_162008_8587d70c` o
 revision still being installed* as the truth — a non-empty `diff -rq` against the clone, and a
 `metadata.source_revision` older than the push.
 
+**That contradiction has a ladder, and re-running with `--force` is not on it:** 1) read the pattern list
+and fix the text the scanner reads — the same finding will come back otherwise
+(`install-hermes-skills` → `references/install-hermes-skills-scan-gate.md`); 2) if the verdict is
+`dangerous` on a `community` or `trusted` source, **no flag overrides it** and the delivery is `--force`-
+proof at that revision; 3) if you cannot fix it, say the *previous* revision is what the profile still
+loads, and name the offending pattern instead of reporting an update that did not happen.
+
 ## What `update` does per skill, in order (source-verified)
 
 1. `check_for_skill_updates(name)` — keep only the `update_available` rows
@@ -204,7 +211,7 @@ In a session the same work is `/skills update <name> [--force]`; `/skills check`
 
 ```
 update-hermes-skills/
-├── SKILL.md  (218 lines)
+├── SKILL.md  (225 lines)
 ├── test-prompts.json  (12 lines)
 ├── references/
 │   ├── update-hermes-built-in-skills.md  (174 lines)
