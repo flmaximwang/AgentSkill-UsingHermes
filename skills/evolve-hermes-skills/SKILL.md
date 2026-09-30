@@ -180,7 +180,7 @@ a finding the user can drop.
 | what to hand darwin-skill, which paths to override, how its constraints interact with this pack's | `references/evolve-hermes-skills-handoff-to-darwin.md` |
 | how a skill gets installed, updated or removed, or what the hub can and cannot see | the siblings `install-hermes-skills`, `update-hermes-skills`, `remove-hermes-skills` |
 | what belongs in a skill in this pack, prose and structure rules, the generator and the lint | `maintain-hermes-skills` → `references/maintain-hermes-skills-authoring-conventions.md` + `scripts/README.md` |
-| what the curator does on its own, and what its ledger records | `maintain-hermes-memory` → `references/maintain-hermes-skill-curator.md` |
+| what the curator does on its own, and what its ledger records | `maintain-hermes-memory` → `references/maintain-hermes-skill-curator.md` — **only where that skill is installed**: it ships in this pack but not every profile has it, so check `hermes skills list` first or install it from the pack; this row dead-ends otherwise |
 
 ## Skill Structure
 

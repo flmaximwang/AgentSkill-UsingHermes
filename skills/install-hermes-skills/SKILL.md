@@ -25,6 +25,10 @@ Two facts prevent most of the confusion, so they come first:
 and read two lines: `Source:` and `Trust:`. That pair predicts the outcome — and when one route is
 blocked, it usually shows which other route to take instead.
 
+**A clean `inspect` is not proof the identifier installs** — an index entry (hermes-index, skills.sh)
+resolves to metadata without its files, so the failure only surfaces at `install` (measured:
+`alchaincyf/nuwa-skill/huashu-nuwa`; error table row 5 in the github reference).
+
 ## Non-negotiables (user rules)
 
 - **No identifier in the request = ask, then stop. Never mine archaeology for a target.** "装 1 个 skill" /
@@ -62,6 +66,11 @@ blocked, it usually shows which other route to take instead.
 - **Reset a sandbox by picking a new name, not by deleting it.** `rm -rf "$HERMES_HOME"` is refused
   by the harness (a recursive delete of a variable path cannot be proven safe); `hh-<topic>2` costs
   nothing and keeps both runs comparable.
+- **A sandbox name is single-use — an existing one silently turns the probe into a no-op.** Measured
+  2026-09-30: a `hh-nuwa2` left over from a run 6 h earlier made the raw-URL probe answer `Warning:
+  'huashu-nuwa' is already installed at nuwa/huashu-nuwa` and never execute, while the run read as if
+  the route had been tried. Test the name first (`[ -e "$SB" ] && echo REUSED`), or pick a fresh
+  ordinal, and look for the `already installed` line before crediting any sandbox result.
 - **`inspect` before `install`, always.** It is read-only and prints `Source:` / `Trust:`.
   Report those to the user before installing anything from a `community` source, and say what
   the scan flagged — a `--force` past a caution verdict is the user's call, not yours.
@@ -71,11 +80,19 @@ blocked, it usually shows which other route to take instead.
   one to keep — the ranking rule above says which one to *recommend*.
 - **Report by route + verified numbers** (files installed, size, verdict, target home) — never
   "installed successfully". An install that succeeded into the wrong home is a failure.
-- **Make the chat reply legible: lead with the answer to the question that was asked.** The evidence
-  chain (probe outputs, per-route verdicts, file inventories) belongs in the note or the lock, never
-  in the message — a wall of sections is unreadable and the user will say so. When the user says they
-  cannot follow the report, stop writing reports: switch to one question per turn, answered in **≤3
-  sentences**, and let them pull the detail out one question at a time.
+- **The chat reply is ≤3 sentences by default — not an escalation after the user complains.** Lead with
+  the answer to the question that was asked, then the commands you actually ran (name them: an install
+  done by clone + `cp -R`, or by `npx skills`, must not be reported as an install command), then what it
+  cost (files, size, verdict, target home, and anything the route dropped). The evidence chain (probe
+  outputs, per-route verdicts, file inventories) belongs in the note, the commit or the lock, never in
+  the message — a wall of sections is unreadable and the user will say so. Expand only when asked, then
+  one question per turn, ≤3 sentences each.
+- **A correction to this skill, or to any skill in this pack, is written in the pack clone — never in the
+  installed copy.** Source of truth is `~/Repositories/AgentSkill-UsingHermes`; deliver with
+  `scripts/auto-generate-skill-structure.py <name>` → `scripts/verify-skill-package.py skills/<name>` →
+  `git add skills/<name>` → commit → push `main` → `hermes skills update <name>` (`--force` when the
+  installed copy carries local edits). A `skill_manage`/editor patch under `$HERMES_HOME/skills/` looks
+  applied, is invisible to the repo, and dies at the next update, which replaces the directory wholesale.
 - **A bare name has several bloodlines: rank them before installing, then prove the winner installs.**
   The candidate the resolver picks is not necessarily the one worth having, and the best-maintained
   one may not be installable at all. Read both axes per source — skills.sh page `Installs` /
@@ -130,7 +147,7 @@ blocked, it usually shows which other route to take instead.
 | a third-party skill/plugin pack (Codex `.codex-plugin`, Claude `.claude-plugin`, an Agent Plugins v1 package) | `references/install-hermes-skills-external-pack-adoption.md` |
 | a package of your own that has to pass `skills_guard` — which documented commands trip it, how to predict the verdict before pushing, why `.skillignore` cannot clear a block on this route | `references/install-hermes-skills-scan-gate.md` |
 | renaming a skill or the whole pack — the cascade, the substitution table, the verbatim-evidence exemptions, and re-installing wherever the old name is already known | `references/install-hermes-skills-renaming-a-skill-pack.md` |
-| an error string to decode (`Could not download`, `Could not find … in any source`, `Invalid skill name: .`, `is not a hub-installed skill`), an install that shipped three files its body references, or "how was this installed / why did it need `--force`" | `references/install-hermes-skills-diagnosis.md` + `scripts/lock-provenance.py` |
+| an error string to decode (`Could not download`, `Could not find … in any source`, `Invalid skill name: .`, `is not a hub-installed skill`, `is listed in the hermes-index index, but its files no longer exist upstream`), an install that shipped three files its body references, "how was this installed / why did it need `--force`", or you need to read/import a `tools/skills_hub_*.py` module (run it under `~/.hermes/hermes-agent/venv/bin/python` — the ambient and the vendored interpreters have no `httpx`) | `references/install-hermes-skills-diagnosis.md` + `scripts/lock-provenance.py` |
 
 Read the one file the shape points at — each is a complete, tested protocol for that source. Where a
 reference presents its routes as a **ladder** (the github one does), walk it from the top and step down
@@ -256,12 +273,12 @@ deciding field; the content hash is.
 
 ```
 install-hermes-skills/
-├── SKILL.md  (277 lines)
+├── SKILL.md  (294 lines)
 ├── references/
 │   ├── install-hermes-skills-diagnosis.md  (219 lines)
 │   ├── install-hermes-skills-external-pack-adoption.md  (105 lines)
 │   ├── install-hermes-skills-from-clawhub.md  (87 lines)
-│   ├── install-hermes-skills-from-github.md  (464 lines)
+│   ├── install-hermes-skills-from-github.md  (507 lines)
 │   ├── install-hermes-skills-from-names.md  (202 lines)
 │   ├── install-hermes-skills-from-npx.md  (166 lines)
 │   ├── install-hermes-skills-from-skill-sh.md  (193 lines)

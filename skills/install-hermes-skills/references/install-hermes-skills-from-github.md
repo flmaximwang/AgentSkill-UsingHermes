@@ -200,8 +200,21 @@ losing automatic updates.
   **`Decision: BLOCKED`（community + caution，29 findings，含 `.github/scripts/community_check.py:172`
   的 HIGH `exfiltration`）** → needs `--force`, and installs **156 files / 33.69 MB**. **That is worse
   than rung 2, so the root skill skips rung 1 and drops.**
+- **Budget for it** (measured 2026-09-30 in a live session): against such an entry the hub commands
+  re-walk the whole repo tree — one `hermes skills check nuwa-skill` cost **178 s**, and three
+  `hermes skills inspect <id>` calls against the same entry cost **87 s** (≈29 s each). When you only
+  need to know what is installed, read the lock entry or the on-disk tree (`scripts/lock-provenance.py`)
+  instead of re-`inspect`ing an installed skill; a repeat `inspect` buys no new fact.
 - Sub-skills still use rung 1: `github.com/<owner>/<repo>/tree/<ref>/examples/<x>` →
   `<owner>/<repo>/examples/<x>`.
+- With both identifiers and this rung 3 out, the **root skill's only route is rung 2** — do it and
+  state the cost instead of reinstalling the whole repo. Measured on `alchaincyf/nuwa-skill`
+  (2026-09-30): copying `SKILL.md LICENSE references/ scripts/` out of a clone at the lock's recorded
+  revision gives **9 files / 84 KB** in place of **158 files / 34.5 MB**, and the 15 `examples/*/SKILL.md`
+  stop being discovered as sub-skills — the reason for the reinstall. Cost: `hermes skills check`
+  answers `No hub-installed skills to check.` forever (no lock entry → `check`/`update`/`audit`/
+  `uninstall` blind). The upstream fix that would restore rung 1 is a narrow in-repo directory
+  (`skills/<name>/`) — say so and offer the PR rather than silently shipping the copy.
 
 ### Install and verify
 
@@ -285,12 +298,23 @@ skill is one **you intend to keep editing**.
 ```bash
 # 1. get the directory
 git clone <repo>            # or reuse an existing checkout
+# 1b. PROVE the clone BEFORE anything is uninstalled — `hermes skills uninstall` has no local-edit
+#     guard: it rmtree's the installed directory as it stands, and the lock entry is what you lose.
+git -C <clone> log -1 --format=%H          # must equal metadata.source_revision in the lock entry
+python3 <this-skill>/scripts/lock-provenance.py <name>      # snapshot the entry before it disappears
+diff -rq <clone>/<skill-dir> "$HERMES_HOME/skills/<path>"   # byte-for-byte; expect no output
+hermes skills snapshot export <file>       # and keep the whole hub ledger as a fallback
 # 2. copy the layer that contains SKILL.md (two levels if you want a category)
 cp -R <clone>/skills/foo "$HERMES_HOME/skills/<category>/foo"
 # 3. verify — it shows up as `local`
 hermes skills list --source local
 # 4. take effect: discovery is directory-based, nothing to register; in-session /reload-skills rescans
 ```
+
+Measured 2026-09-30 on `alchaincyf/nuwa-skill`: the clone's `HEAD` equaled the lock's recorded
+`source_revision`, `shasum -a 256 SKILL.md` matched the installed copy, `diff -rq references/ scripts/`
+was empty — and only then did `hermes skills uninstall nuwa-skill -y` run. Skipping 1b on a type-2 repo
+means the good hub copy is destroyed before you know the replacement is complete.
 
 **What you keep**: this is the only route `update` will never overwrite (which is why "I will edit it
 myself" points here), and you decide what gets copied — so the result can be far more complete than
@@ -343,17 +367,26 @@ Verify with `hermes skills list`: expect `Source: url`, `Trust: community`, land
 
 **This rung's losses, measured one by one:**
 
-- **Only files the body explicitly references, and only under four prefixes**
-  (`tools/skills_hub_sources.py:210-240`: `references/ templates/ scripts/ assets/`). Same skill,
+- **Only files the body explicitly references, and only under five prefixes**
+  (`_ALLOWED_SUPPORT_DIRS` and `_LOCAL_LINK_RE`, `tools/skills_hub_models.py:254-262`:
+  `references/ templates/ scripts/ assets/ examples/`; `tools/skills_hub_sources.py:215` is only the
+  caller of `_referenced_support_paths`). Same skill,
   measured: the URL route fetched **3 files**, the tap route **18** — the difference is exactly the
-  unreferenced `scripts/`, `agents/`, `eval-viewer/`.
+  unreferenced `scripts/`, `agents/`, `eval-viewer/`. **It is the reference *syntax* that decides**, not
+  the path: `_LOCAL_LINK_RE` (`skills_hub_models.py:255`) matches a support path only after `](`, a
+  backtick, or start/whitespace/quote, so a body that writes `` `python3 [skill目录]/scripts/x.py` ``
+  loses that script. Measured on `alchaincyf/nuwa-skill`'s root skill (2026-09-30): **3 files**
+  (the root `SKILL.md` plus the two support docs its body links — `extraction-framework.md`,
+  `skill-template.md`) while the body
+  tells the agent to run four `scripts/*.py|sh` helpers in Phases 1.5 and 4 — installed that way the
+  skill is degraded, which is exactly what forbids this rung here.
 - **⚠ For "repo root is the skill" repos it produces a broken skill**: measured on
   `kangarooking/cangjie-skill` →
   `Files: SKILL.md, scripts/cangjie.py, scripts/validate_skill_pack.py, templates/BOOK_OVERVIEW.md.template`
   (**4 files / 40 KB**), while the body references `methodology/` (9) + `extractors/` (5) = **14 files**
   — all dropped, so the installed skill ships with dangling references.
   **You can predict this before installing**: check whether the body references any path outside those
-  four prefixes. If it does, do not use this rung — go back to rung 1 or 2.
+  five prefixes. If it does, do not use this rung — go back to rung 1 or 2.
 - **No commit pin**: a `url` entry has no `metadata.source_revision`, so a floating `/main/` ref follows
   upstream, the next `update` takes whatever is there, and **there is no version to fall back to**.
   Pin the ref to a commit or tag if you need reproducibility. (Mechanism inferred; not measured by
@@ -440,8 +473,18 @@ Look here first — **do not follow the error's own advice**.
 4. **A `blob` page link (any rung)**: `UrlSource` claims a URL by "path ends in `.md`"
    (`tools/skills_hub_sources.py:156-184`), so it drags back the **whole HTML page** as if it were
    `SKILL.md`; the scan judges `DANGEROUS` (`hidden_div`, `translate_execute`, `oversized_file`, 13
-   findings) → `BLOCKED`, `--force` does not override it, and **nothing gets installed**. Switch to
-   `raw.githubusercontent.com`.
+ findings) → `BLOCKED`, `--force` does not override it, and **nothing gets installed**. Switch to
+ `raw.githubusercontent.com`.
+ 5. **`'<owner>/<repo>/<skill-name>' is listed in the hermes-index index, but its files no longer
+ exist upstream.` (a three-segment identifier whose third segment is the skills.sh *skill name*)** —
+ measured 2026-09-30 on `alchaincyf/nuwa-skill/huashu-nuwa`. skills.sh indexes that name
+ (`path: "huashu-nuwa"`, `detail_url: …/alchaincyf/nuwa-skill/huashu-nuwa`) but no such directory
+ exists — the skill sits at the repo root. Install therefore resolves hermes-index → skills.sh →
+ `_discover_identifier`: the standard `skills/ .agents/skills/ .claude/skills/` candidates, then
+ `_find_skill_in_repo_tree` (needs `<token>/SKILL.md`), then `_find_repo_root_skill` (**requires
+ EXACTLY ONE `SKILL.md` in the whole tree** — this repo has 16) → nothing → this error. **`inspect`
+ prints the index entry anyway, so a clean inspect does not prove an identifier installs** — and
+ `--force` does not help. Repo-root skills of multi-skill repos stay unreachable by identifier.
 
 ## FAQ
 
