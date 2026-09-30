@@ -25,9 +25,12 @@ Two facts prevent most of the confusion, so they come first:
 and read two lines: `Source:` and `Trust:`. That pair predicts the outcome — and when one route is
 blocked, it usually shows which other route to take instead.
 
-**A clean `inspect` is not proof the identifier installs** — an index entry (hermes-index, skills.sh)
-resolves to metadata without its files, so the failure only surfaces at `install` (measured:
-`alchaincyf/nuwa-skill/huashu-nuwa`; error table row 5 in the github reference).
+**A clean `inspect` is not proof the identifier installs** — an index entry (hermes-index, skills.sh,
+clawhub) resolves to metadata without its files, so the failure only surfaces at `install` (measured:
+`alchaincyf/nuwa-skill/huashu-nuwa`; error table row 5 in the github reference). ClawHub is the same
+trap and its `inspect` can print the *whole* SKILL.md body while `install` answers `is listed in the
+clawhub index, but its files no longer exist upstream` — a dead publisher entry, not a wrong shape
+(two dianping skills measured this way; a search row is a lead, never a recommendation).
 
 ## Non-negotiables (user rules)
 
