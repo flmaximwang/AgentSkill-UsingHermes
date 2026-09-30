@@ -188,7 +188,8 @@ a finding the user can drop.
 
 ```
 evolve-hermes-skills/
-├── SKILL.md  (198 lines)
+├── SKILL.md  (199 lines)
+├── test-prompts.json  (12 lines)
 └── references/
     ├── evolve-hermes-skills-handoff-to-darwin.md  (125 lines)
     ├── evolve-hermes-skills-routing.md  (178 lines)

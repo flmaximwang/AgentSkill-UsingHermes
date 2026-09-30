@@ -1,0 +1,12 @@
+[
+  {
+    "id": 1,
+    "prompt": "把这轮会话的教训存进 skill（本轮会话 = 那个「重新安装 nuwa-skill 跳过 examples」的 Discord 线程）",
+    "expected": "先用 chat_id 定位会话（绝不取「最新会话」，本机多线程并发）→ 派 1 个只读 subagent 按 schema 挖（skills loaded / tool census / ledger 新出现 / provenance / 带 receipt 的 findings）→ 抽查至少 2 条 receipt 再往下 → 逐个 touched skill 探落点（hub lock → ~/Repositories 克隆）→ 一个 clarify（映射 + 应用哪些 finding + Phase 3）→ 按 rung 1 投递（生成器 → verify → pathspec commit → push main → hermes skills update）→ darwin 逐 skill 带 per-skill checkpoint。报告 ≤3 句、结论先行。"
+  },
+  {
+    "id": 2,
+    "prompt": "evolve了几个skill？合并了几个skill？",
+    "expected": "两行给数字，不写分节报告：evolve 了 2 个 skill（install-hermes-skills 8 条 finding + evolve-hermes-skills 1 条），合并 0 个——并点明那次合并（skill-library-consolidation 并进 maintain-hermes-skills）是别的会话做的，不揽功。"
+  }
+]
