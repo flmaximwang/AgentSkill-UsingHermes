@@ -325,6 +325,16 @@ Measured 2026-09-30 on `alchaincyf/nuwa-skill`: the clone's `HEAD` equaled the l
 was empty — and only then did `hermes skills uninstall nuwa-skill -y` run. Skipping 1b on a type-2 repo
 means the good hub copy is destroyed before you know the replacement is complete.
 
+**When there is no lock entry to compare against** — the steady state of a rung-2 copy, which has none by
+construction (measured after this skill's own nuwa-skill fix: `lock.json` holds no `nuwa*` key, and
+`audit.log` reads `02:59 INSTALL … caution` → `08:51 UNINSTALL … user_request`). Step 1b's
+`git -C <clone> log -1 --format=%H` then has nothing to match, which is not a reason to skip the proof:
+
+| Trigger | First fix | If it still fails |
+|---|---|---|
+| the copy being replaced has no lock entry, so there is no `metadata.source_revision` to compare | preserve instead of overwrite — `mv "$DEST" "$DEST.bak-$(date +%Y%m%d%H%M)"`, copy the new payload in, `diff -rq <clone>/<skill-dir> "$DEST.bak-…"` to see exactly what changed, and put the clone's `log -1 --format=%H` in the commit message: with no lock entry that hash is the only version record | keep the `.bak` and report the skill as hand-maintained (no `check`/`update` sees either copy); re-clone at that hash to rebuild |
+| the new copy turns out incomplete or landed in the wrong category | `rm -rf "$DEST" && mv "$DEST.bak-…" "$DEST"`, then `hermes skills list --source local` — exactly one row must appear, under the category you meant | report which revision was kept and that the `.bak` is still on disk |
+
 **What you keep**: this is the only route `update` will never overwrite (which is why "I will edit it
 myself" points here), and you decide what gets copied — so the result can be far more complete than
 rung 3.
