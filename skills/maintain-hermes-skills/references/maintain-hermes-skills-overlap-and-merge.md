@@ -70,11 +70,22 @@ Depth behind a route row nobody reads never loads.
 
 ## 4. Deliver in the repo's order, retire last
 
-Edit the clone → run the generator → `verify-skill-package.py` → commit (pathspec per skill, Conventional
-Commits with a Chinese subject) → push `main` → `hermes skills update <name>` → read the entry back. The
-commands are the sibling's: `install-hermes-skills` § Replacing an installed skill with a better bloodline
-plus its relocation reference, and `update-hermes-skills` § Cost. Nothing reaches any profile until the
-update runs, so an edit that stops at the clone is not delivered.
+Edit the clone, in this order — the meanings live in the siblings, the sequence is the part this skill owns:
+
+```bash
+cd ~/Repositories/<repo>
+python3 scripts/auto-generate-skill-structure.py <name>     # LAST step of the content edit
+python3 scripts/verify-skill-package.py skills/<name>       # exit 1 on any tree/pointer problem
+git add skills/<name>                                       # pathspec per skill: never `git add -A`
+git commit -m "docs(skills): <what changed>" && git push origin main
+hermes skills update <name>                                 # ONE name per command
+hermes skills check <name>                                  # expect up_to_date
+diff -rq skills/<name> "$HERMES_HOME/skills/<install_path>"  # prints nothing
+```
+
+`install-hermes-skills` § Replacing an installed skill with a better bloodline plus its relocation reference
+carry the semantics of each command, `update-hermes-skills` § Cost the per-source timing. Nothing reaches
+any profile until the update runs, so an edit that stops at the clone is not delivered.
 
 Retire the duplicate **only after** the delivery is verified: 🔴 CHECKPOINT — the read-back comes first
 (`hermes skills check <name>` → `up_to_date`, `diff -rq` repo vs installed empty), and only then does
