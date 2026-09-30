@@ -4,7 +4,9 @@ Use this file when the user did **not** hand you a link or an `owner/repo/path` 
 **name** or a description of what they want ("装个处理 pdf 的 skill", "the official skill-creator"),
 or when they want to know what is already available. Here discovery is the hard part: `search` has
 several documented ways to return an empty or misleading list, so read the failure modes before
-concluding "it does not exist".
+concluding "it does not exist". Two decisions matter, in this order: **which source** the name should
+come from (popularity × recency — see *Pick the source BEFORE installing*), and whether that source is
+installable at all.
 
 ## The nine sources, and which one a bare name hits
 
@@ -114,6 +116,53 @@ hermes skills tap remove anthropics/skills  # only affects future search/browse 
   `tools/skills_hub_skillssh.py:241,254`). Measured: `hermes skills inspect
   flmaximwang/AgentSkill-ObsidianManagement/skills/organize-obsidian-notes` → `Source: skills.sh`,
   `Trust: community`, no tap involved.
+
+## Pick the source BEFORE installing: popularity × recency, then verify it is installable
+
+A bare name usually exists in several bloodlines at once, and **the one the name resolves to is not
+necessarily the one worth installing — nor the one that installs at all.** Score every candidate on two
+axes first, then check that the winner actually installs.
+
+Measured on `cangjie-skill` (2026-09-30), one name, two bloodlines:
+
+- **`kangarooking/cangjie-skill`** — popularity: skills.sh page says `Installs 1.4K` / `GitHub Stars
+  10.8K`; `gh api repos/kangarooking/cangjie-skill --jq '{stars,pushed_at,archived}'` →
+  `10757` / `2026-09-26T09:38:37Z` / `false` (repo created 2026-04-16, MIT). Recency: repo pushed 4 days
+  before the install, frontmatter `cangjie.version: 2.5.0`, skills.sh `First Seen Jun 30, 2026`, three
+  third-party audits (Agent Trust Hub Pass, Socket Warn, Snyk Pass).→ **wins both axes.**
+- **`@terrybenedict0515/cangjie-skill`** (ClawHub, display name "Cangjie Skill") — popularity/recency
+  come from `GET https://clawhub.ai/api/v1/skills/<slug>`: `.skill.stats.installs` `15`,
+  `.stats.downloads` `2101`, `.stats.stars` `1`, `.stats.versions` `1`, `.skill.updatedAt` = `.createdAt`
+  = `1781784343470` (= 2026-06-18, untouched for 3.5 months); `.moderation.verdict` `clean`. → **loses
+  both axes** (15 installs vs 1.4K).
+
+Where each axis is readable, per source:
+
+| source | popularity | recency |
+|---|---|---|
+| skills.sh | `Installs …` on the detail page (scraped by `_WEEKLY_INSTALLS_RE`) | `First Seen` + frontmatter `version:` |
+| the GitHub repo behind it | `gh api repos/<owner>/<repo> --jq .stargazers_count` | `--jq .pushed_at` (and `.archived`) |
+| clawhub | `.skill.stats.installs` / `.downloads` / `.stars` | `.skill.updatedAt`, `.stats.versions` |
+
+**Then verify the winner is installable — the ranking hides this completely.** In the measured case the
+winner could not be installed at all while the loser installed cleanly:
+
+- The identifier every registry hands out (`skills-sh/kangarooking/cangjie-skill/cangjie-skill`) dies at
+  fetch: `Error: '…' is listed in the hermes-index index, but its files no longer exist upstream.`
+- The only GitHub form that resolves (`kangarooking/cangjie-skill/`, the whole 366-file repo) is
+  **permanently** blocked: `Decision: BLOCKED — dangerous verdict, 18 findings … --force does not
+  override a dangerous verdict.`
+- The raw URL of the root `SKILL.md` installs, but as a 4-file stub (`methodology/`, `extractors/` are
+  outside the URL route's support dirs).
+- The ClawHub loser installed (`safe`, 21 files) — and is a *different, incomplete* bloodline: its
+  `SKILL.md` says `name: book2skill`, `version: 2.0.0`, `author: 花叔 AlchainHust (原版) ·
+  mac-openclaw-manager (改造版)`, and 6 files its body references (`templates/*.template`) were never
+  published.
+
+So: rank first, then prove the winner installs, and when the popular/maintained bloodline cannot be
+installed, **say that** instead of quietly installing the fork under the same name — and never present a
+winner you have not tried. `install-hermes-skills-from-clawhub.md` covers the bloodline check on the
+package side.
 
 ## Verify what a name resolved to
 
