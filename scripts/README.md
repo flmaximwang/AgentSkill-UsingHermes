@@ -49,10 +49,11 @@ is 1 only under `--check`.
 | skill dir with no `SKILL.md` | `skipped (no SKILL.md)` (the path shown is the directory) | no | work in progress |
 
 Classify skip reasons, do not lump them into one counter: a gate that fails on WIP placeholders gets turned
-off, and one that passes on a skill missing its section never catches anything. **`remove-hermes-skills` is
-the pack's one 0-byte `SKILL.md`** — reported as `skipped (empty placeholder)`, and deliberately *not* a
-`--check` failure, so a repo-wide `--check` exits 0 on it. It joins the generated set the moment it carries
-content and a marker pair (0 bytes install and `inspect` returns `None` for it in the meantime — see
+off, and one that passes on a skill missing its section never catches anything. **The pack no longer holds a
+0-byte `SKILL.md`** — `remove-hermes-skills` was the last one, and it joined the generated set on 2026-09-30
+once its content and marker pair landed. Keep the `empty placeholder` classification anyway: it is the state
+a freshly created skill directory starts in, it must stay a non-failure under `--check`, and an empty
+`SKILL.md` still installs as a 0-byte skill whose `inspect` returns `None` (see
 `skills/install-hermes-skills/references/install-hermes-skills-diagnosis.md`).
 
 ### Render contract
