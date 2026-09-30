@@ -156,7 +156,7 @@ clawhub index, but its files no longer exist upstream` — a dead publisher entr
 | the full route list (A–F), the per-route maintenance matrix, the lock schema, what `skill_view` exposes, clearing a scan block with `.skillignore` | `references/install-hermes-skills-registry-routes.md` |
 | a third-party skill/plugin pack (Codex `.codex-plugin`, Claude `.claude-plugin`, an Agent Plugins v1 package) | `references/install-hermes-skills-external-pack-adoption.md` |
 | a package of your own that has to pass `skills_guard` — which documented commands trip it, how to predict the verdict before pushing, why `.skillignore` cannot clear a block on this route | `references/install-hermes-skills-scan-gate.md` |
-| renaming a skill or the whole pack — the cascade, the substitution table, the verbatim-evidence exemptions, and re-installing wherever the old name is already known | `references/install-hermes-skills-renaming-a-skill-pack.md` |
+| renaming a skill, the whole pack, or the pack's repo — the cascade, the substitution table, the verbatim-evidence exemptions, re-installing wherever the old name is already known, and the repo rename's four-point sync | `references/install-hermes-skills-renaming-a-skill-pack.md` |
 | an error string to decode (`Could not download`, `Could not find … in any source`, `Invalid skill name: .`, `is not a hub-installed skill`, `is listed in the hermes-index index, but its files no longer exist upstream`), an install that shipped three files its body references, "how was this installed / why did it need `--force`", or you need to read/import a `tools/skills_hub_*.py` module (run it under `~/.hermes/hermes-agent/venv/bin/python` — the ambient and the vendored interpreters have no `httpx`) | `references/install-hermes-skills-diagnosis.md` + `scripts/lock-provenance.py` |
 
 Read the one file the shape points at — each is a complete, tested protocol for that source. Where a
@@ -283,7 +283,7 @@ deciding field; the content hash is.
 
 ```
 install-hermes-skills/
-├── SKILL.md  (303 lines)
+├── SKILL.md  (306 lines)
 ├── test-prompts.json  (12 lines)
 ├── references/
 │   ├── install-hermes-skills-diagnosis.md  (219 lines)
@@ -296,7 +296,7 @@ install-hermes-skills/
 │   ├── install-hermes-skills-github-sources.md  (130 lines)
 │   ├── install-hermes-skills-registry-routes.md  (451 lines)
 │   ├── install-hermes-skills-relocating-a-skill.md  (77 lines)
-│   ├── install-hermes-skills-renaming-a-skill-pack.md  (119 lines)
+│   ├── install-hermes-skills-renaming-a-skill-pack.md  (128 lines)
 │   ├── install-hermes-skills-repo-structure-routing.md  (76 lines)
 │   └── install-hermes-skills-scan-gate.md  (91 lines)
 └── scripts/

@@ -133,3 +133,31 @@ say which copy the retirement step will then act on:
   lockless copy already occupies replaces that directory in place, so the "original" is consumed by the
   install rather than left beside it — a state that reads as "the profile copy is gone" only if you look at
   the directory that is now the installed tree.
+
+## 7. Absorbing a profile copy into the pack (where each half goes)
+
+When a profile-local skill and a pack skill cover the same ground and the user chooses "merge", the merge
+has two destinations, and the split is the point:
+
+1. **The method belongs in the pack.** Read the whole profile copy first — SKILL.md, every
+   `references/` file, every `scripts/` file — then fold its depth into the pack skill: extend the
+   existing topical reference instead of adding a parallel one, copy its scripts into the pack's
+   `scripts/`, rescan the result. Deleting a copy you only skimmed loses material nothing else holds.
+2. **Machine-local detail belongs to the project it operates on.** Real paths, ports, script locations,
+   connection strings, current object/test counts, the operator's own habits go into a dated record in
+   that project's own store — for a lab project, a `Logs/<YYYY>/<MM>/<DD>/<Type>. <title>.md` entry in
+   its vault. Write it the way that store writes records: read its `README.md` first, reuse the type
+   wording already in use there (never invent a new type name), copy the frontmatter shape from a
+   sibling entry, and mark a non-experiment record with the store's "deliberately not in the paper
+   notebook" form of `archive-id`. Keep local paths out of the skill, and leave a pointer between the
+   record and the pack skill so each side finds the other.
+3. **Then remove the duplicate — backed up.** `tar czf <scratch>/<skill>-backup-<date>.tar.gz` the copy
+   before deleting it and state where the backup is. Two copies of one skill name is the drift state the
+   user rejects; a restorable archive is not a copy.
+
+Commit each half where it lives: the pack repo, each project repo (its own message convention), and a
+file under no version control (a profile `README.md`) as an edit you report but cannot commit. A fix-up
+round like this spans several repos at once — read two `git log` lines of each repo first, because the
+`<type>(<scope>): <subject>` vocabulary differs per repo and a foreign message style shows up in the
+history the user reads. Rename a skill directory with `git mv`, then **re-read the file at its new path
+before editing it**: the write guard keys content per path and refuses the first write after a move.
