@@ -56,10 +56,11 @@ that the children go too. Depth in the sibling `install-hermes-skills` →
 ## Two states that look like a failed removal
 
 **An orphaned entry (the directory is gone, the lock entry is alive).** `check` names it and prints the
-remedy itself:
+remedy itself (paths below are relative to the profile home — `<home>` is `~/.hermes` for the default
+profile):
 
 ```
-$ rm -rf ~/.hermes/skills/hermes/remove-hermes-skills
+$ rm -rf <home>/skills/hermes/remove-hermes-skills
 $ hermes skills check remove-hermes-skills
 │ remove-hermes-skills │ skills.sh │ orphaned │
 Orphaned: remove-hermes-skills — lock-file entries whose local directory is missing or replaced by a
@@ -75,10 +76,10 @@ orphan both looks installed and blocks the reinstall that would fix it.
 `install_path` from the lock, so the files survive:
 
 ```
-$ mv ~/.hermes/skills/hermes/remove-hermes-skills ~/.hermes/skills/hermes/renamed-by-hand
+$ mv <home>/skills/hermes/remove-hermes-skills <home>/skills/hermes/renamed-by-hand
 $ hermes skills uninstall remove-hermes-skills -y
 Uninstalled 'remove-hermes-skills' from hermes/remove-hermes-skills
-$ test -d ~/.hermes/skills/hermes/renamed-by-hand && echo YES
+$ test -d <home>/skills/hermes/renamed-by-hand && echo YES
 YES                                        # an orphan the hub no longer knows about
 ```
 
