@@ -301,11 +301,20 @@ git clone <repo>            # or reuse an existing checkout
 # 1b. PROVE the clone BEFORE anything is uninstalled — `hermes skills uninstall` has no local-edit
 #     guard: it rmtree's the installed directory as it stands, and the lock entry is what you lose.
 git -C <clone> log -1 --format=%H          # must equal metadata.source_revision in the lock entry
-python3 <this-skill>/scripts/lock-provenance.py <name>      # snapshot the entry before it disappears
+hermes skills snapshot export "$HERMES_HOME/cache/lock-before-<name>.json"   # whole hub ledger
+python3 ~/.hermes/hermes-agent/venv/bin/python \
+  <abs path to this skill>/scripts/lock-provenance.py <name>
+#   ↑ the script needs HERMES_HOME exported and imports from $HERMES_HOME/hermes-agent: where that
+#     tree is absent (a bare sandbox) it cannot run — read $HERMES_HOME/skills/.hub/lock.json directly.
 diff -rq <clone>/<skill-dir> "$HERMES_HOME/skills/<path>"   # byte-for-byte; expect no output
-hermes skills snapshot export <file>       # and keep the whole hub ledger as a fallback
-# 2. copy the layer that contains SKILL.md (two levels if you want a category)
-cp -R <clone>/skills/foo "$HERMES_HOME/skills/<category>/foo"
+# 2. copy the layer that contains SKILL.md into the SAME relative path the old copy had, so the
+#    category stays valid and notes citing that path do not rot. Locate it first:
+#    `ls -d "$HERMES_HOME"/skills/*/<name>` — the directory name is NOT always the name
+#    `hermes skills list` prints (measured: directory `agent-evolution/nuwa-skill` lists as
+#    `huashu-nuwa`, its frontmatter name).
+DEST="$HERMES_HOME/skills/<category>/<same-dir-name-as-the-copy-you-replaced>"
+mkdir -p "$DEST"
+cp -R <clone>/<skill-dir>/. "$DEST"/
 # 3. verify — it shows up as `local`
 hermes skills list --source local
 # 4. take effect: discovery is directory-based, nothing to register; in-session /reload-skills rescans
