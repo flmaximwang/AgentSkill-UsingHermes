@@ -147,6 +147,15 @@ mutation is recorded rather than inferred. `action` is one of `create / write_fi
 Ledger entries are appended live, so an entry created *after* the subagent ran is not in its report —
 re-run this one query at the end of Phase 2 if the session is long, and reconcile before optimising.
 
+**Measured blind spot: a skill delivered through a clone + `hermes skills install` leaves no ledger entry
+at all.** Building `evolve-hermes-skills` that way produced `0` grep hits for its name in the ledger, an
+empty `metadata` object in its lock entry (no `installed_at`, unlike a skills.sh install of an older
+revision), and a `.usage.json` row with `created_by: "installed"` whose `created_at` is the install time.
+The ledger records mutations *inside* a skills tree by the skill tools; editing a clone and installing from
+the hub is neither. So this query answers "which skills did the curator/agent mutate", not "which skills are
+new" — when it comes back empty, cross-check `.usage.json` `created_at >= session start` and the pack
+clone's own `git log --since=<session start>` before reporting that nothing appeared.
+
 ### 2.4 Provenance per skill (input to Phase 2's ladder)
 
 `.usage.json` is per-skill telemetry: `created_by, state, use_count, view_count, patch_count,
