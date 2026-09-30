@@ -1,0 +1,182 @@
+---
+name: update-hermes-skills
+description: Update skills already installed in Hermes, and work out which update path a given skill actually has. Use when a skill is out of date, when `hermes skills check` reports update_available / unavailable / orphaned, when an update was skipped for local edits, when a bundled (built-in) skill never updates, or before believing a `No updates available.` line. Routes by which kind of skill it is — hub-installed, bundled, local, or npx-installed — then gives the tested commands for that source. Installing and removing skills are the sibling skills.
+---
+
+# Update Hermes Skills
+
+`hermes skills update` reaches **one** kind of skill. Three other kinds live in the same profile, look
+identical in `hermes skills list`, and are invisible to it — and two of them answer
+**`No updates available.`** and exit 0 rather than admitting they cannot see the skill at all. So the
+first question is never "how do I update X"; it is **which kind of X is it**.
+
+| Kind | How to recognise it | What updates it | Its silent failure mode |
+|---|---|---|---|
+| **hub-installed** | an entry in `skills/.hub/lock.json`; `list` shows a real `Source` (`skills.sh` / `github` / `clawhub` / `url` / `official`) | `hermes skills check` → `hermes skills update` | — |
+| **bundled** (built-in) | tracked in `skills/.bundled_manifest`; `list --source builtin` | `hermes update` (re-seeds), `reset --restore` to revert | `0 new / 0 updated` can mean *no source* |
+| **local** (a `cp -R` you made) | `list --source local`; `Source: local` | you, by hand | `check`/`update` answer `No … to check` / `No updates available.` |
+| **npx-installed** (`npx skills add`) | `~/.agents/.skill-lock.json`, not the hub lock | `npx skills update -g -y` | `hermes skills check <name>` → `No hub-installed skills to check.` |
+
+Measured on this machine (2026-09-30): `hermes skills update obsidian` — a local skill — prints
+`No updates available.`, and `hermes skills check obsidian` prints `No hub-installed skills to check.`
+Neither is evidence that `obsidian` is current.
+
+## The one rule
+
+`hermes skills check <name>` first (read-only), then read the **Status** column — `update` acts on
+`update_available` rows and on nothing else.
+
+| Status | What it means | What to do |
+|---|---|---|
+| `up_to_date` | installed bundle hash == upstream hash (a matching `source_revision` short-circuits before any download) | nothing |
+| `update_available` | the upstream bundle now hashes differently | `hermes skills update <name>` |
+| `unavailable` | the adapter matching the **recorded** source could not fetch it | fix that fetch path — for `url` entries see `references/update-hermes-url-skills.md` |
+| `orphaned` | `install_path` is missing, or is not a directory | `hermes skills uninstall <name>` to clear the stale lock entry (no network is spent on these) |
+| `invalid_install` | `install_path` cannot be resolved at all | read the lock entry; the name and the path disagree |
+
+## Two hashes — why an update reports "available" and then does nothing
+
+The two commands hash different things, and that is the trap this skill exists for:
+
+- **`check` compares installed vs upstream** — the `content_hash` recorded at install time against the
+  upstream bundle's hash. What you edited locally is not part of this comparison.
+- **`update` compares on-disk vs installed** — `content_hash(<install_path>)` right now against the
+  recorded hash. Any drift means the skill was edited, and an update `rmtree`-replaces the directory,
+  so it is **skipped** unless `--force` is passed (`hermes_cli/skills_hub.py:887-897`, `:928-932`).
+
+Measured (sandbox, revision and hash both forged stale):
+
+```
+$ hermes skills check skill-creator
+│ skill-creator │ github │ update_available │
+
+$ hermes skills update skill-creator
+Skipping: skill-creator — you have local edits (update would overwrite them).
+1 skill(s) kept your local edits: skill-creator.
+Overwrite with: hermes skills update <name> --force
+
+$ hermes skills update skill-creator --force
+Updated 1 skill(s).
+```
+
+So `update_available` plus a silent skip is a coherent pair rather than a bug, and **a skipped run
+still exits 0**. A related measured fact: forging only `source_revision` back to an older commit
+leaves `check` at `up_to_date` — the revision is a fast-path shortcut, **the hash is the decision**.
+
+## What `update` does per skill, in order (source-verified)
+
+1. `check_for_skill_updates(name)` — keep only the `update_available` rows
+   (`hermes_cli/skills_hub.py:916`).
+2. `_has_local_edits(installed)` → skip, unless `--force` (`:928`).
+3. `do_install(identifier, category=<parent of install_path>, force=True, source_id=<lock's source>)`
+   (`:937-938`), which means:
+   - **the category comes from `install_path`'s parent**, so an update keeps the skill exactly where it
+     is and never re-files it;
+   - **the source is pinned** to the lock's registry. The in-code reason: a bare identifier such as
+     `reddit` would otherwise fuzzy-resolve inside `do_install` to a same-named skill in a *different*
+     registry, overwriting the files and rewriting the lock's `source`;
+   - **`force=True` is internal**, so an update does **not** re-ask the security gate the way a first
+     install does — a `community` + `caution` skill that needed `--force` to install updates without it
+     (the bundle is still scanned and the verdict re-recorded);
+   - the install is a **whole-directory replacement**, so support files, scripts and any nested
+     `SKILL.md` bundles all move together.
+4. Prints `Updated N skill(s).`, or the kept-your-local-edits lines above.
+
+## What no update command can reach
+
+- **Bundled skills** are not hub entries: `hermes skills update` never lists them. `hermes update`
+  re-seeds them and *keeps* any copy you edited — `list-modified` / `diff` / `reset`
+  (`references/update-hermes-built-in-skills.md`).
+- **Local copies** have no lock entry: `check`, `update`, `audit` and `uninstall` cannot see them.
+  Re-install through the hub if you want them maintained.
+- **npx-installed skills** are managed by the skills CLI's own lock, not the hub one — same registry,
+  different updater (`references/update-hermes-skill-sh-skills.md`).
+- **Sub-skills inside an installed bundle**: `list` reports them as `local`, but they live in the
+  parent's tree, so the parent's update and uninstall move all of them. They are not separately
+  updatable.
+- **Other profiles**: the lock is per profile. Run `hermes -p <profile> skills update <name>`, or the
+  skill stays stale there.
+
+## Cost — scope checks by name
+
+`check` without a name walks **every** hub entry (20 on this machine) and each row costs a network round
+trip. Only adapters that implement `current_revision` can answer without downloading
+(`tools/skills_hub_github.py:300`; the base class returns `""`, `tools/skills_hub_models.py:154-157`),
+and that shortcut also needs a `source_revision` in the lock. Measured per entry:
+
+| Source | Lock records `source_revision`? | Measured `check` | Note |
+|---|---|---|---|
+| `github` (tap) | yes | 3.3 s | fast path |
+| `skills.sh` | yes | 9.5–11.9 s | fast path, still a GitHub API call |
+| `clawhub` | no (`metadata: {}`) | 8.9 s | full download on every check |
+| `url` | no | 2.1 s | full download on every check (tiny bundle) |
+| `official` | no (`metadata: {}`) | not timed | full download on every check |
+
+Two consequences for scripts: check **by name** (never a bare `hermes skills check` on a timer), and
+grep for `update_available` rather than the summary line — `0 update(s) available` also contains
+`update(s) available`.
+
+## Shared commands
+
+```bash
+hermes skills check [name]                 # read-only; scope it by name (see Cost)
+hermes skills update [name] [--force]      # --force overwrites local edits (rmtree-replaces the tree)
+hermes skills audit [name] [--deep]        # re-scan; verdicts follow the scanner version
+hermes skills snapshot export <file>       # back up the installed set before a bulk update
+
+hermes skills list --source hub|builtin|local
+hermes skills list-modified [--json]       # bundled skills you edited (kept by `hermes update`)
+hermes skills diff <name>                  # bundled: your copy vs the stock version
+hermes skills reset <name> [--restore]     # bundled: re-baseline tracking / revert to stock
+hermes -p <profile> skills check|update    # the lock is per profile
+```
+
+Measured `hermes skills update --help` on this machine (2026-09-30):
+
+```
+usage: hermes skills update [-h] [--force] [name]
+
+positional arguments:
+  name        Specific skill to update (default: all outdated skills)
+
+options:
+  --force     Overwrite skills you have edited locally (they are skipped by
+              default)
+```
+
+In a session the same work is `/skills update <name> [--force]`; `/skills check` is read-only.
+
+## Route by what was asked
+
+| The question is | Read |
+|---|---|
+| a bundled / built-in skill never changes, what `hermes update` printed, `list-modified`, `diff`, `reset`, `repair-official` | `references/update-hermes-built-in-skills.md` |
+| a three-segment identifier or a tap skill (the common case), the revision fast path, nested sub-skill trees, an update skipped because of a self-authored skill inside the bundle | `references/update-hermes-skill-sh-skills.md` |
+| an `npx skills add` install of the same registry | `references/update-hermes-skill-sh-skills.md` |
+| a `@publisher/slug` ClawHub skill, version vs hash, same-slug-different-lineage risk | `references/update-hermes-clawhub-skills.md` |
+| a raw-URL skill, a `check` stuck on `unavailable`, floating refs | `references/update-hermes-url-skills.md` |
+| installing, removing, seeding on/off, or a search that cannot find your skill | the siblings `install-hermes-skills`, `remove-hermes-skills`, `manage-hermes-skills` |
+
+## When the new content takes effect
+
+- A CLI `hermes skills update <name>` clears the skill cache as it writes, so a CLI session sees it at
+  once; a **running** session (gateway / desktop) picks the new files up on its next session — or
+  immediately with `/reload-skills`.
+- The update is per profile; `hermes skills list --enabled-only -p <profile>` shows what a profile
+  will actually load.
+
+## Skill Structure
+
+<!-- Generated by Scripts -->
+
+```
+update-hermes-skills/
+├── SKILL.md  (182 lines)
+└── references/
+    ├── update-hermes-built-in-skills.md  (174 lines)
+    ├── update-hermes-clawhub-skills.md  (98 lines)
+    ├── update-hermes-skill-sh-skills.md  (168 lines)
+    └── update-hermes-url-skills.md  (133 lines)
+```
+
+<!-- Generated by Scripts -->
