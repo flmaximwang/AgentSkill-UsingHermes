@@ -1,20 +1,59 @@
 # Install Hermes Skills from Github
 
 Get the github path first. A `github.com` link tells you *where* the skill is, not *what*
-`hermes skills install` should be given: the installable identifier depends on how the repo is laid
-out, and the wrong shape installs the wrong thing — a sub-skill instead of the root skill, or 73 MB
-of unrelated files. So the order is always: identify the repo type → convert the link → `inspect` →
-install.
+`hermes skills install` should be given — the identifier's shape depends on the repo's layout, and
+**each shape buys a different amount of the skill**. This file is therefore a **ladder, not a menu**:
+three routes ordered by what they actually get you.
+
+**How to choose — walk it from the top, every time:**
+
+1. Identify the repo type (Step 0 below). The type decides which rung is even reachable.
+2. Convert the link to the rung 1 identifier for that type and try it. This is the default; get it working.
+3. Only when a rung 1 **drop signal** fires (listed at the end of the rung 1 section), step down to rung 2.
+4. Only when you have no checkout at all — a single `SKILL.md` and nothing else — step down to rung 3.
+5. Say in your report which rung you used, and why the rungs above it were out.
+
+Never drop a rung because it looks simpler or more familiar, and never offer a lower rung as an
+"alternative" when a higher one works: the lower rungs lose files or lose maintenance, and they lose
+them silently.
+
+## The ladder
+
+| 档 | 方式 | 装到多少 | 维护 | 什么时候用它 |
+|---|---|---|---|---|
+| **1** | 三段式标识符 `owner/repo/仓库内路径` | **整个技能目录** + pin 到 commit | **hub 全管**：`check` / `update` / `audit` / `uninstall` / `snapshot` 都认它 | **默认档**。类型 3 必用；类型 4 挑定目录后可用；类型 1 用 `<owner>/<repo>/` |
+| **2** | 手动复制（先 clone，再 `cp -R`） | 你拷多少有多少——**选对了就是完整目录** | **手工养**：不进 lock，没有版本记录、没有 `update`、没有审计 | 档 1 无法命名目标时：根布局技能、私有仓库、离线、超大仓库只想要其中一部分 |
+| **3** | 单个 `SKILL.md` 的 raw URL | 只有 `SKILL.md` + 正文**显式引用**的文件，且只在 `references/ templates/ scripts/ assets/` 四个前缀里 | hub 管，但**没有 commit pin** | **最后手段**：手上真的只有一个 `SKILL.md`（散落单文件、离线拷贝、正文之外什么也拿不到） |
+
+Why this order — the criterion is *the cost you pay later*, not "which command is shorter":
+
+- **Rung 1 is the only route that gets you the whole directory *and* automatic maintenance**, so it
+  comes first. Everything below it gives up one of the two.
+- **Rung 2 matches rung 1 on install completeness** (you decide what to copy), and gives up
+  maintenance: nothing will ever re-sync it, so an upstream change means comparing by hand.
+- **Rung 3 is last because it is the only route that can silently hand you a broken skill.** Measured
+  on `kangarooking/cangjie-skill`: it brings **4 files / 40 KB** while the body references 14 more under
+  `methodology/` (9) and `extractors/` (5) — those are neither in the four allowed prefixes nor
+  explicitly referenced, so **all of them are dropped** and the installed skill ships with dangling
+  references. **If a directory is reachable at all, do not use rung 3.**
+
+**Self-check before any drop**: is rung 1 genuinely impossible (type forbids it, two-segment
+identifier, private repo, verdict BLOCKED), or did I just not work out what the third segment should
+be? Only the first answer licenses a drop.
 
 **Contents**
-- Step 1 — identify the repo type (`gh api` one-liner, the browser fallback, the 4 types with real outputs)
-- Which link forms survive (`raw` / `tree` / `blob` / repo root)
-- Step 2 — convert the link into an install target (types 1–4, and what to do when no identifier fits)
-- Known misjudgments — the four failures whose error text does not say what went wrong
-- Step 3 — install and verify (Route A raw URL, Route D manual copy)
-- FAQ — `blob` links, the four-segment raw URL, silently lost files, and the SSRF/`fake_ip_ranges` `unavailable` case
+- The ladder — the three rungs, in order, with the criterion for each
+- Step 0 — which rung this repo can even reach (repo types, link forms, type → rung table)
+- Rung 1 — three-segment identifier: conversions per type, install, verify, optional tap, drop signals
+- Rung 2 — manual copy: complete install, maintenance is all yours
+- Rung 3 — raw `SKILL.md`: last resort, measured losses, the SSRF `unavailable` case
+- Error text → meaning (check here first — do not follow the error's own advice)
+- FAQ
 
-## Step 1 — Identify the repo type
+## Step 0 — Which rung this repo can even reach
+
+Identify the type first, because **the type decides whether rung 1 is usable at all** (a type 2 root
+skill can never use it).
 
 List all `SKILL.md` to identify the type of this repo with the command below.
 
@@ -86,75 +125,36 @@ README 也值得扫一眼：作者常写明这是"一个 skill"还是"技能集�
 
 | 你手上的链接 | 结果 |
 | --- | --- |
-| `raw.githubusercontent.com/<owner>/<repo>/<ref>/<path>/SKILL.md` | ✅ 走 `url` 源，**必须四段**（见 FAQ） |
-| `github.com/<owner>/<repo>/tree/<ref>/<dir>` | ✅ 删掉 `https://github.com/` 和 `tree/<ref>` → 三段式 |
-| `github.com/<owner>/<repo>` | 看类型：1 尾斜杠、2 raw URL、3 补第三段 |
+| `github.com/<owner>/<repo>/tree/<ref>/<dir>` | ✅ 删掉 `https://github.com/` 和 `tree/<ref>` → 三段式（档 1） |
+| `github.com/<owner>/<repo>` | 看类型：1 尾斜杠（档 1）、3 补第三段（档 1）、2 的根技能降档 |
+| `raw.githubusercontent.com/<owner>/<repo>/<ref>/<path>/SKILL.md` | ✅ 走 `url` 源（**必须四段**）→ 档 3 |
 | `github.com/<owner>/<repo>/blob/<ref>/<path>` | ⛔ 抓回整个 HTML 页面 → `DANGEROUS` → `BLOCKED` |
 
-## Step 2 — Convert the link into an install target
+### Repo type → highest reachable rung
 
-### Type 1 — single-skill repo (`SKILL.md` at the root, nothing else)
+| 类型 | 档 1 可用？ | 说明 |
+| --- | --- | --- |
+| 1 单技能仓 | ✅ `<owner>/<repo>/` | **代价 = 整仓**：除点开头文件和 `.pyc` 外全都打包。小仓库就是最优解；实测 cangjie 型仓库这一档是 **73 MB / 367 文件**（`books/` 96、`benchmarks/` 86、`dist/` 57…）→ 这种体量该降到档 2 挑目录 |
+| 2 根技能 + 子技能 | 根技能 ✗ / 子技能 ✅ | 标识符**表达不了"只要根技能"**；尾斜杠能装但实测 **93–117 s → `CAUTION` → `BLOCKED` → `--force` → 156 文件 / 33.69 MB**，比档 2 还差 → 根技能直接降档。子技能走 `<owner>/<repo>/examples/<x>`（档 1） |
+| 3 聚合仓 | ✅ | 常规情形，一条命令到位 |
+| 4 非标准 / 深嵌套 | ✅（挑定目录） | 越深越容易装到非预期目标；这类仓库的根技能若走档 3 会掉文件 |
 
-- `github.com/<owner>/<repo>` → **`<owner>/<repo>/`（带尾斜杠）**: an empty third segment means
-  "skill dir = repo root" (`_skill_file_path('')` returns `SKILL.md` directly; the docstring states
-  this is the designed way to say it).
-- `github.com/<owner>/<repo>/tree/<ref>/SKILL.md` → same `<owner>/<repo>/` (a bare two-segment
-  `owner/repo` is rejected by `_split_repo_id`).
-- `raw.githubusercontent.com/<owner>/<repo>/<ref>/SKILL.md` → pass as a URL.
+## Rung 1 — three-segment identifier (the default; get this one working first)
 
-```bash
-hermes skills install "<owner>/<repo>/" -y
-```
+**What you get**: the whole skill directory, pinned to an upstream commit, recorded in the lock — so
+`check`, `update`, `audit`, `uninstall` and `snapshot` all work on it. One command, no tap needed.
 
-Cost: the trailing slash means **skill dir = the entire repo** — everything is packaged except
-dotfiles and `.pyc`. Weigh the size when a repo has one `SKILL.md` but lots of other content
-(measured: the cangjie-style repo is 73 MB / 367 files). `owner/repo/.` fails with
-`Unsafe skill name: .`.
-
-### Type 2 — root skill + sub-skills
-
-- `github.com/<owner>/<repo>` → ⛔ **no identifier expresses this**: the identifier grammar cannot
-  say "the root skill only". Use the raw URL of the root `SKILL.md` instead — take
-  `github.com/<owner>/<repo>/blob/<ref>/SKILL.md`, switch the host to `raw.githubusercontent.com`
-  and drop `blob/`:
-
-```
-https://raw.githubusercontent.com/<owner>/<repo>/<ref>/SKILL.md
-```
-
-- `github.com/<owner>/<repo>/tree/<ref>/examples/<x>` → `<owner>/<repo>/examples/<x>`
-  (three-segment) — that is the **sub-skill**, not the repo's main skill.
-- The trailing slash `<owner>/<repo>/` is syntactically valid but measured expensive
-  (`alchaincyf/nuwa-skill`): **93–117 s** download+scan → `Verdict: CAUTION` →
-  **`Decision: BLOCKED`（community + caution, 29 findings, incl. a HIGH `exfiltration` at
-  `.github/scripts/community_check.py:172`）** → needs `--force`, and installs **156 files /
-  33.69 MB**.
-
-The correct route, measured:
-
-```bash
-hermes skills install "https://raw.githubusercontent.com/alchaincyf/nuwa-skill/main/SKILL.md" --category nuwa -y
-# → Installed: nuwa/huashu-nuwa
-# → 3 files / 52 KB (SKILL.md + references/extraction-framework.md + references/skill-template.md)
-```
-
-The cost: you get only `SKILL.md` and the files its body **explicitly references** — nothing else.
-
-Pitfall: on a machine that has not declared `fake_ip_ranges`, this URL reports
-`Could not find 'https://…' in any source.` (see the FAQ at the end of this file).
-
-### Type 3 — aggregate repo (`skills/<name>/SKILL.md`)
+### Type 3 — aggregate repo
 
 - `github.com/<owner>/<repo>/tree/<ref>/skills/<name>` → delete `https://github.com/`, delete
-  `tree/<ref>`, delete a trailing `SKILL.md`; what's left, `<owner>/<repo>/skills/<name>`, is the
+  `tree/<ref>`, delete a trailing `SKILL.md`; what is left, `<owner>/<repo>/skills/<name>`, is the
   identifier.
-- `github.com/<owner>/<repo>` → find `<name>` first with the Step 1 command (one repo can have
-  several installable targets: `Paper2Agent` measured 4).
+- `github.com/<owner>/<repo>` → find `<name>` first with the Step 0 command (one repo can have several
+  installable targets: `Paper2Agent` measured 4).
 
-Why the third segment can itself contain `/`: `_split_repo_id` splits **twice**
-(`identifier.split("/", 2)`), so the third segment is "everything else". But `_skill_file_path`
-builds `f"{skill_path}/SKILL.md"`, so the third segment must **stop at a directory** and never
-carry the file name.
+Why the third segment may itself contain `/`, yet must stop at a directory: `_split_repo_id` splits
+**twice** (`identifier.split("/", 2)`), so the third segment is "everything else" — but
+`_skill_file_path` builds `f"{skill_path}/SKILL.md"`, so it must never carry the file name.
 
 ```python
 parts = identifier.split("/", 2)                        # owner / repo / 其余全部
@@ -162,75 +162,150 @@ return (f"{parts[0]}/{parts[1]}", parts[2]) if len(parts) >= 3 else None   # _sp
 ```
 
 Measured: `hermes skills inspect flmaximwang/AgentSkill-ObsidianManagement/skills/organize-obsidian-notes`
-→ `Source: skills.sh`, whole directory = 6 files, pinned to commit `7884d88d`. (This identifier
-shape is claimed by the `skills.sh` adapter, which proxies GitHub and relabels the result — see
-`install-hermes-skills-from-skill-sh.md`.)
+→ `Source: skills.sh`, whole directory = 6 files, pinned to commit `7884d88d`. (This shape is claimed
+by the `skills.sh` adapter, which proxies GitHub and relabels the result.) Identifier discovery at
+scale, and the batch recipe, are in `install-hermes-skills-from-skill-sh.md`.
 
 ### Type 4 — non-standard / deep nesting
 
-- List every `SKILL.md` with the Step 1 command → pick the directory you want → **strip the trailing
-  `/SKILL.md`** → prepend `<owner>/<repo>/<that relative path>`.
-- Measured: `alchaincyf/nuwa-skill/examples/naval-perspective` inspects fine (body 452 lines) — but
-  that is a sub-skill. For a repo shaped like `kangarooking/cangjie-skill` (root + deep nesting),
-  the root skill goes through the raw URL and the sub-directory skills go through three-segment
-  identifiers; no single identifier covers the whole repo.
-- Pitfall: the deeper the directory, the easier it is to install a target you did not mean. And the
-  raw-URL route for a root layout only takes explicitly referenced files (measured: the cangjie root
-  skill = 4 files / 40 KB, all 14 `methodology/` files referenced by its body were dropped).
+List every `SKILL.md` with the Step 0 command → pick the directory you want → **strip the trailing
+`/SKILL.md`** → prepend `<owner>/<repo>/<that relative path>`. Measured:
+`alchaincyf/nuwa-skill/examples/naval-perspective` inspects fine (body 452 lines) — but that is a
+sub-skill. For a repo shaped like `kangarooking/cangjie-skill` (root + deep nesting), the root skill
+and the sub-directory skills take **different rungs**; no single identifier covers the whole repo.
 
-### When no identifier can express the target
+### Type 1 — single-skill repo: `<owner>/<repo>/`
 
-- **Fallback A — raw URL**: with a raw address for `SKILL.md`, any type installs (gets `SKILL.md` +
-  the files its body explicitly references).
-- **Fallback B — manual copy**: private repos, huge repos, or "I only want part of this tree" —
-  clone, then `cp -R <clone>/<dir> <HERMES_HOME>/skills/[<category>/]<name>/`. The cost is real:
-  it never enters the lock, so `check` / `update` / `uninstall` cannot see it (see Route D below).
-
-### Known misjudgments — the failures that do not say what went wrong
-
-1. **URL route, no `fake_ip_ranges` declared**: the CLI prints
-   `Could not find 'https://…/SKILL.md' in any source.` — not a self-explaining "the SSRF guard
-   blocked this", so it reads as "that skill does not exist". Declaring both fake-IP ranges in the
-   config makes the same command succeed (see FAQ).
-2. **Search**: the default `search` will happily show you same-name imitations —
-   `hermes skills search nuwa` returns 12 rows, **all from `clawhub`** (`nuwa-dual-mode`,
-   `nuwa-video-gen`, …), not one of them this GitHub repo (without `--source`, the GitHub source is
-   skipped entirely — see `install-hermes-skills-from-names.md`).
-3. **Three-segment written with the file name** (`<owner>/<repo>/…/SKILL.md`) →
-   `Could not find '…' in any source.`
-4. **Two-segment identifier — `install` and `inspect` report it differently** (measured 2026-09-30):
-   - `hermes skills install alchaincyf/nuwa-skill` → `Fetching: alchaincyf/nuwa-skill` →
-     `Error: Could not download 'alchaincyf/nuwa-skill'.`, plus advice to run
-     `hermes skills search nuwa-skill` and `hermes doctor` — **both suggestions are dead ends**
-     (search does not find it either; doctor finds nothing wrong).
-   - `hermes skills inspect alchaincyf/nuwa-skill` → `Error: Could not find
-     'alchaincyf/nuwa-skill' in any source.`
-   - Both are **one fact, two subcommand failure branches**: `install` goes
-     `do_install → _resolve_source_meta_and_bundle`, walking all 9 adapters (`inspect` + `fetch`),
-     **every one returns None with no metadata at all** → falls through to `_print_fetch_failure`'s
-     generic text (the "it is in the index but gone upstream" wording only appears when metadata
-     exists).
-   - Of those 9 adapters only **2 actually sent HTTP**: `skills-sh` → `GET
-     https://skills.sh/alchaincyf/nuwa-skill` → **308** (that is the repo page, not a skill page),
-     and `lobehub` → `https://chat-agents.lobehub.com/alchaincyf/nuwa-skill.json` → **404**; the
-     other 7 (`official`/`hermes-index`/`well-known`/`url`/`github`/`clawhub`/`browse-sh`)
-     short-circuit at the identifier-shape check (`github` requires ≥3 segments).
-   - **Conclusion: no source claims a two-segment identifier. Do not go spelling-hunting or run
-     `doctor` on the error's advice — switch to the type 1/2 route (trailing slash or raw URL).**
-
-## Step 3 — Install and verify
-
-Route B (three-segment, the common case) is `install-hermes-skills-from-skill-sh.md`; Route C (tap)
-only changes *discoverability* and lives in `install-hermes-skills-from-names.md`. The two routes
-that come out of a link conversion are:
-
-### Route A — raw URL (one `SKILL.md` + its explicit references)
+- `github.com/<owner>/<repo>` → **`<owner>/<repo>/` (trailing slash)**: an empty third segment means
+  "skill dir = repo root" (`_skill_file_path('')` returns `SKILL.md` directly; the docstring states
+  this is the designed way to say it).
+- `github.com/<owner>/<repo>/tree/<ref>/SKILL.md` → the same `<owner>/<repo>/` (a bare two-segment
+  `owner/repo` is rejected by `_split_repo_id`).
+- `owner/repo/.` → fails outright with `Unsafe skill name: .`.
 
 ```bash
-# 1. the link must be raw: .../<owner>/<repo>/<ref>/<path>
+hermes skills install "<owner>/<repo>/" -y
+```
+
+**Drop signal**: when the repo holds a single `SKILL.md` but is *large* (measured: 73 MB / 367 files),
+weigh it — rung 2 (clone, then copy only the directories you need) is less work here, at the cost of
+losing automatic updates.
+
+### Type 2 — why rung 1 cannot express the root skill
+
+- `github.com/<owner>/<repo>` → ⛔ **no identifier expresses this**: the grammar cannot say "the root
+  skill only".
+- The trailing slash `<owner>/<repo>/` is syntactically valid but measured expensive
+  (`alchaincyf/nuwa-skill`): **93–117 s** download+scan → `Verdict: CAUTION` →
+  **`Decision: BLOCKED`（community + caution，29 findings，含 `.github/scripts/community_check.py:172`
+  的 HIGH `exfiltration`）** → needs `--force`, and installs **156 files / 33.69 MB**. **That is worse
+  than rung 2, so the root skill skips rung 1 and drops.**
+- Sub-skills still use rung 1: `github.com/<owner>/<repo>/tree/<ref>/examples/<x>` →
+  `<owner>/<repo>/examples/<x>`.
+
+### Install and verify
+
+```bash
+hermes skills inspect <owner>/<repo>/<path>     # read-only; read Source / Trust first
+hermes skills install <owner>/<repo>/<path> --category <cat> -y
+hermes skills list                              # verify: Source / Trust / enabled; lands in skills/<cat>/<name>/
+```
+
+Several skills in one repo can be batched (still no tap needed):
+
+```bash
+for s in <skill1> <skill2>; do hermes skills install <owner>/<repo>/skills/$s --category <cat> -y; done
+```
+
+A real measured install (self-built repo, no tap):
+
+```bash
+$ hermes skills install "flmaximwang/AgentSkill-ObsidianManagement/skills/organize-obsidian-notes" --category obsidian -y
+Decision: ALLOWED — Allowed (community source, safe verdict)
+Installed: obsidian/organize-obsidian-notes
+Files: SKILL.md, assets/darwin-card-20260930.png, scripts/organize.sh,
+       scripts/organize_notes.py, scripts/test_organize_notes.py, test-prompts.json
+```
+
+- Lands in `skills/obsidian/organize-obsidian-notes/`; the lock records `source: skills.sh`,
+  `source_revision: 7884d88dee7938b47c5115a4d1d91e7e71970de9`.
+- **The verdict was `safe`, so no `--force` was needed** even though it reported **9 medium findings**
+  (`oversized_file`: `assets/darwin-card-20260930.png` 707 KB > 256 KB; `python_subprocess` ×5;
+  `unicode_escape_chain` ×1). **medium ≠ blocked**: community + safe is allowed outright; only
+  caution/dangerous goes through `--force`.
+
+### Want it searchable too? add a tap (optional, does not change the install)
+
+```bash
+hermes skills tap add <owner>/<repo>      # → Added tap: …（写 skills/.hub/taps.json，默认 path "skills/"）
+hermes skills search "<关键词>" --source github
+```
+
+A tap only affects **discovery** (it lets `search`/`browse` list the repo); the install command is
+identical. For self-built small repos that search path is currently broken (without `--source` the
+GitHub source is displaced by the central index; with it, the 30 s budget usually runs out) — so a tap
+is an optional bonus, **not a prerequisite for rung 1**. Details and measurements:
+`install-hermes-skills-from-names.md`.
+
+### When rung 1 is out — the drop signals
+
+- **Two-segment identifier `owner/repo`** → no source claims it (error texts in the table below) →
+  type 1 adds the trailing slash; types 2/4 drop a rung.
+- **Third segment written as a file** (`…/SKILL.md`) → `Could not find '…' in any source.` → drop the
+  file name.
+- **Private repo**: `skills.sh` always pulls files from the underlying GitHub repo, so **private repos
+  cannot pass** → rung 2.
+- **Root-layout skill (a type 2 root)** → rung 1 cannot express it → drop.
+- **Whole repo too large** (the trailing slash drags the entire tree) → rung 2, copy the directories
+  you need.
+
+## Rung 2 — manual copy (complete install, maintenance is all yours)
+
+**Use it when**: rung 1 cannot name the target (a type 2 root skill, a deep nesting with no unique
+directory), the repo is private or offline, the repo is too large and you want only part of it, or the
+skill is one **you intend to keep editing**.
+
+```bash
+# 1. get the directory
+git clone <repo>            # or reuse an existing checkout
+# 2. copy the layer that contains SKILL.md (two levels if you want a category)
+cp -R <clone>/skills/foo "$HERMES_HOME/skills/<category>/foo"
+# 3. verify — it shows up as `local`
+hermes skills list --source local
+# 4. take effect: discovery is directory-based, nothing to register; in-session /reload-skills rescans
+```
+
+**What you keep**: this is the only route `update` will never overwrite (which is why "I will edit it
+myself" points here), and you decide what gets copied — so the result can be far more complete than
+rung 3.
+
+**What you give up** (measured):
+
+```
+$ hermes skills check
+No hub-installed skills to check.
+$ hermes skills uninstall obsidian -y
+Error: 'obsidian' is not a hub-installed skill (may be a builtin)
+```
+
+It is not in `.hub/lock.json`, so every hub maintenance command except `list`
+(`check` / `update` / `uninstall` / `audit`) is blind to it and `audit.log` has no record: no version,
+no audit, no diff — when upstream moves you compare by hand. Deleting means
+`rm -rf <HERMES_HOME>/skills/<cat>/<name>`.
+
+**Drop signal**: you do not even have a checkout — all you hold is a **single `SKILL.md`** (a gist, a
+paste, one offline file) → only then go to rung 3.
+
+## Rung 3 — raw `SKILL.md` (last resort, the least complete install)
+
+**Use it when**: a single `SKILL.md` is genuinely all you have. **If a directory is reachable, do not
+use this rung.**
+
+```bash
+# 1. the link must be raw (four segments: <owner>/<repo>/<ref>/<path>)
 # 2. install (-y is required in non-interactive contexts)
 hermes skills install "https://raw.githubusercontent.com/anthropics/skills/main/skills/skill-creator/SKILL.md" -y
-# 3. if the name does not match ^[a-z][a-z0-9_-]*$ or frontmatter has no usable name:, pass --name
+# 3. if the name does not match ^[a-z][a-z0-9_-]*$ or the frontmatter has no usable name:, pass --name
 hermes skills install "<raw URL>" --name my-skill -y
 ```
 
@@ -246,115 +321,124 @@ Installed: skill-creator
 Files: SKILL.md, assets/eval_review.html, references/schemas.md
 ```
 
-Verify with `hermes skills list`: expect `Source: url`, `Trust: community`, landing at
-`<HERMES_HOME>/skills/<name>/` (**flat, no category layer**).
+Verify with `hermes skills list`: expect `Source: url`, `Trust: community`, landing **flat** at
+`<HERMES_HOME>/skills/<name>/` (no category layer unless you pass `--category`).
 
-Maintenance note specific to this route: a `url` lock entry has **no commit pin** — there is no
-`metadata.source_revision`, so `check` must re-download every time, and a floating `/main/` ref means
-you cannot roll back. Pin the ref to a commit or tag if you need reproducibility.
+**This rung's losses, measured one by one:**
 
-### Route D — manual copy (never in the hub)
+- **Only files the body explicitly references, and only under four prefixes**
+  (`tools/skills_hub_sources.py:210-240`: `references/ templates/ scripts/ assets/`). Same skill,
+  measured: the URL route fetched **3 files**, the tap route **18** — the difference is exactly the
+  unreferenced `scripts/`, `agents/`, `eval-viewer/`.
+- **⚠ For "repo root is the skill" repos it produces a broken skill**: measured on
+  `kangarooking/cangjie-skill` →
+  `Files: SKILL.md, scripts/cangjie.py, scripts/validate_skill_pack.py, templates/BOOK_OVERVIEW.md.template`
+  (**4 files / 40 KB**), while the body references `methodology/` (9) + `extractors/` (5) = **14 files**
+  — all dropped, so the installed skill ships with dangling references.
+  **You can predict this before installing**: check whether the body references any path outside those
+  four prefixes. If it does, do not use this rung — go back to rung 1 or 2.
+- **No commit pin**: a `url` entry has no `metadata.source_revision`, so a floating `/main/` ref follows
+  upstream, the next `update` takes whatever is there, and **there is no version to fall back to**.
+  Pin the ref to a commit or tag if you need reproducibility. (Mechanism inferred; not measured by
+  moving an upstream ref.)
+- It is the only one of the three routes that is "semi-automatic": it enters the lock and works with
+  `check`/`update`, but has no commit pin and no integrity guarantee beyond `files`.
 
-```bash
-# 1. get the directory
-git clone <repo>            # or reuse an existing checkout
-# 2. copy the layer that contains SKILL.md (two levels if you want a category)
-cp -R <clone>/skills/foo "$HERMES_HOME/skills/<category>/foo"
-# 3. verify — it shows up as `local`
-hermes skills list --source local
-# 4. take effect: discovery is directory-based, nothing to register; in-session /reload-skills rescans
+### This rung's own trap: `check` reports `unavailable`
+
+(Hit for real on this machine, 2026-09-30.) **The skill is not broken — the download path is blocked
+by the SSRF guard.** The chain has four steps:
+
+1. `check` only reads from the adapter matching the recorded source (`_source_matches`,
+   `tools/skills_hub_install.py:262-330`; docstring: *"Each entry is fetched ONLY from adapters
+   matching its recorded source … a missing adapter reports unavailable"*) → a `url` entry can only be
+   fetched by `UrlSource`.
+2. A `url` entry has **no** `metadata.source_revision` → the zero-download fast path ("same revision →
+   `up_to_date`") is unreachable (`current_revision` is implemented only by `GitHubSource`,
+   `skills_hub_github.py:300`; the base class returns `""`, `skills_hub_models.py:154-157`) → it must
+   really download.
+3. `UrlSource` inherits `GuardedFetchMixin`; downloads go through `hub()._guarded_http_get`
+   (`skills_hub_models.py:163-167`) → resolve the host, then check whether it is private. Behind a
+   fake-IP TUN proxy, `raw.githubusercontent.com` resolves to **198.18.0.8 (A)** and **2001:2::13
+   (AAAA)** — both in benchmarking ranges → blocked.
+4. Hence `_load → None → fetch → None → status: unavailable`. Real error text:
+   ```
+   Blocked request to private/internal address: raw.githubusercontent.com -> 198.18.0.8
+   Blocked unsafe Skills Hub URL: https://raw.githubusercontent.com/.../SKILL.md
+   ```
+
+**Fix 1 (recommended, whole machine)**: declare the proxy's fake-IP ranges under `security:` in
+`~/.hermes/config.yaml` — this is exactly the switch `tools/url_safety.py:183-214` keeps for
+Mihomo/Clash fake-ip:
+
+```yaml
+security:
+  fake_ip_ranges:
+    - 198.18.0.0/15      # IPv4 fake-ip
+    - 2001:2::/48        # IPv6 fake-ip —— 只写上面那段仍会被拦在 2001:2::13
 ```
 
-Measured consequences of not being in the lock:
+Measured: declaring only `198.18.0.0/15` → still `Blocked … -> 2001:2::13`; **both ranges** →
+`is_safe_url → True`, `UrlSource.fetch` succeeds (`files=['SKILL.md']`). Ranges overlapping
+RFC1918/loopback/CGNAT are dropped by the guard (`_FAKE_IP_UNDECLARABLE_NETWORKS`,
+`url_safety.py:131-135`). Side benefit: `web_extract`, platform attachment downloads and the browser
+relay use the same guard, so they are fixed together.
+**Fix 2 (this skill only)**: reinstall through a three-segment identifier (back to rung 1) — the source
+becomes `skills.sh` (GitHub API, bypasses this guard), `check` works immediately, and you get the whole
+directory as a bonus. **Fix 3**: set proxy env vars such as `HTTPS_PROXY` — `url_safety.py:367` has a
+"hostname + configured proxy → hand DNS to the proxy" branch (TUN mode usually sets no env, so it is
+inactive by default).
 
-```
-$ hermes skills check
-No hub-installed skills to check.
-$ hermes skills uninstall obsidian -y
-Error: 'obsidian' is not a hub-installed skill (may be a builtin)
-```
+## Error text → meaning
 
-The trade: this is the **only route that `update` will never overwrite** (so it is the right one for
-a skill you intend to keep editing), and in exchange you get no version record, no audit log, no
-diff — when upstream moves you compare by hand. Deletion is
-`rm -rf <HERMES_HOME>/skills/<cat>/<name>`; `uninstall` will not touch it.
+Look here first — **do not follow the error's own advice**.
+
+1. **Two-segment identifier `owner/repo`** (the most common rung 1 drop signal) — measured 2026-09-30:
+   - `hermes skills install alchaincyf/nuwa-skill` → `Fetching: alchaincyf/nuwa-skill` →
+     `Error: Could not download 'alchaincyf/nuwa-skill'.`, plus advice to run
+     `hermes skills search nuwa-skill` and `hermes doctor` — **both suggestions are dead ends**
+     (search does not find it either; doctor finds nothing wrong).
+   - The same identifier via `hermes skills inspect alchaincyf/nuwa-skill` →
+     `Error: Could not find 'alchaincyf/nuwa-skill' in any source.`
+   - Both are **one fact, two subcommand failure branches**: `install` goes
+     `do_install → _resolve_source_meta_and_bundle`, walking all 9 adapters (`inspect` + `fetch`),
+     **every one returns None with no metadata at all** → it falls through to
+     `_print_fetch_failure`'s generic text (the "it is in the index but gone upstream" wording only
+     appears when metadata exists).
+   - Of those 9 adapters only **2 actually sent HTTP**: `skills-sh` → `GET
+     https://skills.sh/alchaincyf/nuwa-skill` → **308** (that is the repo page, not a skill page), and
+     `lobehub` → `https://chat-agents.lobehub.com/alchaincyf/nuwa-skill.json` → **404**; the other 7
+     (`official`/`hermes-index`/`well-known`/`url`/`github`/`clawhub`/`browse-sh`) short-circuit at the
+     identifier-shape check (`github` requires ≥3 segments).
+   - **Conclusion: no source claims a two-segment identifier. Do not go spelling-hunting and do not run
+     `doctor` on the error's advice — for type 1 add the trailing slash; for types 2/4 drop a rung.**
+2. **`Could not find 'https://…' in any source.` when what you passed was a URL (rung 3)**: on a machine
+   that has not declared `fake_ip_ranges`, this is the SSRF guard. Fix it as above. **Do not read it as
+   "this skill does not exist".**
+3. **`Could not download '<url>'. Check the name with hermes skills search SKILL.md and check your
+   internet connection. If it keeps failing, run hermes doctor.` (rung 3)**: Hermes' generic text —
+   **you cannot tell a 404 from a typo**. Measured on one repo: `…/kangarooking/cangjie-skill/SKILL.md`
+   (no ref) → **HTTP 404**; adding `main` / `master` / `HEAD` → **HTTP 200**. Check it yourself first:
+   `curl -s -o /dev/null -w '%{http_code}' "<url>"`.
+4. **A `blob` page link (any rung)**: `UrlSource` claims a URL by "path ends in `.md`"
+   (`tools/skills_hub_sources.py:156-184`), so it drags back the **whole HTML page** as if it were
+   `SKILL.md`; the scan judges `DANGEROUS` (`hidden_div`, `translate_execute`, `oversized_file`, 13
+   findings) → `BLOCKED`, `--force` does not override it, and **nothing gets installed**. Switch to
+   `raw.githubusercontent.com`.
 
 ## FAQ
 
-- **Why can't I use a `github.com/.../blob/...` page link?** `UrlSource` claims a URL by "path ends
-  in `.md`" (`tools/skills_hub_sources.py:156-184`), so it drags back the **whole HTML page** as if it
-  were `SKILL.md`; the scan judges `DANGEROUS` (`hidden_div`, `translate_execute`, `oversized_file`,
-  13 findings) → `BLOCKED`, `--force` does not override it, **nothing gets installed**. Use
-  `raw.githubusercontent.com`.
-- **The raw URL must have four segments**: `https://raw.githubusercontent.com/<owner>/<repo>/<ref>/<path>`.
-  Measured on one repo: `…/kangarooking/cangjie-skill/SKILL.md` (no ref) → **HTTP 404**; adding
-  `main` / `master` / `HEAD` → **HTTP 200**. Hermes' error is the generic
-  `Could not download '<url>'. Check the name with hermes skills search SKILL.md and check your
-  internet connection. If it keeps failing, run hermes doctor.` — **you cannot tell a 404 from a
-  typo**. Check it yourself first: `curl -s -o /dev/null -w '%{http_code}' "<url>"`.
-- **Why did I only get 3 files?** The URL route downloads the files the body **explicitly
-  references** under `references/ templates/ scripts/ assets/` (same file, `:210-240`). Same skill,
-  measured: URL route 3 files vs tap route 18 — the difference is the unreferenced `scripts/`,
-  `agents/`, `eval-viewer/`.
-- **⚠ The URL route builds a broken skill for "repo root is the skill" repos.** Measured on
-  `kangarooking/cangjie-skill`: `Files: SKILL.md, scripts/cangjie.py, scripts/validate_skill_pack.py,
-  templates/BOOK_OVERVIEW.md.template` (**4 files / 40 KB**), while the body references
-  `methodology/` (9) + `extractors/` (5) = **14 files** — those two directories are not among the
-  four allowed prefixes, so **all of them are lost**. Such repos should go through B/C or manual (D).
 - **Where does the skill name come from?** First the frontmatter `name:`; otherwise the directory
   name/slug in the URL; if neither, an interactive TTY asks you and non-interactive (`-y`) refuses —
   pass `--name`. A frontmatter like `My Skill v2` is unusable; use `--name my-skill-v2`.
-- **Floating ref risk**: `/main/` follows upstream, so the next `update` takes new content with **no
-  version to fall back to**. Pin the ref to a commit or tag for reproducibility. (Mechanism inferred;
-  not measured by moving an upstream ref.)
-- **Fit of this route**: it is the only one of the four GitHub routes that is "semi-automatic" — it
-  enters the lock and works with `check`/`update`, but has no commit pin and no integrity guarantee
-  beyond `files`.
-- **⚠ `check` on a URL-sourced skill reports `unavailable` — what then?** (hit for real on this
-  machine, 2026-09-30) **The skill is not broken; the download path is blocked by the SSRF guard.**
-  Four steps:
-  1. `check` only reads from adapters matching the recorded source (`_source_matches`,
-     `tools/skills_hub_install.py:262-330`; docstring: *"Each entry is fetched ONLY from adapters
-     matching its recorded source … a missing adapter reports unavailable"*) → a `url` entry can only
-     be fetched by `UrlSource`.
-  2. A `url` entry has **no** `metadata.source_revision` → the zero-download fast path ("same
-     revision → `up_to_date`") is unreachable (`current_revision` is implemented only by
-     `GitHubSource`, `skills_hub_github.py:300`; the base class returns `""`,
-     `skills_hub_models.py:154-157`) → it must really download.
-  3. `UrlSource` inherits `GuardedFetchMixin`; downloads go through `hub()._guarded_http_get`
-     (`skills_hub_models.py:163-167`) → resolve the host, then check for a private address. Behind a
-     fake-IP TUN proxy: `raw.githubusercontent.com` → **198.18.0.8 (A)** and **2001:2::13 (AAAA)**,
-     both in benchmarking ranges → blocked.
-  4. Hence `_load → None → fetch → None → status: unavailable`. Real error text:
-     ```
-     Blocked request to private/internal address: raw.githubusercontent.com -> 198.18.0.8
-     Blocked unsafe Skills Hub URL: https://raw.githubusercontent.com/.../SKILL.md
-     ```
-  **Fix 1 (recommended, whole machine)**: declare the proxy's fake-IP ranges in
-  `~/.hermes/config.yaml` under `security:` — this is exactly the switch
-  `tools/url_safety.py:183-214` keeps for Mihomo/Clash fake-ip:
-
-  ```yaml
-  security:
-    fake_ip_ranges:
-      - 198.18.0.0/15      # IPv4 fake-ip
-      - 2001:2::/48        # IPv6 fake-ip —— 只写上面那段仍会被拦在 2001:2::13
-  ```
-
-  Measured: declaring only `198.18.0.0/15` → still `Blocked … -> 2001:2::13`; **both ranges** →
-  `is_safe_url → True`, `UrlSource.fetch` succeeds (`files=['SKILL.md']`). Ranges overlapping
-  RFC1918/loopback/CGNAT are dropped by the guard (`_FAKE_IP_UNDECLARABLE_NETWORKS`,
-  `url_safety.py:131-135`). Side benefit: `web_extract`, platform attachment downloads and the
-  browser relay use the same guard, so they are fixed together.
-  **Fix 2 (just this skill)**: reinstall through a three-segment identifier (type 3): the source
-  becomes `skills.sh` (GitHub API, bypasses this guard), `check` works immediately, and you get the
-  whole directory as a bonus. **Fix 3**: set proxy env vars such as `HTTPS_PROXY` —
-  `url_safety.py:367` has a "hostname + configured proxy → hand DNS to the proxy" branch (TUN mode
-  usually sets no env, so it is inactive by default).
+- **Can `search` prove a GitHub skill does not exist?** No. Measured: `hermes skills search nuwa`
+  returns 12 rows, **all from `clawhub`** (`nuwa-dual-mode`, `nuwa-video-gen`, …), not one of them the
+  GitHub repo in question. The discovery/search failure modes are in
+  `install-hermes-skills-from-names.md`.
 - **Why doesn't a `Source: skills.sh` entry report `unavailable`?** Different HTTP paths: the `url`
   source goes through `_guarded_http_get` (with the SSRF pre-check), while `GitHubSource._github_get`
-  goes through `hub()._skills_hub_http_get` (`tools/skills_hub_github.py:446-465`, no pre-check) —
-  and `skills.sh`'s own `fetch()` is literally `self.github.fetch(...)`. Same machine, same day:
+  goes through `hub()._skills_hub_http_get` (`tools/skills_hub_github.py:446-465`, no pre-check) — and
+  `skills.sh`'s own `fetch()` is literally `self.github.fetch(...)`. Same machine, same day:
 
   ```
   organize-obsidian-notes │ skills.sh │ up_to_date      ← 走 GitHub API

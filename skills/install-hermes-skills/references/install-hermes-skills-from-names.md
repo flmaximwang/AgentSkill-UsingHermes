@@ -47,7 +47,7 @@ from the current code root's `skills/` into the profile's `<HERMES_HOME>/skills/
   your unmodified bundled copies) and `hermes skills opt-in [--sync]` to re-enable.
 - Three different words mean three different things: **bundled** (seeded from the code tree, managed
   by `diff`/`reset`/`list-modified`), **local** (manually copied, managed by nothing — see
-  `install-hermes-skills-from-github.md` Route D), **hub-installed** (in the lock, managed by
+  `install-hermes-skills-from-github.md` rung 2), **hub-installed** (in the lock, managed by
   `check`/`update`/`audit`/`uninstall`).
 
 ## `search` — how it lies, and how to make it work

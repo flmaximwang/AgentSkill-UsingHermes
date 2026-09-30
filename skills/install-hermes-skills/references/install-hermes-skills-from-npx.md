@@ -56,7 +56,7 @@ Hermes tracks skills it installs in its lock (`<HERMES_HOME>/skills/.hub/lock.js
 installed outside that path — a manual `cp -R`, or a tool that writes into a project's own
 `.hermes/skills` / `.agents/skills` — is a **local** skill: `check`, `update`, `audit` and
 `uninstall` cannot see it, and there is no version record (the full consequences are measured in
-`install-hermes-skills-from-github.md` Route D; project-local skills additionally need
+`install-hermes-skills-from-github.md` rung 2; project-local skills additionally need
 `hermes skills trust` before they load, per `hermes skills --help`).
 
 The measured counterpart is in the GitHub FAQ: the same skill installed through the raw-URL route

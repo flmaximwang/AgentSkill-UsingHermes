@@ -56,8 +56,11 @@ blocked, it usually shows which other route to take instead.
 | `@publisher/slug` (clawhub.ai) | `references/install-hermes-skills-from-clawhub.md` |
 | a lone `SKILL.md` with no repo behind it | the raw-URL route in the github reference |
 
-Read the one file the shape points at — each is a complete, tested protocol for that source. When you
-cannot tell what you have, work from the shape: the source router resolves in this order
+Read the one file the shape points at — each is a complete, tested protocol for that source. Where a
+reference presents its routes as a **ladder** (the github one does), walk it from the top and step down
+a rung **only** when the current one is impossible — each rung states its own drop signal, and the
+lower rungs lose files or lose maintenance. When you cannot tell what you have, work from the shape:
+the source router resolves in this order
 (`tools/skills_hub_search.py:99-114`)
 
 ```
@@ -65,7 +68,7 @@ official → hermes-index → skills.sh → well-known → url → github(tap) �
 ```
 
 and two shapes are accepted by **nothing** (`install` and `inspect` then report it two *different*
-ways — see the github reference's "Known misjudgments"):
+ways — see the github reference's "Error text → meaning" table):
 
 - a **two-segment** `owner/repo` → use `owner/repo/` (trailing slash) or a raw URL instead;
 - a `blob` link, or a three-segment identifier ending in `/SKILL.md`.
@@ -154,10 +157,10 @@ deciding field; the content hash is.
 
 ```
 install-hermes-skills/
-├── SKILL.md  (168 lines)
+├── SKILL.md  (171 lines)
 ├── references/
 │   ├── install-hermes-skills-from-clawhub.md  (72 lines)
-│   ├── install-hermes-skills-from-github.md  (363 lines)
+│   ├── install-hermes-skills-from-github.md  (447 lines)
 │   ├── install-hermes-skills-from-names.md  (132 lines)
 │   ├── install-hermes-skills-from-npx.md  (66 lines)
 │   └── install-hermes-skills-from-skill-sh.md  (193 lines)
