@@ -25,7 +25,7 @@ SKIP_SUFFIXES = {".pyc", ".pyo"}
 # Files rendered before directories at each level; the entry point first of all.
 FIRST_FILES = ["SKILL.md", "README.md"]
 
-TREE_HEADING = "install-hermes-skills/"
+TREE_HEADING_SUFFIX = "/"  # the heading is "<skill-dir-name>/", taken from the directory
 
 
 def _default_skill_dir() -> Path:
@@ -77,7 +77,7 @@ def _walk(directory: Path, prefix: str = "", override: "dict[str, int] | None" =
 
 def render(skill_dir: Path, override: "dict[str, int] | None" = None) -> str:
     """The full replacement block, markers included."""
-    tree = [TREE_HEADING, *_walk(skill_dir, override=override)]
+    tree = [f"{skill_dir.name}{TREE_HEADING_SUFFIX}", *_walk(skill_dir, override=override)]
     body = "\n".join(tree)
     return f"{MARKER}\n\n```\n{body}\n```\n\n{MARKER}"
 
