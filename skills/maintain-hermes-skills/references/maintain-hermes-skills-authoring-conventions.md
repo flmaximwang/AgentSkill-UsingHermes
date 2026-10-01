@@ -112,6 +112,13 @@ optimisation); this pack owns the Hermes-specific half.
 - **Assume more than one writer.** Check `git status --short` and file mtimes before and after a batch of
   edits; a write can be refused as unread-since-modified, and the fix is to re-read once and retry, not to
   force it. If the diff is larger than your change, say which files you did not touch.
+- **Regenerating a skill's tree encodes whatever is uncommitted inside it.** The generator renders every
+  line count off the working tree, so regenerating a skill a sibling session is mid-edit in ships *their*
+  uncommitted count inside *your* commit, and a fresh clone's `verify-skill-package.py` then fails against
+  the pushed reference. Check `git status --short` for the skill you are about to regenerate; if it is
+  dirty, hold both the tree and the row that needed it. Measured 2026-10-01: a route row for
+  `install-hermes-skill-from-a-profile` would have carried a sibling's uncommitted 527→595 line count for
+  `install-hermes-skills-from-github.md`, and was deferred until that commit landed.
 - **A profile copy that is *ahead* of the clone is content the repo lacks, and `update --force` deletes
   exactly that.** Run `diff -rq <clone>/skills/<name> "$HERMES_HOME/skills/<install_path>"` immediately
   before any force; when the installed copy holds the newer text, backport it *mechanically* — match the
