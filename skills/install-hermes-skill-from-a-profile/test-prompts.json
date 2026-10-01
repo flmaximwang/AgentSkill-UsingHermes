@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "prompt": "profile 里又冒出个新 skill（curator 建的，没 lock 条目），先评估它跟已有技能的关系，再迁到仓库里、从远程重装一遍",
+    "expected": "五阶段走完：Phase 0 先三次切分定位——lock.json 有键=hub 装的（不是本技能的业务），在 .bundled_manifest 里=bundled，两者都不是才是 local（本机 58 个 bundled 名字同样没有 lock 条目，所以 manifest 才是判据；.usage.json 的 created_by 是历史不是现状）；Phase 1 按 claim 逐条做 overlap 审计（方法在 maintain-hermes-skills 的引用里），得出唯一落点（并入已有技能 / 已有 pack 内新建 / 自建 pack）并要求一次 clarify（落点+终态+category+是否本次退役）；Phase 2 在 clone 里写成 pack 形态 → 生成器 → verify → 先预测 scan verdict 再 push；Phase 3 三段式标识符安装、--category 只在安装时读取、多 profile 逐 profile -p 安装；Phase 4 先回读（check up_to_date + diff -rq 空）再退役，删前 tar 备份并 grep lock 证明无条目。"
+  },
+  {
+    "id": 2,
+    "prompt": "这个 skill 我之前手拷进 profile 的，没有 lock 条目，怎么让它以后能 update？",
+    "expected": "答：无 lock 条目 = 没有 source of truth，check/update/uninstall 都看不见它；正规路是迁进 pack 仓库（已有 pack 就按 README 动词词表命名、README 加索引行与安装命令；没有就新建 repo，注意 gh repo create 留的是 https origin、裸 push 会卡凭据），push 后用三段式标识符安装（--category 只在安装时读取，换分类=uninstall+install），回读 check→up_to_date 与 diff -rq 空之后再删手拷副本（先 tar 备份）；不要用手拷+自写同步脚本当答案，并说明手拷产物永远没有 lock 条目这个代价。"
+  },
+  {
+    "id": 3,
+    "prompt": "迁进仓库以后，profile 里原来那份怎么办？要装到别的 profile 又该怎么做？",
+    "expected": "先交付后退役：先回读（hermes skills check → up_to_date、diff -rq 仓库 vs 已装目录为空、hermes skills list 只一行），再删宽松副本；同 --category 的安装会就地覆盖手拷目录，所以「原来那份」是被 install 消耗掉的，要按状态报告而不是当成漏了一步；装到别的 profile 必须逐 profile 装（hermes -p <profile> skills install …），skills 是 per-profile 目录树、不会传播；一份技能名有两个目录就是 drift，报告里要说清留下哪个。"
+  }
+]
