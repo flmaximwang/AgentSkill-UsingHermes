@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "prompt": "我有个 skill 仓库还没装，先看看里面都有什么技能，别装",
+    "expected": "把仓库的 name+description 表读进上下文，而不是安装：Phase 1 解析来源（本地目录直接用；owner/repo 或 git URL → git clone --depth 1 到 $HERMES_HOME/cache/scratch/skillrepo-<name> 并复用）；Phase 2 用 scripts/skill-index.py（YAML 解析 frontmatter、按技能名去重、--max-desc 截断）打印 category/name: description 行 + 统计脚注；Phase 3 只对选中的那条读全文（已装用 skill_view，未装用 read_file 读 clone 路径），绝不批量读正文；Phase 4 报告条数、代价（索引约占全文 1–2%）、以及明确说清什么没被加载。要说明代价：表在对话里不在系统提示里，下个会话不存在，check/update/uninstall 也看不见它。"
+  },
+  {
+    "id": 2,
+    "prompt": "load 和 install 有什么区别？",
+    "expected": "load=读仓库里每个 SKILL.md 的 frontmatter，把一张 name: description 表放进对话，不写 profile、不扫描、没有 lock 条目，check/update/uninstall 永远看不见它，表随会话消失（scratch 里的 clone 闲置即被清理）；install=install-hermes-skills 把技能复制进 <HERMES_HOME>/skills/<category>/<name>，过安全扫描、写 lock 条目、进 check/update/uninstall 生命周期，并从下个会话起拥有系统提示里的一行与 /skill-name 命令。两者不能互相替代：load 每次都要重新付索引的钱，install 一次就常驻一行；而且已装技能模型能自己选中，临时加载的表只影响读它的那一轮。要说清系统提示索引是按会话构建、字节稳定、prompt-cached，中途换表=破 prompt 缓存，所以外部目录只能当数据读。"
+  },
+  {
+    "id": 3,
+    "prompt": "这个技能库有几百个技能，全读描述进来行不行？",
+    "expected": "答：机制上可以，但天花板是总量不是机制——252 个唯一技能 ≈ 32.4k 字符 ≈ 16k token，几百到上千个时索引本身就很贵。做法：一次只索引一个仓库、按技能名去重（实测 14 个仓库裸走 737 行 → 去重后 252 行）、--max-desc 截断到 ~110 字符（Hermes 约定前 ~57 字符必须能独立触发，截在这里不丢信息）；CJK 描述约为同长度 ASCII 的 4 倍 token。要让表变小/控制谁进表的官方阀门是 agent.coding_context: auto|focus|on|off（非编码类目塌成 names-only 一行，条目永不删）、frontmatter requires_toolsets/fallback_for_toolsets、按平台 enable/disable。要长驻就走 skills.external_dirs 或装进 profile，但那就是另一个决定了。"
+  }
+]
