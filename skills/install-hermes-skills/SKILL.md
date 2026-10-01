@@ -15,7 +15,10 @@ the real problem is that no source accepts that shape.
 Two facts prevent most of the confusion, so they come first:
 
 1. **`Source:` is not necessarily where the content came from.** `Source: skills.sh` is a GitHub
-   fetch wearing a relabelled badge; the truth lives in `metadata.source_url` in the lock.
+   fetch wearing a relabelled badge; the truth lives in `metadata.source_url` in the lock. The printed
+   **`Identifier:`** line is what names the route that actually claimed your input — `Source: official`
+   for an identifier you spelled `skills-sh/…` means the official adapter won the race (measured on
+   `tt-a1i/archify`; rung 0 in the github reference).
 2. **`Trust:` follows the source, and trust × scan verdict decides whether `--force` is needed** — so
    the same repo can install cleanly through one route and be blocked through another.
 
@@ -144,7 +147,7 @@ clawhub index, but its files no longer exist upstream` — a dead publisher entr
 
 | You were handed | Read |
 |---|---|
-| `github.com/…` or `raw.githubusercontent.com/…` (repo / `tree` / `blob` / raw link) | `references/install-hermes-skills-from-github.md` |
+| `github.com/…` or `raw.githubusercontent.com/…` (repo / `tree` / `blob` / raw link) — **check rung 0 first**: the skill may already be an official catalog stub | `references/install-hermes-skills-from-github.md` |
 | `npx skills add <repo> --skill <name>` (a skills.sh page or README command) | `references/install-hermes-skills-from-npx.md` |
 | `owner/repo/path`, or `skills.sh/<owner>/<repo>/<skill>` | `references/install-hermes-skills-from-skill-sh.md` |
 | a bare name / keyword, "the official X", a bundled or optional skill | `references/install-hermes-skills-from-names.md` |
@@ -283,13 +286,13 @@ deciding field; the content hash is.
 
 ```
 install-hermes-skills/
-├── SKILL.md  (306 lines)
+├── SKILL.md  (309 lines)
 ├── test-prompts.json  (12 lines)
 ├── references/
 │   ├── install-hermes-skills-diagnosis.md  (219 lines)
 │   ├── install-hermes-skills-external-pack-adoption.md  (105 lines)
 │   ├── install-hermes-skills-from-clawhub.md  (87 lines)
-│   ├── install-hermes-skills-from-github.md  (527 lines)
+│   ├── install-hermes-skills-from-github.md  (595 lines)
 │   ├── install-hermes-skills-from-names.md  (202 lines)
 │   ├── install-hermes-skills-from-npx.md  (166 lines)
 │   ├── install-hermes-skills-from-skill-sh.md  (193 lines)

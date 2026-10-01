@@ -3,10 +3,13 @@
 Get the github path first. A `github.com` link tells you *where* the skill is, not *what*
 `hermes skills install` should be given — the identifier's shape depends on the repo's layout, and
 **each shape buys a different amount of the skill**. This file is therefore a **ladder, not a menu**:
-three routes ordered by what they actually get you.
+four routes ordered by what they actually get you.
 
 **How to choose — walk it from the top, every time:**
 
+0. Check whether the skill already has an **official catalog stub** (rung 0 below). A stub installs the
+   same upstream tree on `official` trust, so it beats rung 1 outright whenever it exists — and with it,
+   the whole question of which identifier shape the repo needs never arises.
 1. Identify the repo type (Step 0 below). The type decides which rung is even reachable.
 2. Convert the link to the rung 1 identifier for that type and try it. This is the default; get it working.
 3. Only when a rung 1 **drop signal** fires (listed at the end of the rung 1 section), step down to rung 2.
@@ -21,14 +24,18 @@ them silently.
 
 | 档 | 方式 | 装到多少 | 维护 | 什么时候用它 |
 |---|---|---|---|---|
+| **0** | 官方目录 stub：`official/<类别>/<名>` | **整个上游技能目录** + pin 到 commit（实时拉上游树） | **hub 全管**，同档 1 | 上游技能在官方目录里有 catalog stub 时（`optional-skills/<cat>/<name>/SKILL.md` 只放元数据）：trust=official，CAUTION 也不用 `--force` |
 | **1** | 三段式标识符 `owner/repo/仓库内路径` | **整个技能目录** + pin 到 commit | **hub 全管**：`check` / `update` / `audit` / `uninstall` / `snapshot` 都认它 | **默认档**。类型 3 必用；类型 4 挑定目录后可用；类型 1 用 `<owner>/<repo>/` |
 | **2** | 手动复制（先 clone，再 `cp -R`） | 你拷多少有多少——**选对了就是完整目录** | **手工养**：不进 lock，没有版本记录、没有 `update`、没有审计 | 档 1 无法命名目标时：根布局技能、私有仓库、离线、超大仓库只想要其中一部分 |
 | **3** | 单个 `SKILL.md` 的 raw URL | 只有 `SKILL.md` + 正文**显式引用**的文件，且只在 `references/ templates/ scripts/ assets/` 四个前缀里 | hub 管，但**没有 commit pin** | **最后手段**：手上真的只有一个 `SKILL.md`（散落单文件、离线拷贝、正文之外什么也拿不到） |
 
 Why this order — the criterion is *the cost you pay later*, not "which command is shorter":
 
-- **Rung 1 is the only route that gets you the whole directory *and* automatic maintenance**, so it
-  comes first. Everything below it gives up one of the two.
+- **Rung 0 is the cheapest route when it exists**: it reaches the *same* upstream tree as rung 1, but
+  through `official` trust, which is the one row of the trust × verdict table that installs a `CAUTION`
+  verdict without `--force`. There is nothing to weigh — check for the stub, use it if it is there.
+- **Rung 1 is the only general route that gets you the whole directory *and* automatic maintenance**, so
+  it is the default the moment no stub exists. Everything below it gives up one of the two.
 - **Rung 2 matches rung 1 on install completeness** (you decide what to copy), and gives up
   maintenance: nothing will ever re-sync it, so an upstream change means comparing by hand.
 - **Rung 3 is last because it is the only route that can silently hand you a broken skill.** Measured
@@ -42,8 +49,9 @@ identifier, private repo, verdict BLOCKED), or did I just not work out what the 
 be? Only the first answer licenses a drop.
 
 **Contents**
-- The ladder — the three rungs, in order, with the criterion for each
+- The ladder — the four rungs, in order, with the criterion for each
 - Step 0 — which rung this repo can even reach (repo types, link forms, type → rung table)
+- Rung 0 — the official catalog stub: how to find one, why it preempts the identifier you spelled, and what it costs
 - Rung 1 — three-segment identifier: conversions per type, install, verify, optional tap, drop signals
 - Rung 2 — manual copy: complete install, maintenance is all yours
 - Rung 3 — raw `SKILL.md`: last resort, measured losses, the SSRF `unavailable` case
@@ -138,6 +146,66 @@ README 也值得扫一眼：作者常写明这是"一个 skill"还是"技能集�
 | 2 根技能 + 子技能 | 根技能 ✗ / 子技能 ✅ | 标识符**表达不了"只要根技能"**；尾斜杠能装但实测 **93–117 s → `CAUTION` → `BLOCKED` → `--force` → 156 文件 / 33.69 MB**，比档 2 还差 → 根技能直接降档。子技能走 `<owner>/<repo>/examples/<x>`（档 1） |
 | 3 聚合仓 | ✅ | 常规情形，一条命令到位 |
 | 4 非标准 / 深嵌套 | ✅（挑定目录） | 越深越容易装到非预期目标；这类仓库的根技能若走档 3 会掉文件 |
+
+## Rung 0 — the official catalog stub (check before converting the link)
+
+Hermes' own optional-skills catalog can carry an upstream skill as a **catalog stub**: a directory
+holding **only** a stub `SKILL.md`, whose `metadata.hermes.upstream` names the repo the real files come
+from. Installing the stub pulls the current upstream tree live (quarantined and scanned like any hub
+install) and pins the commit. Measured on this machine (2026-10-01):
+`<HERMES_HOME>/hermes-agent/optional-skills/creative/archify/` holds **1 file**, a 2,449-byte `SKILL.md`
+that opens `> **Catalog stub.** This entry is maintained upstream at tt-a1i/archify …` and carries
+
+```yaml
+metadata:
+  hermes:
+    category: creative
+    upstream:
+      repo: tt-a1i/archify
+      path: archify
+```
+
+Find one before you touch the identifier shape — the stub lives in the Hermes install tree, not in the
+repo you were handed:
+
+```bash
+grep -rl "upstream:" "$HERMES_HOME"/hermes-agent/optional-skills/*/*/SKILL.md    # HERMES_HOME default ~/.hermes
+find "$HERMES_HOME"/hermes-agent/optional-skills -iname "*<name>*"
+hermes skills inspect "official/<category>/<name>"        # read-only; Source: official, Trust: official
+hermes skills install "official/<category>/<name>" --category <category> -y
+```
+
+Measured, `tt-a1i/archify` — whose own README recommends the `skills-sh` form:
+
+| route | identifier | trust | `CAUTION` verdict | outcome |
+|---|---|---|---|---|
+| catalog stub | `official/creative/archify` | official | **ALLOWED, no `--force`** | 313 files / 11 MB, pinned to `d5a1333d` |
+| skills.sh | `skills-sh/tt-a1i/archify/archify` | community | blocked → needs `--force` | not reached — `official` claimed the identifier first |
+
+- **Read the `Identifier:` line, not only `Source:`.** `hermes skills inspect
+  skills-sh/tt-a1i/archify/archify` answered `Identifier: official/creative/archify` **after 2 min 24 s**:
+  the official adapter had already claimed it. `Source: official` on an identifier you spelled
+  `skills-sh/…` means your spelling was not the one used (the claim looks like a match on the trailing
+  skill name — mechanism inferred, the printed `Identifier:` is the measured part).
+- **The stub's frontmatter `version:` is catalog metadata, not the version you install** (stub `2.17.0`,
+  fetched body `metadata.version: "3.0"`, release channel `3.0.1`). Never report the stub's version as the
+  installed skill's version.
+- **What you pay: the whole upstream directory, tests included.** 313 files / 10,343 KB, of which `test/`
+  is ~250 files. The scanner returned `CAUTION` — 6× HIGH `exfiltration` (`assets/template.html:162` and
+  five `examples/*.html:162`: `src: url(data:font/woff2;base64,…`), MEDIUM `oversized_file`
+  (`bin/archify.mjs` 260 KB, `examples/*.html` 741–749 KB, `assets/template.html` 710 KB,
+  `renderers/shared/generated-validators.mjs` 518 KB), MEDIUM `too_many_files` ("313 files"), MEDIUM
+  `obfuscation` (`schemas/common.schema.json:37`) — and `Decision: ALLOWED — Allowed (builtin source,
+  caution verdict)`. That is the whole point of this rung: official trust is the row that installs a
+  `CAUTION` verdict without `--force`, while the same content through `skills.sh` is community + caution =
+  blocked.
+- **Maintenance is ordinary hub maintenance** on the recorded revision: `metadata.source_url` =
+  `https://github.com/tt-a1i/archify/tree/d5a1333d7447c866a765adac7d4d062f2f02e4d2/archify` with
+  `source_revision` equal to that commit; `source: official` / `identifier: official/creative/archify` /
+  `trust_level: trusted`. Measured `hermes -p <profile> skills check archify` → `up_to_date`, but it cost
+  **3 min 57 s** and the install 2 min 36 s — budget for it, a 300-file tree is not an instant check.
+- **Drop signal**: nothing under `optional-skills/` matches the repo or skill name → fall through to
+  rung 1 below. A stub exists only where somebody added one, so its absence says nothing about the repo.
 
 ## Rung 1 — three-segment identifier (the default; get this one working first)
 
