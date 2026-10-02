@@ -123,3 +123,99 @@ running process never re-read it.
 
 `hermes -p` is a global flag: put it **before** the subcommand. `hermes profile alias --remove`
 (measured `--help`) is the way to take an alias back off `PATH`.
+
+## Create lands an empty shell — two layers to fill
+
+`hermes profile create` prints its own warning (`has no API keys yet … or it will inherit keys from your
+shell environment`): a fresh profile has no model key, so "created" ≠ "runnable". Fill two layers:
+
+- **Settings layer — `config.yaml`** (machine-local; not part of a distribution package). The quick route is
+  copying a working home's file, but **check the source for a top-level `platforms:` section first** —
+  copying that binds the other profile's bot tokens along with it. Parse, do not grep:
+  `display.platforms` makes a string search a false positive.
+
+  ```bash
+  python3 -c "import yaml;print('platforms' in yaml.safe_load(open('<home>/config.yaml')))"
+  ```
+
+- **Secrets layer — `.env`**: copy only the keys that agent actually needs (model key, web-search key, its
+  own data tokens) out of another profile's `.env`, and **never print the values**.
+
+**Verification is a real turn, not a file check:**
+
+```bash
+hermes -p <name> chat -q "只回复两个字：就绪"     # an answer means it runs
+find <home>/skills -name SKILL.md | wc -l        # skills land per profile
+```
+
+### Installing skills into the new profile
+
+Skills are per-profile: `hermes -p <name> skills install "<identifier>" --category <cat> -y`. Having
+installed a skill in another profile does not give this one the skill. **A skill that exists only on a
+non-default branch is structurally unreachable through the three-segment identifier**: the syntax has no ref
+slot, always pulls the default branch, and answers `Could not download '<owner>/<repo>/<path>'` — that is
+"wrong branch", not "skill does not exist". The official route is a raw URL with the ref pinned to a **commit
+SHA** (not a branch name: non-ASCII branch names break at the HTTP layer, and a SHA also freezes the
+content). The cost, stated plainly: that entry carries no `source_revision`.
+
+## Rename — what it fixes itself, and the collateral it leaves
+
+```bash
+hermes profile rename <old> <new>
+```
+
+It handles, without help: the directory rename, the wrapper alias (old removed, new installed), stopping and
+removing the old name's gateway service, unbinding the old name from the live multiplexer's routes,
+migrating the identity keyed by profile name (`agent:<old>:*` routing keys, `sessions.profile_name`,
+`gateway_heartbeats`, the delivery/routing index), appending the old name to the new profile's
+`profile.yaml → previous_names`, retargeting `active_profile`, and hot-serving the new name back.
+
+**It does not touch these — scan them by hand, or they break silently:**
+
+| 写死了旧名的地方 | 不改的后果 |
+|---|---|
+| `cron/jobs.json` 里 job prompt 内的绝对脚本路径（`bash /Users/…/profiles/<old>/scripts/x.sh`） | 那个 cron 当晚就 `Script exited with code 1` |
+| profile 自己的 helper 脚本按字面路径读自己的 `.env` | 读不到 token，静默走错配置 |
+| 技能正文引用的 `~/.hermes/profiles/<old>/…`（run-book 类笔记最常见） | 下次照笔记执行时路径不存在 |
+| 分发包 `~/Repositories/Agent-*/`：`distribution.yaml → name`（**就是** profile 名；sync/统计脚本都从这里解析，脚本本身不硬编码名）、README 标题与每个示例命令、仓库目录名 | 包指向一个不存在的 profile |
+| 别的 profile 的技能 / 笔记里提到的旧名 | 指路指到空气 |
+
+Two traps while scanning:
+
+- **Grep the bare name, not just the `profiles/<old>` path form.** The path may be assembled at runtime
+  (`Path.home() / ".hermes" / "profiles" / "<old>" / ".env"`), and any replacement keyed on `profiles/<old>`
+  misses it — after replacing, grep the bare name again to confirm.
+- **Exclude the record-class files**: `.curator_ledger.jsonl`, `.curator_backups/`, `cron/output/`,
+  `cache/`, `sessions/`, `logs/`, `state.db*`, `*.bak-*`. They are history; rewriting them is forging
+  history, and leaving them alone changes nothing at runtime.
+
+Verification:
+
+- `hermes profile list` — both names present, each gateway `running`.
+- **Read the multiplexer's state, not the profile's own `gateway_state.json`** — the latter is stale and will
+  show `served_profiles: []`, which is a lie. Look at `<root>/gateway_state.json`: `served_profiles` and
+  `platforms` should carry `<new>` and `<new>:<platform>` (e.g. `quant-investor:feishu`), which is the proof
+  the platform route survived.
+- Commit the distribution-package side (push only if it has a remote). Say in the commit message which
+  changes belong to this rename and which pre-existed, and stage by pathspec — a shared clone may hold
+  someone else's uncommitted work.
+
+## Delete, and retrying an identity migration
+
+- Deletion is `hermes profile delete` (it also purges that profile's session/routing identity).
+- If the rename's identity migration did not settle: `hermes profile migrate-identity <old> <new>`
+  (idempotent, retryable). If a delete did not settle: `purge-identity`. Both only mean anything for a named
+  profile — `default` can only change its display name.
+
+## Pitfalls
+
+- **"Created" is not "runnable"**: without a key layer the profile is a shell, and one real
+  question-and-answer turn is the only proof.
+- Before copying `config.yaml`, check the top-level `platforms:` (parse the YAML, do not grep): two profiles
+  holding one bot token collide — the clone path has a guard, a hand copy has none.
+- Reporting a rename as done without the bare-name grep leaves a broken cron for the user to find that
+  night.
+- Use the official verbs instead of a home-made fallback: `create` / `rename` / `delete` /
+  `migrate-identity` / `purge-identity` are all first-class.
+- `previous_names` (in `profile.yaml`) is the only record of what this profile used to be called — do not
+  clean it up as dirt after a rename.

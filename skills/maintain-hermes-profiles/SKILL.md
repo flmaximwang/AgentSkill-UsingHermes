@@ -1,6 +1,6 @@
 ---
 name: maintain-hermes-profiles
-description: Manage Hermes Agent profiles and their per-profile gateways — create or clone a profile, run several gateways online at once, keep instances isolated, and switch profiles. Use when the user wants multiple bots or agents running simultaneously, asks about `hermes profile create`, `use`, `list` or `show`, about per-profile LaunchAgent or systemd gateway services, gateway ports, or about why a profile switch did not take effect. Covers the two hard limits that decide which requests are possible today — the gateway is profile-blind and the Desktop GUI has no profile switcher — plus the workarounds for each.
+description: Manage Hermes Agent profiles and their per-profile gateways — create, clone, rename or delete a profile, run several gateways online at once, keep instances isolated, and switch profiles. Use when the user wants multiple bots or agents running simultaneously, asks about `hermes profile create`, `rename`, `delete`, `use`, `list` or `show`, about per-profile LaunchAgent or systemd gateway services, gateway ports, or about why a profile switch did not take effect. Covers the two hard limits that decide which requests are possible today — the gateway is profile-blind and the Desktop GUI has no profile switcher — plus the workarounds for each.
 ---
 
 # Manage Hermes Profiles and Their Gateways
@@ -76,6 +76,15 @@ Everything else names its profile explicitly. `-p` is a global flag and belongs 
 subcommand (`hermes -p <name> gateway start`, never `hermes gateway start -p <name>`), and a switch
 is CLI-only until the Desktop GUI gains a switcher.
 
+## The lifecycle verbs, and where they bite
+
+`create` lands an **empty shell** — no model key, so a real question-and-answer turn (not a file listing) is
+what proves it runs; `rename` fixes the directory and the identity itself but leaves every hard-coded old
+name stale (cron script paths, distribution packages, other profiles' notes), so a bare-name grep is part of
+the job; `delete` also purges that profile's session/routing identity, and `migrate-identity` /
+`purge-identity` are the idempotent retries when either did not settle. Full procedures, the collateral
+table and the two grep traps: `references/maintain-hermes-profiles-lifecycle.md`.
+
 ## Architecture, in the note's own terms
 
 | 概念 | 说明 |
@@ -117,7 +126,7 @@ are **not** read-only — on a machine whose bots are serving users, a wrong one
 
 | The request is about | Read |
 |---|---|
-| creating / cloning / describing a profile, the alias, `setup`/`chat`, `list`/`show`, `use` vs `-p`, when a switch takes effect | `references/maintain-hermes-profiles-lifecycle.md` |
+| creating / cloning / describing a profile, the alias, `setup`/`chat`, `list`/`show`, `use` vs `-p`, when a switch takes effect, the empty-shell key layers, per-profile skill installs, and **rename / delete / identity retries** | `references/maintain-hermes-profiles-lifecycle.md` |
 | per-profile gateway services, LaunchAgent / systemd paths, the batch `hermes-gateways` script, ports, the dashboard `/chat` exception | `references/maintain-hermes-profiles-gateways.md` |
 | "why did the switch not apply", "why is there no profile switcher", the two GitHub issues, workarounds, use-case matrix, official docs | `references/maintain-hermes-profiles-limitations.md` |
 
@@ -131,10 +140,10 @@ and the two issue links are the honest answer to give.
 
 ```
 maintain-hermes-profiles/
-├── SKILL.md  (142 lines)
+├── SKILL.md  (151 lines)
 └── references/
     ├── maintain-hermes-profiles-gateways.md  (111 lines)
-    ├── maintain-hermes-profiles-lifecycle.md  (125 lines)
+    ├── maintain-hermes-profiles-lifecycle.md  (221 lines)
     └── maintain-hermes-profiles-limitations.md  (76 lines)
 ```
 
