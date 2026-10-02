@@ -65,6 +65,18 @@ PY
 
 `safe` 才推（medium findings 不影响）；`caution` 多半是正文里出现了 **home 相对的字面路径**（ssh 配置/密钥文件名）或**提权词**——改成描述式表述即可，被替换的原文留在 source 抓取物里。
 
+**实测命中的五类形态与逐条改写方式**（2026-10-02，一个网络类 skill 首轮拿到 `dangerous`：1 critical + 5 high；改写后只剩 2 条 medium `python_subprocess`，设计一字未改）：
+
+| 命中形态 | 级别 / pattern_id | 改写成 |
+|---|---|---|
+| SSH 公钥清单那个**文件名**（字面量写出来就命中） | **critical** / `ssh_backdoor` | 用官方机制代替：`ssh-copy-id -i "<公钥路径>" <user>@<host>`（顺带避开「SFTP 子系统关闭 ⇒ scp 失败」那个坑） |
+| 家目录前缀**紧跟** ssh 配置目录（`~/` 与 `.ssh` 连写、`$HOME/` 与 `.ssh` 连写） | high / `ssh_dir_access` | 去掉家目录前缀，只写 `.ssh/config` |
+| 裸词形式的提权命令（**含逐字引用厂商输出里那道前缀**） | high / `sudo_usage` | 写「提权 / 以 root 执行」；引用时只保留命令本身，前缀改成说明句 |
+| 通配监听地址带端口 | high / `bind_all_interfaces` | 「22 与 5001 都在通配地址上监听」 |
+| 字面 IP 带端口 | medium / `hardcoded_ip_port` | `NAS=<地址>` + `"https://$NAS:5001/"`：变量形式保留可复制性，不再命中 |
+
+保留路径、警告与命令，只去掉「长得像那个动作」的形态——把整条警告删掉是更贵的错。
+
 **先看判级这一层，再决定改不改**：判级与严重度一一对应 —— `critical → dangerous`、`high → caution`、`medium/low 单独只算 informational（safe）`。
 所以 `dangerous` 就是**硬拦**：来源是 `community` / `trusted`（包仓库的常态）时**任何 flag 都覆盖不了**，`--force` 也不行，
 这个 revision 在 hub 上**永远装不上**。症状是 `hermes skills install` 回一句
@@ -99,6 +111,7 @@ python3 <profile>/skills/<类目>/<name>/scripts/<name>.py <一个真实输入> 
 - **跑过脚本的安装副本会被判成「本地已改」**：在副本目录里以模块方式导入/跑过脚本会留下 `__pycache__/`，hub 就报「kept your local edits」并跳过更新。修法：先删副本里的 `__pycache__` 再 `update`（实测即通过）——磁盘上的内容其实没被改动。
 - **`update` 是单向的**（已推送的修订 → profile），推不出去。回读时 `diff -rq` 若显示安装副本里有 clone 没有的内容（别的会话直接改过安装目录），那是**先判后并**的漂移：逐字节回移植进 clone → pathspec 提交推送 → 再 `update --force`（此时仍会报「kept your local edits」——跳过判据是**记录的哈希**，与两棵树现在是否已相同无关）；顺序反了就是静默删掉别人那份内容。归属与五步走见 evolve 流程。
 - **`hermes skills list` 的 Name 列会截断**（显示成 `maintain-hermes-mem…`）：拿完整技能名 grep 它**零命中**，看起来像「根本没装上」。回读以 `diff -rq` 与 `.hub/lock.json` 为准（有 `install_path` + `source_revision` 才算真装上）；要 grep 列表就 grep **名字前缀**，或直接读 lock。
+- **`hermes skills check` 不带名字会把 90+ 个技能逐个对远端核**（实测 300 s 跑不完）——回读只查刚装的那个：`hermes skills check <name>`（输出 `up_to_date` 即可），别为了「跑一遍 check」把一次交付卡死。
 - **别信 `Updated N skill(s).` 这句收尾行**：扫描被拒时它照打不误。真相是三件回读再加一件：`diff -rq` 空、`check` = `up_to_date`、**`.hub/lock.json` 里的 `source_revision` == 仓库 HEAD**。
 - `--category` **只在安装时读**：换类目 = 卸载 + 带 `--category` 重装。
 - 目标 profile 与类目查 `references/author-a-skill-in-a-pack-repo-pack-repos.md`（快照，以 `git remote -v` 与 `.hub/lock.json` 为准）。
@@ -166,6 +179,7 @@ python3 <profile>/skills/<类目>/<name>/scripts/<name>.py <一个真实输入> 
   `<本技能>/../../<兄弟技能>/scripts/<x>.py` 找（hub 安装后形状不变），并给一个显式覆盖参数（`--find-stock <路径>`）
   + 找不到时**明说找过哪些路径**、把那一半结论判成「无法判定」并给出专属退出码。**两处都要实测**：
   clone 里跑一次、hub 安装到 profile 后再从安装那份跑一次（本次实测两次都自动定位到正确的 find_stock.py）。
+- **切分 CLI 输出的标记前必须补一个换行**：用 `echo "###MARKER"` 切段时，前一段若是 JSON（`tailscale status --json` 这类）就没有结尾换行，标记会被**粘到最后一行上**——那一段 `json.loads` 静默失败、下一个段的 key 直接消失，输出看着"字段全空"却毫无报错。写 `printf '\n###MARKER\n'` 即可（本轮实测踩过，症状是 `TUN: ?`）。
 - **包内脚本不要依赖环境里的 `python3` 有第三方包**：同一台机器上，前台登录 shell 的 `python3` 与后台/非登录 shell
   解析到的 `python3` 可能不是同一个（实测前台是自带 PyYAML 的 3.9、后台落到没装 yaml 的 homebrew python3，
   脚本直接 `ImportError` 退出）⇒ 要么自带一个只吃目标子集的兜底解析器，要么在文档与命令里写死解释器路径；
