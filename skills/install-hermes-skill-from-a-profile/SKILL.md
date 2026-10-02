@@ -118,10 +118,16 @@ Details and the per-profile loop: `references/install-hermes-skill-from-a-profil
 Nothing is deleted on the strength of a plan. Two read-backs, then the delete:
 
 ```bash
-hermes skills check <name>                                  # up_to_date
+hermes skills check <name>                                  # up_to_date, and the name printed in FULL
 diff -rq ~/Repositories/<repo>/skills/<name> "$HERMES_HOME/skills/<cat>/<name>"   # prints nothing
-hermes skills list | grep <name>                            # exactly one row, Source: skills.sh
+hermes skills list | grep "<name minus its last 3 chars>"   # one row — the Name column is elided
 ```
+
+`hermes skills list` **elides long names** and has no `--wide`/`--json` flag (measured 2026-10-02: an
+installed `maintain-hermes-memory` lists as `maintain-hermes-mem…`), so a `grep` for the full name returns
+nothing on a skill that is installed fine — it cost three extra round trips the first time it bit. Match a
+prefix, or read the lock entry, which is keyed by the full name and is the authoritative "exactly one"
+check.
 
 A local copy is a plain delete once `grep` has proved the lock holds no entry for it; a hub-installed one
 goes through `hermes skills uninstall <lock key>`. Back the copy up (`tar czf`) before deleting it and say
@@ -161,10 +167,10 @@ missing step. Full five-phase runbook and the failure branches:
 
 ```
 install-hermes-skill-from-a-profile/
-├── SKILL.md  (171 lines)
+├── SKILL.md  (177 lines)
 ├── test-prompts.json  (17 lines)
 └── references/
-    ├── install-hermes-skill-from-a-profile-pipeline.md  (177 lines)
+    ├── install-hermes-skill-from-a-profile-pipeline.md  (182 lines)
     └── install-hermes-skill-from-a-profile-placement.md  (118 lines)
 ```
 

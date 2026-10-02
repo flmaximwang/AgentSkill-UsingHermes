@@ -223,7 +223,7 @@ evolve-hermes-skills/
 ├── test-results.md  (112 lines)
 └── references/
     ├── evolve-hermes-skills-handoff-to-darwin.md  (125 lines)
-    ├── evolve-hermes-skills-routing.md  (209 lines)
+    ├── evolve-hermes-skills-routing.md  (214 lines)
     └── evolve-hermes-skills-session-mining.md  (273 lines)
 ```
 

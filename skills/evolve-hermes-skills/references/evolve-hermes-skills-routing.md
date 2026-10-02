@@ -186,9 +186,14 @@ git add skills/<name> && git commit -m "docs(skills): add <name>" && git push or
 # 2. install it back from the repo (this is what creates the lock entry)
 hermes skills install <owner>/<repo>/skills/<name> --category <category> -y
 # 3. only now remove the loose local copy, and confirm the install landed first
-hermes skills list | grep <name>          # exactly one row, source skills.sh, category <category>
+hermes skills list | grep "<name minus its last 3 chars>"  # one row, source skills.sh, category <category>
 rm -rf "$HERMES_HOME/skills/<old path>/"
 ```
+
+Match a **prefix**, not the full name: `hermes skills list` elides long names (`maintain-hermes-mem…`,
+measured 2026-10-02) and has no wide/json flag, so a full-name `grep` finds nothing for a skill that
+installed fine — `hermes skills check <name>` prints the name in full, and the lock entry (keyed by full
+name) is the authoritative "exactly one" check.
 
 Step 3 is the step to slow down on: the local copy has no lock entry, so nothing will warn about the
 duplicate — a leftover copy shows up as a second skill with the same name and the same description, and

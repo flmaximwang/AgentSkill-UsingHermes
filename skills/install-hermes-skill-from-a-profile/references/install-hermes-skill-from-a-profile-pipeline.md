@@ -145,10 +145,15 @@ Measured on the fleet 2026-10-01, as the reference numbers a report can be check
 ## §4 Verify, then retire the loose copy
 
 ```bash
-hermes skills check <name>                                     # up_to_date
+hermes skills check <name>                                     # up_to_date, and the name printed in FULL
 diff -rq ~/Repositories/<repo>/skills/<name> "$HERMES_HOME/skills/<cat>/<name>"   # prints nothing
-hermes skills list | grep <name>                               # exactly one row for this profile
+hermes skills list | grep "<name minus its last 3 chars>"      # one row for this profile
 ```
+
+The displayed Name column is elided (`hermes skills list` has no wide/json flag), so grepping the full name
+of a long skill reports 0 rows for one that is installed — measured 2026-10-02 on
+`maintain-hermes-memory` → `maintain-hermes-mem…`. `check <name>` prints the name in full; the lock entry
+(keyed by full name) is the authoritative "exactly one" check.
 
 Then, and only then, the copy that is no longer the source of truth:
 
