@@ -104,6 +104,37 @@ Three facts about that last pair, from the sibling skill measuring them (`update
   finding that says the skill should live in a different repo is an uninstall + install, not an update.
 - The category is read from `install_path`'s parent, so the update keeps the skill where it is.
 
+### Reconciling a drifted installed copy
+
+`update` is one-directional: it moves a *pushed* revision into the profile and can never publish a local edit
+outward. So a non-empty
+
+```bash
+diff -rq ~/Repositories/<repo>/skills/<name> "$HERMES_HOME/skills/<install_path>"
+```
+
+is not a state to overwrite — it is a finding to judge, and it belongs to this run, not to `update`:
+
+1. **Read the diff before touching anything.** Two ordinary causes look identical in the output: the
+   installed copy is *behind* (normal right after a push — the update is the whole fix), or it is *ahead /
+   different* — content the clone does not have, written into the profile tree mid-session by an agent, the
+   curator, or a hand fix. `__pycache__/` and other build residue are neither: name them and move on.
+2. **Judge the block, never the direction.** Content only the installed copy holds may be exactly the
+   optimisation this run was called to find, or a stale experiment. Read it against the clone's text and
+   say which, with the reason — a user correction from this session is the best evidence available to you.
+3. **Keep it by backporting into the clone, byte-exact.** Match the block by a unique prefix, take the
+   replacement's exact bytes from the installed copy so quoted measurements stay identical, regenerate the
+   tree, commit **the backport alone** (pathspec), push.
+4. **Only then refresh the profile:** `hermes skills update <name>`. Expect
+   `kept your local edits` and pass `--force` — the skip test compares the *recorded* hash against the
+   copy's bytes, so any copy that was ever edited is skipped even after the backport made the two trees
+   identical. `--force` here is safe *because* step 3 already put that content in the pushed revision.
+5. **Read back three things:** `diff -rq` empty (ignoring `__pycache__`), `hermes skills check <name>` →
+   `up_to_date`, and the lock's `metadata.source_revision` equal to the clone's `HEAD`.
+
+A reconcile that stops at step 3 leaves the profile on the old revision; one that jumps to step 4 destroys
+the foreign content. Name the foreign content in the report — never commit another writer's work silently.
+
 **A repo-backed skill with no lock entry yet** (the first delivery of a new skill): install once, and the
 lock entry appears —
 
@@ -174,5 +205,5 @@ any note that cites the old path goes stale in that same commit.
 | Lock entry exists but the clone is missing | `git clone <repo_url>` into `~/Repositories/<repo>`, then re-check `source_revision` against the clone's log | clone the exact `source_revision` (`git checkout <sha>`) before editing, so the diff is real |
 | Clone's `HEAD` is behind the installed revision | `git pull --ff-only`; the installed copy came from a commit the clone has not got | `git fetch && git log --oneline -3` and report the divergence before editing — do not force a merge on the user's repo |
 | `git status --short` shows files you did not touch | leave them alone; stage with a pathspec and name them in the report | if one of them is the same file you edited, stop and re-read the file — a concurrent writer owns it |
-| `hermes skills update` answers "kept your local edits" | `--force` once the pushed edit is the intended content | restore the installed copy from the clone, then update |
+| `hermes skills update` answers "kept your local edits" | the recorded hash no longer matches the copy — run the copy-ahead `diff -rq` first, backport anything the clone lacks, push, then `--force` (§ *Reconciling a drifted installed copy*) | if the diff shows the installed copy is merely *behind* the clone, `--force` straight away and report which revision is now installed |
 | Skill has no `lock.json` entry and no repo, and the user wants neither promotion nor an in-place edit | report it as dropped with its receipts | queue it in the report's "not done" list |

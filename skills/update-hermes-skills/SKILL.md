@@ -47,6 +47,12 @@ The two commands hash different things, and that is the trap this skill exists f
 🔴 CHECKPOINT before `--force`: it `rmtree`-replaces the directory, so a copy holding content the clone
 lacks loses exactly that content — run the copy-ahead check first, and stop if the copy is ahead.
 
+**`update` is one-directional: a pushed revision → the profile.** It cannot publish a local edit outward,
+so it is not the tool that reconciles a drifted copy — an installed copy that is *ahead* of its clone is a
+job for `evolve-hermes-skills` (`references/evolve-hermes-skills-routing.md` § *Reconciling a drifted
+installed copy*): judge the drift, backport what is worth keeping into the clone, push, and only then
+update. Going straight to `--force` here is the one move that destroys the very edit that needed judging.
+
 Measured (sandbox, revision and hash both forged stale):
 
 ```
@@ -124,6 +130,10 @@ successful, so report the identifier you installed.
   (`references/update-hermes-built-in-skills.md`).
 - **Local copies** have no lock entry: `check`, `update`, `audit` and `uninstall` cannot see them.
   Re-install through the hub if you want them maintained.
+- **A local edit inside an installed skill.** No update command pushes content outward — an installed copy
+  that has drifted ahead of its clone is reconciled through the clone first (`evolve-hermes-skills` →
+  `references/evolve-hermes-skills-routing.md` § *Reconciling a drifted installed copy*). `--force` before
+  that publishes nothing and deletes the edit; this command only ever carries a pushed revision home.
 - **npx-installed skills** are managed by the skills CLI's own lock, not the hub one — same registry,
   different updater (`references/update-hermes-skill-sh-skills.md`).
 - **Sub-skills inside an installed bundle**: `list` reports them as `local`, but they live in the
@@ -211,7 +221,7 @@ In a session the same work is `/skills update <name> [--force]`; `/skills check`
 
 ```
 update-hermes-skills/
-├── SKILL.md  (225 lines)
+├── SKILL.md  (235 lines)
 ├── test-prompts.json  (12 lines)
 ├── references/
 │   ├── update-hermes-built-in-skills.md  (174 lines)

@@ -74,7 +74,7 @@ maintain-hermes-skills/
 └── references/
     ├── FAQs-on-hermes-skills-tap.md  (189 lines)
     ├── maintain-hermes-bundled-skills.md  (429 lines)
-    ├── maintain-hermes-skills-authoring-conventions.md  (161 lines)
+    ├── maintain-hermes-skills-authoring-conventions.md  (165 lines)
     ├── maintain-hermes-skills-inventory-and-availability.md  (354 lines)
     └── maintain-hermes-skills-overlap-and-merge.md  (163 lines)
 ```

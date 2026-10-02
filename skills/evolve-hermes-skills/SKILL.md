@@ -98,6 +98,16 @@ instead of recalling one. Two rungs, best first; the detection commands and both
 2. **No repo** — an agent-created or locally copied skill. Edit it in place under
    `$HERMES_HOME/skills/<path>`.
 
+**A drifted installed copy is a finding of its own, and it outranks both rungs.** Rung 1 assumes the clone
+is the only writer; when the profile copy differs from the clone, one side is wrong and the diff says which.
+Judge each differing block on its content, never on the direction the tool would move: a block that exists
+only in the installed copy is an edit someone made there — the curator, an agent mid-session, a hand fix —
+and it may be exactly the optimisation this run was called to find, while `update --force` deletes it. So
+the judgment comes first (keep it → backport into the clone byte-exact, commit, push; drop it → say why in
+the report). `hermes skills update` only ever carries a *pushed* revision **into** the profile; it cannot
+publish a local edit outward, so a reconcile that stops at the profile leaves the repo stale and the next
+update destroys the work. Commands, the false-positive list and the read-back: `references/evolve-hermes-skills-routing.md` §3.
+
 **🔴 Then ONE `clarify`, recommended-first, covering every finding** — the repo mapping, the findings to
 apply, whether to promote a rung-2 skill, and whether to run Phase 3. Never a per-skill question: the user
 handed you a batch, and a batch is one decision. Ask about the mapping explicitly even though you detected
@@ -157,7 +167,7 @@ a finding the user can drop.
 | A finding carries no message id or quoted output | drop it; do not forward it to Phase 2 | if the whole report is like that, re-brief the subagent with the schema — do not edit anything on that run |
 | A reported skill is not on disk any more | check `.usage.json` `state` and `hermes curator list-archived`; if archived, `hermes curator restore <name>` first | if `state` is still `active` with `archived_at: None`, a sibling session retired it mid-run (measured 2026-09-30: another evolve run merged `skill-library-consolidation` into the pack and deleted the loose copy while this run was still mining) — do not restore it; report the merge and where it landed |
 | A skill has no `lock.json` entry but the user says it has a repo | confirm the repo from `git remote get-url origin`; a repo the profile never installed from is rung 1 only after an install from it | edit rung 2 in place and offer promotion |
-| `hermes skills update <name>` answers `kept your local edits` | the installed copy drifted before this run — the clone is source of truth, so `--force` once the pushed edit is what you want | restore the installed copy from the clone and re-run the update |
+| `hermes skills update <name>` answers `kept your local edits` | expected after a reconcile: the skip test compares the **recorded** hash, not the file's current bytes — run the rung-1 copy-ahead `diff -rq` first, backport anything the clone lacks, push, then `--force` | if the diff shows the installed copy is merely *behind* the clone, `--force` straight away and report which revision is now installed |
 | darwin reports the skill is not in a git repo | run it against the clone (rung 1); for rung 2 use darwin's file-backup fallback | skip Phase 3 for that skill and say so — an unratcheted rewrite is not an optimisation |
 | The generator's `--check` fails on a skill you did not touch | name it in the report and touch nothing — another writer owns it | `git status --short` before staging, and commit with a pathspec |
 | The report has more findings than you can apply in one pass | apply and optimise the top 3 by cost to the session | queue the rest in the report's "not done" list with their receipts |
@@ -166,6 +176,12 @@ a finding the user can drop.
 
 - **Never edit the installed copy of a skill that has a repo.** The next `hermes skills update` replaces
   that directory wholesale, so the edit is lost and looks like it was applied.
+- **Never `--force` a drifted copy without reading the diff first.** `--force` `rmtree`-replaces the
+  directory, so whatever only the installed copy holds is gone the moment it runs; the diff is what decides
+  whether that content was junk or the optimisation this run exists to keep.
+- **Never reach for `hermes skills update` to publish a local edit.** It is one-directional — a pushed
+  revision into the profile — and it exits 0 while publishing nothing. Publishing is the clone, the commit
+  and the push; the update only carries them home (`update-hermes-skills`).
 - **Never hand-edit an installed package as the delivery mechanism.** Delivery is the hub route — commit,
   push, update — and a hand edit is the change no tool can see.
 - **Never let the subagent edit, and never take its report as fact.** Spot-check two findings, minimum.
@@ -201,11 +217,11 @@ a finding the user can drop.
 
 ```
 evolve-hermes-skills/
-├── SKILL.md  (212 lines)
+├── SKILL.md  (228 lines)
 ├── test-prompts.json  (12 lines)
 └── references/
     ├── evolve-hermes-skills-handoff-to-darwin.md  (125 lines)
-    ├── evolve-hermes-skills-routing.md  (178 lines)
+    ├── evolve-hermes-skills-routing.md  (209 lines)
     └── evolve-hermes-skills-session-mining.md  (273 lines)
 ```
 

@@ -126,7 +126,11 @@ optimisation); this pack owns the Hermes-specific half.
   byte-identical — and commit the backport **before** forcing. Measured 2026-09-30: an installed
   `remove-hermes-skills/SKILL.md` carried a 9-line paragraph the clone did not (a session had edited the
   installed tree directly); the byte-exact backport committed first, and the force that followed left no
-  drift. Name the foreign content in the report — never commit another writer's work silently.
+  drift. Name the foreign content in the report — never commit another writer's work silently. **This is
+  the mechanics only.** Whether the drifted block is an optimisation worth keeping is a judgment, and it
+  belongs to the evolve flow: `evolve-hermes-skills` →
+  `references/evolve-hermes-skills-routing.md` § *Reconciling a drifted installed copy*. `hermes skills
+  update` is one-directional and never publishes a local edit outward.
 - **A token-like string in a file is masked in tool output, so a literal replace silently misses.** Output
   renders secret-shaped text (a `$TOKEN` interpolation, an auth header) as `***`; an edit keyed on the
   string you were shown then matches nothing and reads as "the file already says something else". Confirm
