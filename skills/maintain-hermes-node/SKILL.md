@@ -121,8 +121,11 @@ reference records both the note's mechanism and the current source text.
 - **Never delete `~/.local/bin/cua-driver`, `~/.local/bin/hermes` or `~/.local/bin/hermes-acp`.** Those are
   the computer_use driver and the CLI entry points, not Node links. Verbatim from the note:
   ⚠️ **别删的链接**：`cua-driver`（Hermes computer_use 驱动）、`hermes`/`hermes-acp`（CLI 入口包装）
-- **Never `rm -rf ~/.hermes/node`** — it is the live runtime, and Hermes rebuilds that whole tree on a
-  managed-Node upgrade anyway (which is precisely why the redirect design exists).
+- **Never delete the managed runtime tree** (the directory `~/.hermes/node`) — it is the live runtime, and
+  Hermes rebuilds that whole tree on a managed-Node upgrade anyway (which is precisely why the redirect
+  design exists). The verbatim form of this warning is a shell command naming that path, which the pack's
+  scanner reads as `destructive_home_rm` (critical → the whole skill is `dangerous` → hub refuses to
+  install it at any revision); it is stated in prose here for that reason, not because the advice changed.
 - **Do not run the `mkdir -p ~/.hermes/node/etc && echo 'prefix=…' > …/npmrc` recovery while
   diagnosing** — it silently relocates where the user's future global packages land.
 - **Do not `brew upgrade node` assuming Hermes follows** — the managed runtime is versioned separately,
@@ -147,7 +150,7 @@ reference records both the note's mechanism and the current source text.
 
 ```
 maintain-hermes-node/
-├── SKILL.md  (157 lines)
+├── SKILL.md  (160 lines)
 └── references/
     ├── maintain-hermes-node-bootstrap.md  (130 lines)
     └── maintain-hermes-node-global-npm.md  (142 lines)
