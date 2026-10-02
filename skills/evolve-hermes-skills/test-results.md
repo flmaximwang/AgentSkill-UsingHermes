@@ -96,3 +96,17 @@ Round 1 raw assets (gold, arm tables, authoritative per-judge prompt order parse
 Re-running means rebuilding the three arm tables from this file, dispatching 2 fresh judges per arm with
 `delegate_task` (blind, shuffled, no labels), then scoring the returned `results` against the gold column
 above.
+
+**Two measured traps when re-running:**
+
+- **Never retype the per-judge prompt order.** Each judge answers with `P1…P20` labels that mean *its own*
+  shuffled order, so the labels are worthless without the order it actually received — and that order
+  survives in exactly one place: the `delegate_task` call's own arguments
+  (`sqlite3` → `messages.tool_calls` on the author's session, `json.loads(...)['tasks'][i]['context']`).
+  Retyping it by hand drifted on two of six judges this round (B2, C2) and silently produced a wrong
+  matrix. The subagent live logs and the child session rows in `state.db` do **not** keep the kickoff
+  context (logs truncate it with `…(+N chars)`; child sessions store only the goal), so there is no
+  second source to fall back on.
+- **Read the picks from the batch notification, not from a transcript.** The per-task JSON in the
+  completion message is the whole answer; parse it (`TASK n/6` blocks → `results`) rather than
+  re-transcribing, and score programmatically.
