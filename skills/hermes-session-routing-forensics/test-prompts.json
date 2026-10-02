@@ -1,0 +1,14 @@
+[
+  {
+    "prompt": "这个 Discord 线程的消息跑到别的 agent 会话里去了",
+    "expected": "查 routing key 与它的当前 owner（state.db）→ 是否一个 key 被两个 live row 持有 → 从日志找决策行 → 追那批委托产物落哪了 → 从 transcript 确认"
+  },
+  {
+    "prompt": "怎么确认某条消息到底被哪个 session 接走了",
+    "expected": "按 chat_id/路由键查 sessions 与 messages：references/…-state-db-routing-queries.md 的查询；scripts/routing_owner.py 直接给 owner"
+  },
+  {
+    "prompt": "两个 profile 的 bot 抢同一个频道会怎样",
+    "expected": "routing key 冲突：一条消息只归一个 session，先看 owner 再看谁在订阅"
+  }
+]

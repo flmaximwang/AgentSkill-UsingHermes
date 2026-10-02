@@ -1,0 +1,14 @@
+[
+  {
+    "prompt": "把这件事交给 rdm-assistance 那个 profile 做",
+    "expected": "先确认那个 profile 能不能被叫到（gateway 在线/路由）→ 写任务书 body → 建卡 → 订阅终态事件 → 确认真的跑起来 → 汇报"
+  },
+  {
+    "prompt": "我在 kanban 上给别的 profile 建了卡，工人起了又死了",
+    "expected": "先读 runs 的 outcome 再决定动不动；失败模式表在 references/…-kanban-worker-failure-modes.md"
+  },
+  {
+    "prompt": "卡建好了就算交出去了吗",
+    "expected": "不算：第 4 步要确认它真的跑起来，交出去后自己不要再做那份产物"
+  }
+]
