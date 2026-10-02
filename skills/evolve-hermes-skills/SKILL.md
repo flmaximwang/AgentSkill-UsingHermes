@@ -1,6 +1,6 @@
 ---
 name: evolve-hermes-skills
-description: "Harvest one finished session into skill edits. Mines the session's own transcript for the skills it loaded, the gaps where the real process outran them, and the skills that appeared while it ran; settles per skill whether the user maintains an external pack repo (edit the clone, commit, push, `hermes skills update`) or edits the profile copy in place; then feeds each gap through darwin-skill's optimisation loop. Use at the end of a session when the user says 'evolve the skills' / 'evolve-hermes-skills', '把这轮会话的教训存进 skill', '分析这次会话里我调用过的 skill', '看看流程有什么 skill 没覆盖的', 'curator 这轮新建了哪些 skill', or asks which skill to touch after a session."
+description: "Evolve skills from a session, and reconcile a copy drifted from its pack repo. Mines the session's own transcript for the skills it loaded, the gaps where the real process outran them, and the skills that appeared while it ran; settles per skill whether the user maintains an external pack repo (edit the clone, commit, push, `hermes skills update`) or edits the profile copy in place; then feeds each gap through darwin-skill's optimisation loop. Use at the end of a session when the user says 'evolve the skills' / 'evolve-hermes-skills', '把这轮会话的教训存进 skill', '分析这次会话里我调用过的 skill', '看看流程有什么 skill 没覆盖的', 'curator 这轮新建了哪些 skill', or when a profile skill's installed copy disagrees with its pack clone and someone has to say which side is the good text."
 ---
 
 # Evolve Hermes Skills
@@ -205,7 +205,8 @@ a finding the user can drop.
 | The question is | Read |
 |---|---|
 | how to read the transcript, the subagent brief, the extraction commands, the report schema, the gap classes | `references/evolve-hermes-skills-session-mining.md` |
-| which skills have an external repo, the two delivery sequences, what the no-repo rung costs, how to promote a local skill | `references/evolve-hermes-skills-routing.md` |
+| which skills have an external repo, the two delivery sequences, what the no-repo rung costs, how to promote a local skill, and the drift-reconcile branch | `references/evolve-hermes-skills-routing.md` |
+| what the 57-char description window actually routes, which head the last blind round chose, and which leaks are accepted | `test-results.md` |
 | what to hand darwin-skill, which paths to override, how its constraints interact with this pack's | `references/evolve-hermes-skills-handoff-to-darwin.md` |
 | how a skill gets installed, updated or removed, or what the hub can and cannot see | the siblings `install-hermes-skills`, `update-hermes-skills`, `remove-hermes-skills` |
 | what belongs in a skill in this pack, prose and structure rules, the generator and the lint | `maintain-hermes-skills` → `references/maintain-hermes-skills-authoring-conventions.md` + `scripts/README.md` |
@@ -217,8 +218,9 @@ a finding the user can drop.
 
 ```
 evolve-hermes-skills/
-├── SKILL.md  (228 lines)
+├── SKILL.md  (230 lines)
 ├── test-prompts.json  (12 lines)
+├── test-results.md  (98 lines)
 └── references/
     ├── evolve-hermes-skills-handoff-to-darwin.md  (125 lines)
     ├── evolve-hermes-skills-routing.md  (209 lines)
