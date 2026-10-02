@@ -6,7 +6,7 @@
 # Usage: bash scripts/discord_check.sh
 # Env:   HERMES_ENV            (default $HERMES_HOME/.env)
 #        HERMES_GATEWAY_LOG    (default ~/.hermes/logs/gateway.log)
-#        DISCORD_PROXY         e.g. http://127.0.0.1:7890 (auto-detected from macOS scutil otherwise)
+#        DISCORD_PROXY         e.g. the proxy client's loopback mixed port (auto-detected from macOS scutil otherwise)
 
 set -u
 
@@ -39,7 +39,7 @@ if [ "$code" != "200" ]; then
   echo "GATE 0  API unreachable (HTTP $code, proxy=${PROXY:-none})"
   if [ "$code" = "000" ]; then
     echo "        hint: direct access may resolve discord.com into a Clash fake-ip (198.18.0.0/15)."
-    echo "        hint: retry with DISCORD_PROXY=http://127.0.0.1:7890"
+    echo "        hint: retry with DISCORD_PROXY pointing at the proxy client's loopback mixed port"
   fi
   fail "gate 0 failed - fix network/proxy first."
 fi

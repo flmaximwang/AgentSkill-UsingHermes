@@ -1,6 +1,6 @@
 ---
 name: maintain-hermes-gateway
-description: "Use when setting up or debugging a Hermes gateway bot. Standing a platform bot up from scratch, an existing bot that is offline, silent or ignoring one specific user, `hermes gateway status` showing a platform not connected, or a slash command answering with a stale skill list. Discord is covered in depth; the log-first workflow and layer table apply to every platform."
+description: "Use when setting up or debugging a Hermes gateway bot. Standing a platform bot up from scratch, an existing bot that is offline, silent or ignoring one specific user, `hermes gateway status` showing a platform not connected, a slash command answering with a stale skill list, or a bot that admits messages and never answers because its own model call times out behind a local proxy. Discord is covered in depth; the log-first workflow and layer table apply to every platform."
 ---
 
 # Hermes gateway platform debug
@@ -11,7 +11,8 @@ Trigger: standing up a platform bot from scratch (**§0**), or an existing bot t
 silent, or ignores one specific user;
 `hermes gateway status` shows a platform not connected; or `gateway.log` reports a platform
 that `failed to start and are parked`; or a slash command answers with a stale or absent
-entry (`Unknown skill: …`, a skill missing from `/skill` autocomplete — §7). Discord is
+entry (`Unknown skill: …`, a skill missing from `/skill` autocomplete — §7); or it logs
+`inbound message` and then nothing, because the agent's own model call times out (§1). Discord is
 covered in depth (privileged intents,
 allowlists, guild membership, invite scopes, Portal-vs-client lists); the log-first workflow
 and layer table apply to every platform.
@@ -110,6 +111,56 @@ window costs those messages permanently. Check timestamps against when the user 
 acted before concluding a message should have arrived — both the socket drop and the DNS
 failure hit every WS-based platform on the machine at once, not just the one being debugged.
 
+### A bot that admits messages but never answers: the model-API path
+
+The admission line exists (§1) yet `response ready:` never shows up, and `agent.log` carries
+`APITimeoutError … Request timed out` from `agent.conversation_loop` — the allowlist, the
+mention and threading are already ruled out. The agent is running; its **own model call** is
+not getting out.
+
+Hermes' LLM transport reads the proxy from the **process environment only**:
+`agent/process_bootstrap.py::_get_proxy_for_base_url` → `_get_proxy_from_env()`
+(`HTTPS_PROXY` / `HTTP_PROXY` / `ALL_PROXY`). With none of them set it builds the client with
+explicit no-proxy mounts, which deliberately disables httpx's `trust_env` path — the source
+comment says macOS system proxies "are never applied". So a rule-based proxy client in
+**system-proxy mode with TUN off** (Clash Verge, ClashX, mihomo) leaves Hermes dialing
+direct: `scutil --proxy` pointing at `127.0.0.1:<mixed-port>` is evidence only for
+Safari/Electron front-ends, and every host that answers *only* through the proxy (a
+Cloudflare-fronted API, say) ends in connect timeouts × `agent.api_max_retries` — total
+silence, a working browser on the same machine, and a console full of timeouts.
+
+Fix: declare it in the profile's dotenv file (`$HERMES_HOME/.env`) — `HTTPS_PROXY` and
+`HTTP_PROXY` → `http://127.0.0.1:<mixed-port>` — then `hermes gateway restart`.
+`hermes_cli/env_loader.py` loads that file into the process environment at import, so a restart
+is what makes the value visible; as in §0/§2, an env edit without a restart changes nothing.
+Read the var back from the restarted process instead of assuming:
+`ps eww -o command= -p <gateway pid> | tr ' ' '\n' | grep -i proxy`.
+
+Settle the fix without touching the live gateway — a throwaway `HERMES_HOME` is enough: a
+minimal `config.yaml` (provider, `base_url`, `key_env`), the key passed in the environment,
+`hermes chat -q "Reply with exactly: <MARKER>"`, then read the answer out of that home's
+`state.db` (`select role, content from messages`) rather than trusting the CLI footer. Run one
+row with the proxy var and one without; `delegate_task` children are in-process and inherit the
+parent's environment, so a child that lands in `state.db` as `source=subagent` with the marker
+text proves the subagent path too, not just the parent.
+
+Worked example (2026-10-02, verified end to end) — Discord bot silent; provider `custom`,
+`base_url` `https://www.micuapi.ai/v1`, model `gpt-5.6-sol`:
+
+| Item | Value |
+|---|---|
+| Client state | Clash Verge `enable_system_proxy: true`, `enable_tun_mode: false`, mixed-port `7890`; `scutil --proxy` pointed at that loopback port; no proxy variable in the environment |
+| Direct vs proxied curl | direct `http=000` / 15 s timeout vs the same call through the mixed port → **200 in 0.48 s** (same URL, same key) |
+| Transport probe | `_get_proxy_from_env() = None` + `ConnectTimeout` 20 s → with the var: **200 in 0.76 s** |
+| Agent one-shot rows | no proxy **84.6 s** (it answered — direct is flaky, not hard-blocked, so never report "always times out"); `HTTPS_PROXY` in the process env **4.7 s**; proxy only in `.env` with a cleaned process env **7 s** |
+| After `.env` + `hermes gateway restart` | gateway process env carries `HTTPS_PROXY`/`HTTP_PROXY`; micu one-shot **5.6 s**; `APITimeoutError` count in the log after the restart **0**; a desktop `gpt-5.6-sol` session resumed on its own |
+| DNS side-note | the system resolver returned `127.0.0.1` + a patterned fake IPv6 (`1100:2200:3300:4400:5500:6600:7700:8800`) for `*.micuapi.ai` — *including a random subdomain* — while `dig` at 114/223/8.8 returned the real edge IPs: a wildcard sinkhole on the resolver path, not a stale cache. It explains the direct-dial hang, not the fix: a proxy CONNECT resolves the name remotely |
+
+Checking the model's own default first saves a round — `hermes config get model.default`
+(`model.provider` alongside it). In the run above the profile default had since been switched
+to another provider, so a fresh `hermes chat -q` answered on *that* model and proved nothing
+about the suspect one until `-m <model> --provider <name>` was passed explicitly.
+
 ## 2. Separate the failure layers
 
 | Symptom | Layer |
@@ -118,6 +169,7 @@ failure hit every WS-based platform on the machine at once, not just the one bei
 | Bot **online**, ignores everyone | Allowlist (§4) |
 | Online, answers others but not you | Allowlist, or mention rules |
 | Processed but you see no reply | Reply landed elsewhere (threading, §4) |
+| `inbound message` logged, no `response ready:`, `APITimeoutError` in the log | The agent's own egress — its model call never completes (§1, model-API path) |
 
 ## 3. Discord: privileged intents (the offline case)
 
@@ -299,7 +351,7 @@ Hermes-side reference: `https://hermes-agent.nousresearch.com/docs/user-guide/me
 
 ```
 maintain-hermes-gateway/
-├── SKILL.md  (307 lines)
+├── SKILL.md  (359 lines)
 └── scripts/
     └── discord_check.sh  (93 lines)
 ```
