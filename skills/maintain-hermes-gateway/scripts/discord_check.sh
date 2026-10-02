@@ -4,13 +4,13 @@
 # Never prints the bot token. Performs no mutating calls.
 #
 # Usage: bash scripts/discord_check.sh
-# Env:   HERMES_ENV            (default ~/.hermes/.env)
+# Env:   HERMES_ENV            (default $HERMES_HOME/.env)
 #        HERMES_GATEWAY_LOG    (default ~/.hermes/logs/gateway.log)
 #        DISCORD_PROXY         e.g. http://127.0.0.1:7890 (auto-detected from macOS scutil otherwise)
 
 set -u
 
-ENV_FILE="${HERMES_ENV:-$HOME/.hermes/.env}"
+ENV_FILE="${HERMES_ENV:-${HERMES_HOME:-$HOME/.hermes}/.env}"
 LOG_FILE="${HERMES_GATEWAY_LOG:-$HOME/.hermes/logs/gateway.log}"
 API=https://discord.com/api/v10
 

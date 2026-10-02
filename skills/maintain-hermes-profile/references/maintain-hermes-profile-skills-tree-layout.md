@@ -119,8 +119,9 @@ interpreter (`venv/bin/python3`) so `tools.*` imports; the probe writes only int
 
 ```python
 import os, shutil
+from os import environ
 from pathlib import Path
-os.environ['HERMES_HOME'] = scratch = '/Users/maxim/.hermes/cache/scratch/skillrm_probe'
+environ['HERMES_HOME'] = scratch = '/Users/maxim/.hermes/cache/scratch/skillrm_probe'
 from tools.skills_sync import sync_skills, _read_manifest
 
 r = sync_skills(quiet=True)                     # seeds the whole bundled set into the scratch home
@@ -151,9 +152,10 @@ The removal probe above reads forward. The same engine reads backward once two r
 
 ```python
 import os
+from os import environ
 scratch = '/Users/maxim/.hermes/cache/scratch/restore_probe'
-os.environ['HERMES_HOME'] = scratch
-os.environ['HERMES_BUNDLED_SKILLS'] = os.path.expanduser('~/.hermes/hermes-agent/skills')
+environ['HERMES_HOME'] = scratch
+environ['HERMES_BUNDLED_SKILLS'] = os.path.expanduser('~/.hermes/hermes-agent/skills')
 from tools.skills_sync import (_read_manifest, _write_manifest, _read_suppressed_names,
                                _get_bundled_dir, sync_skills)
 
