@@ -53,6 +53,31 @@ job for `evolve-hermes-skills` (`references/evolve-hermes-skills-routing.md` § 
 installed copy*): judge the drift, backport what is worth keeping into the clone, push, and only then
 update. Going straight to `--force` here is the one move that destroys the very edit that needed judging.
 
+### 🔧 Never edit the installed copy — and the measured repair when you already did
+
+**Rule: a hub-installed skill is edited in the clone, never in the installed tree.** An edit made in the
+installed tree is a dead end three times over: `check` then reads `update_available` *even though the copy
+is ahead*, `update` skips it with `kept your local edits`, and `--force` (the "obvious" fix) rmtree-replaces
+the directory and deletes exactly the edit. Measured on this machine 2026-10-03 — the agent edited
+`$HERMES_HOME/skills/git-annex/sync-and-share-content/SKILL.md` instead of the clone, and had to run this
+sequence afterwards:
+
+1. **Prove which copy you edited** — `diff -r <clone>/skills/<name> $HERMES_HOME/skills/<类目>/<name>`:
+   the diff *is* your edit, and the clone path is where it has to land.
+2. **Backport byte-identically into the clone** → `git add <pathspec>` → commit → `git push origin HEAD`
+   → confirm `git ls-remote origin HEAD` equals your sha (that read-back is the delivery evidence, not the
+   push's own output).
+3. **Only now** `hermes skills update <name> --force`. It may *still* print `kept your local edits` — the
+   skip verdict is the **recorded hash**, not whether the two trees currently agree — but it proceeds and
+   re-records the lock. `--force` at this point destroys nothing: clone and installed copy are identical.
+4. **Read back four things**: `diff -r` empty · `hermes skills check <name>` → `up_to_date` ·
+   `metadata.source_revision` in `.hub/lock.json` == the pushed commit · the changed line greppable in the
+   installed copy.
+
+Measured before/after: the just-edited skill read `update_available` (copy ahead of its clone); after
+backport + push + `--force` it read `up_to_date` with the lock's `source_revision` at the new commit
+(`2887ff0` for `sync-and-share-content`, `00c823f` for `update-hermes-skills`).
+
 Measured (sandbox, revision and hash both forged stale):
 
 ```
