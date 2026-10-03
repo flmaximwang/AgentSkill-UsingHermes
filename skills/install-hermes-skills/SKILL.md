@@ -94,7 +94,7 @@ clawhub index, but its files no longer exist upstream` — a dead publisher entr
   the message — a wall of sections is unreadable and the user will say so. Expand only when asked, then
   one question per turn, ≤3 sentences each.
 - **A correction to this skill, or to any skill in this pack, is written in the pack clone — never in the
-  installed copy.** Source of truth is `~/Repositories/AgentSkill-UsingHermes`; deliver with
+  installed copy.** Source of truth is `~/Documents/AgentSkill/AgentSkill-UsingHermes`; deliver with
   `scripts/auto-generate-skill-structure.py <name>` → `scripts/verify-skill-package.py skills/<name>` →
   `git add skills/<name>` → commit → push `main` → `hermes skills update <name>` (`--force` when the
   installed copy carries local edits). A `skill_manage`/editor patch under `$HERMES_HOME/skills/` looks

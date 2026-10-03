@@ -112,7 +112,8 @@ The inverse ladder, and which rung it belongs to:
 | You want | Command | Measured |
 |---|---|---|
 | the stock copy back, edits discarded | `hermes skills reset <name> --restore -y` | edited `box` → `Restored 'box' from bundled source.` + `Copied: box`, edit gone (`grep -c` → 0), `list-modified` empty |
-| a copy you deleted by hand, back | `hermes skills reset <name> -y` — clearing the entry makes the following sync see it as new | deleted `notion` → `Cleared manifest entry for 'notion'. …` + `Copied: notion`, directory back |
+| a copy you deleted by hand, back — profile **not** opted out | `hermes skills reset <name> -y` — clearing the entry makes the following sync see it as new | deleted `notion` → `Cleared manifest entry for 'notion'. …` + `Copied: notion`, directory back |
+| a copy you deleted by hand, back — profile **has** the `.no-bundled-skills` marker | `hermes skills reset <name> -y` **then** `hermes skills opt-in --sync` (re-run `opt-out` if the gate should stay shut) | 2026-10-03: `reset apple-notes -y` → `Cleared manifest entry for 'apple-notes'. Future \`hermes update\` runs will re-baseline against your current copy and accept upstream changes.` and the directory was **still absent** (`ls -d` → No such file); the follow-up `opt-in --sync` → `Re-seeded 1 bundled skill(s).` — that one name only |
 | the whole bundled set, after `opt-out --remove` | `hermes skills opt-in --sync` | `Re-seeded 58 bundled skill(s).` — the deleted names come back (their entries were dropped) |
 | the whole set, after `opt-out` without `--remove` | `hermes skills opt-in --sync` | copies were never touched; the marker was the only change |
 
@@ -125,7 +126,9 @@ Error: '<name>' is not a tracked bundled skill. Nothing to reset. (Hub-installed
 ```
 
 (Measured. Note the same command on a *deleted but still tracked* name re-copies it — the two cases look
-identical from the outside, so read `.bundled_manifest` first.)
+identical from the outside, so read `.bundled_manifest` first. **On a profile carrying the
+`.no-bundled-skills` marker it does not re-copy**: measured 2026-10-03, `reset apple-notes -y` cleared the
+entry and the directory stayed gone — the copy needs a following `opt-in --sync`, see the table above.)
 
 ## Traps
 
@@ -135,6 +138,16 @@ identical from the outside, so read `.bundled_manifest` first.)
   or local kind all along.
 - **The marker is per home, i.e. per profile.** `<HERMES_HOME>/.no-bundled-skills` — opting out of one
   profile does nothing for the others (measured: the file is written at the home root, not under `skills/`).
+- **`reset <name>` is a manifest operation, not a copy operation — the marker decides whether a copy
+  follows.** With no marker, the sync after a cleared entry re-copies the skill; with `.no-bundled-skills`
+  present every seeding path is off, so the entry is cleared and nothing is written to disk.
+- **`opt-in --sync` re-seeds only the names whose manifest entry is *gone*.** A hand-deleted name keeps its
+  entry (`hermes skills list` counts live directories, the manifest keeps the name), so it stays deleted —
+  measured 2026-10-03 while curating a fresh profile: 58 seeded, 52 hand-deleted by hand, marker written,
+  then `opt-in --sync` → `Re-seeded 1 bundled skill(s).` = only the single name a `reset` had cleared on
+  purpose, **0 of the other 51**. That is what makes "hand-delete the unwanted ones + write the marker" the
+  right way to build a curated profile, and "`reset <name>` then `opt-in --sync`" the right way to take one
+  back (re-run `opt-out` afterwards to shut the gate again — `opt-in` removes the marker).
 - **Opting out also disables the manifest-cleanup step** of the sync (`skipped_opt_out`), so stale
   manifest entries linger while the marker exists. Never read a manifest line as proof of a live copy;
   `hermes skills list --source builtin` is the live view.

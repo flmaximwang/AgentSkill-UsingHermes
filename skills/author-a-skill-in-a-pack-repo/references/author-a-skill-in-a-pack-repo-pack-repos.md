@@ -2,9 +2,14 @@
 
 **先核实再照抄**，两类命令足够判断现状：
 
+> **clone 基路径（2026-10-03 本机实测）**：`~/Documents/AgentSkill/<repo>`。本文件表格里此前写的是
+> `~/Repositories/AgentSkill/...`，该目录在本机**不存在**（`ls -ld` → No such file or directory）；
+> 表里十个仓库全部落在 `~/Documents/AgentSkill/` 下。别与 `~/Repositories/Agent/`（`Agent-*` 那一家族，
+> 另一批仓库）混。用前仍按下面第一条命令核实 —— 路径换机器就可能变。
+
 ```bash
 # 仓库侧：路径段必须与 GitHub 实况一致，否则取不到件
-git -C ~/Repositories/AgentSkill/<repo> remote -v && git -C ~/Repositories/AgentSkill/<repo> branch --show-current
+git -C ~/Documents/AgentSkill/<repo> remote -v && git -C ~/Documents/AgentSkill/<repo> branch --show-current
 # profile 侧：谁装了它、pin 在哪个 sha、装在哪个类目
 python3 -c "import json;d=json.load(open('<profile>/skills/.hub/lock.json'))['installed'];\
 print({k:(v['install_path'],v['metadata'].get('source_revision')) for k,v in d.items()})"
@@ -14,16 +19,16 @@ print({k:(v['install_path'],v['metadata'].get('source_revision')) for k,v in d.i
 
 | 仓库 | 可见性 | clone | 类目 `--category` | 目标 profile |
 |---|---|---|---|---|
-| `AgentSkill-LabProject` | private | `~/Repositories/AgentSkill/AgentSkill-LabProject` | `lab` | `rdm-assistance` |
-| `AgentSkill-DoingSAXS` | public | `~/Repositories/AgentSkill/AgentSkill-DoingSAXS` | `saxs` | `default` |
-| `AgentSkill-UsingATSAS` | private | `~/Repositories/AgentSkill/AgentSkill-UsingATSAS` | `mals` | `default` |
-| `AgentSkill-ObsidianManagement` | public | `~/Repositories/AgentSkill/AgentSkill-ObsidianManagement` | `obsidian` | `obsidian-maintenance`（按需装） |
-| `AgentSkill-UsingHermes` | public（已是 tap，路径段 `skills/`） | `~/Repositories/AgentSkill/AgentSkill-UsingHermes` | `hermes` | **全部 profile** |
-| `AgentSkill-AgentOrchestration` | public | `~/Repositories/AgentSkill/AgentSkill-AgentOrchestration` | `agent-orchestration` | **全部 profile** |
-| `AgentSkill-AgentEvolution` | private（origin=SSH） | `~/Repositories/AgentSkill/AgentSkill-AgentEvolution` | `agent-evolution` | `default` |
-| `AgentSkill-JobHunt` | private | `~/Repositories/AgentSkill/AgentSkill-JobHunt` | —— | **不装**：仓库即 source of truth，profile 里不留副本 |
-| `AgentSkill-UsingBioXTASRAW` | 本地无 remote | `~/Repositories/AgentSkill/AgentSkill-UsingBioXTASRAW` | —— | 未安装（历史包） |
-| `AgentSkill-UsingGitAnnex` | private（origin=SSH） | `~/Repositories/AgentSkill/AgentSkill-UsingGitAnnex` | `git-annex` | `default`（10 条已装，pin `5b55317`） |
+| `AgentSkill-LabProject` | private | `~/Documents/AgentSkill/AgentSkill-LabProject` | `lab` | `rdm-assistance` |
+| `AgentSkill-DoingSAXS` | public | `~/Documents/AgentSkill/AgentSkill-DoingSAXS` | `saxs` | `default` |
+| `AgentSkill-UsingATSAS` | private | `~/Documents/AgentSkill/AgentSkill-UsingATSAS` | `mals` | `default` |
+| `AgentSkill-ObsidianManagement` | public | `~/Documents/AgentSkill/AgentSkill-ObsidianManagement` | `obsidian` | `obsidian-maintenance`（按需装） |
+| `AgentSkill-UsingHermes` | public（已是 tap，路径段 `skills/`） | `~/Documents/AgentSkill/AgentSkill-UsingHermes` | `hermes` | **全部 profile** |
+| `AgentSkill-AgentOrchestration` | public | `~/Documents/AgentSkill/AgentSkill-AgentOrchestration` | `agent-orchestration` | **全部 profile** |
+| `AgentSkill-AgentEvolution` | private（origin=SSH） | `~/Documents/AgentSkill/AgentSkill-AgentEvolution` | `agent-evolution` | `default` |
+| `AgentSkill-JobHunt` | private | `~/Documents/AgentSkill/AgentSkill-JobHunt` | —— | **不装**：仓库即 source of truth，profile 里不留副本 |
+| `AgentSkill-UsingBioXTASRAW` | 本地无 remote | `~/Documents/AgentSkill/AgentSkill-UsingBioXTASRAW` | —— | 未安装（历史包） |
+| `AgentSkill-UsingGitAnnex` | private（origin=SSH） | `~/Documents/AgentSkill/AgentSkill-UsingGitAnnex` | `git-annex` | `default`（**11 条**已装：10 个主题 skill + `cheatsheet-for-git-annex`；各条 `source_revision` **混合**——实测 5 种提交，`check` 按内容判、全部 `up_to_date`） |
 
 ## 三条固定口径
 

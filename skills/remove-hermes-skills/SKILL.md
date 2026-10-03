@@ -195,7 +195,7 @@ remove-hermes-skills/
 ├── SKILL.md  (204 lines)
 ├── test-prompts.json  (12 lines)
 └── references/
-    ├── remove-hermes-built-in-skills.md  (151 lines)
+    ├── remove-hermes-built-in-skills.md  (164 lines)
     ├── remove-hermes-clawhub-skills.md  (115 lines)
     ├── remove-hermes-skill-sh-skills.md  (156 lines)
     └── remove-hermes-url-skills.md  (87 lines)
