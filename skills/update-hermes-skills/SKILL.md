@@ -180,6 +180,10 @@ hermes -p <profile> skills check|update    # the lock is per profile
 with `hermes: error: unrecognized arguments: beta` and updates nothing (measured 2026-09-30), so a batch of
 names is one invocation per name.
 
+**`update` takes no `-y`** (unlike install/uninstall, which do): `hermes skills update <name> -y` exits 2
+with `hermes: error: unrecognized arguments: -y` and updates nothing (measured 2026-10-03). `--force` is
+the only flag this subcommand has, and it never prompts — so there is nothing for `-y` to answer.
+
 Measured `hermes skills update --help` on this machine (2026-09-30):
 
 ```
