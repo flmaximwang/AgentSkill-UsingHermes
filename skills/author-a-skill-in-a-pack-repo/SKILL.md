@@ -224,6 +224,14 @@ python3 <profile>/skills/<类目>/<name>/scripts/<name>.py <一个真实输入> 
   机制：**只改文档是安全的，顺手改脚本输出格式会静默打断人家**（对方没有任何信号，直到它下次跑）。
   所以优化一个被依赖的 skill 时，把改动限制在 SKILL.md；改完**核对契约的 key 集合**（`--json` 取 `sorted(keys())` 与 coupling 文档逐个比），
   而不是只跑自己的用例。
+- **新建包仓库后立刻把 remote 换成 SSH**：`gh repo create --source=. --remote=origin --push` 建出来的是
+  **HTTPS** remote（`https://github.com/…`），而本机既有包仓库一律是 `git@github.com:…`（`git remote -v` 实测）。
+  用户明确要求过 SSH。做法：建完 `git remote set-url origin git@github.com:<owner>/<repo>.git`，
+  再用 `git fetch` + `ssh -T git@github.com` 各验一次凭据；别等到下次推送才发现。
+- **回读时不要把命令接 `| tail -1`**：`hermes skills check` 的最后一行是空行/表格边框，`tail -1` 会把它
+  吞成空字符串，看起来像「没输出=没装上」。用 `grep -ivE '^\s*$|^[╭╮╰╯│─]'` 滤掉边框再取结论
+  （实测判据是那句 `0 update(s) available across 1 checked skill(s)`）；同理 lock 条目的 `source` 字段
+  写的是适配器名（`skills.sh`）而不是仓库名，按仓库名去 grep lock 会零命中。
 
 ## Support files
 
@@ -238,7 +246,7 @@ python3 <profile>/skills/<类目>/<name>/scripts/<name>.py <一个真实输入> 
 
 ```
 author-a-skill-in-a-pack-repo/
-├── SKILL.md  (248 lines)
+├── SKILL.md  (256 lines)
 ├── test-prompts.json  (14 lines)
 └── references/
     ├── author-a-skill-in-a-pack-repo-darwin-blind-paired-loop.md  (58 lines)

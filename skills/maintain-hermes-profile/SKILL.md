@@ -130,6 +130,16 @@ hermes config set skills.disabled '[]'  # write a value (YAML literal)
   key changed is the point — a serializer can reformat or drop unrelated keys.
 - Prune `skills.disabled` entries whose directories no longer exist; otherwise they are dead
   entries that make the next audit lie to you.
+- **A null-word value is written as a YAML null, not as the string you typed** — `_SCALAR_WORDS`
+  (`hermes_cli/config.py`) maps `none` / `null` / `~` → `None`, so `hermes config set X none` stores
+  a null, and every reader that treats null as "unset" silently keeps its default while the CLI
+  prints "saved anyway". Live case: `agent.reasoning_effort none` lands as `reasoning_effort:`
+  (null) → `resolve_reasoning_config` (`hermes_constants.py`) returns `None` → **default medium,
+  i.e. thinking stays ON** in a profile whose whole point was to have it off. `parse_reasoning_effort`
+  does accept the *string* `none`, but `config set` cannot produce it; pass `false` instead (stored as
+  the YAML bool → `str(False).lower() == "false"` → `{"enabled": False}`). Prove the effective value by
+  calling `resolve_reasoning_config(yaml.safe_load(config.yaml))` with the install's venv python
+  (`hermes-agent/venv/bin/python`), never by reading the file back — the file looks the same for both.
 
 ## 7. Report shape
 
@@ -797,7 +807,7 @@ What stays here:
 
 ```
 maintain-hermes-profile/
-├── SKILL.md  (806 lines)
+├── SKILL.md  (816 lines)
 └── references/
     ├── maintain-hermes-profile-prompt-assembly-and-guidance-gates.md  (81 lines)
     └── maintain-hermes-profile-skills-tree-layout.md  (296 lines)
