@@ -53,11 +53,12 @@ job for `evolve-hermes-skills` (`references/evolve-hermes-skills-routing.md` § 
 installed copy*): judge the drift, backport what is worth keeping into the clone, push, and only then
 update. Going straight to `--force` here is the one move that destroys the very edit that needed judging.
 
-## 刚推完的那几分钟：`check` / `update` / `install` 互相矛盾 —— 先去查 GitHub 配额（2026-10-04 实测）
+## Right after a push: `check` / `update` / `install` can disagree — read the GitHub quota first (measured 2026-10-04)
 
-同一分钟、同一份 lock 状态下：`check` 报 `1 update(s) available`（installed = 上一个 revision，upstream = 刚推的那个），
-而 `update` 回 `No updates available.` 并把内容留在上一个 revision；几分钟后同一台机器上 `check` 又报 `unavailable` + 0 条。
-再走一次 `install --force`，原因被直接打了出来：
+Same minute, same lock state: `check` reports `1 update(s) available` (installed = the previous revision,
+upstream = the one just pushed) while `update` answers `No updates available.` and leaves the content on the
+previous revision; minutes later, on the same host, `check` answers `unavailable` with 0 rows checked. A
+further `install --force` prints the cause outright:
 
 ```
 Error: Could not download '<owner>/<repo>/skills/<name>'.
@@ -65,13 +66,16 @@ Hint: GitHub API rate limit exhausted (unauthenticated: 60 requests/hour).
 Set GITHUB_TOKEN in your .env or install the gh CLI and run gh auth login to raise the limit to 5,000/hr.
 ```
 
-机制：**没凭据的 headless 主机取件走未认证的 GitHub API，配额 60 次/小时**；一轮 `inspect` + `install` + `update` +
-`check` 就能把它花完（本轮就是如此）。同一个时间窗里，另一台配了凭据的机器上三个同类 skill 都顺利 `update` 到新 revision
-——所以这**不是**"索引/缓存滞后"，别照那个方向查。
+**A headless host with no credential fetches through the unauthenticated GitHub API — 60 requests/hour** — and
+one round of `inspect` + `install` + `update` + `check` spends it (exactly what happened here). In the same
+window three sibling skills on a credentialed machine updated to the new revision without complaint, so this
+is **not** index or cache lag — do not go looking there.
 
-判据：① 先看有没有 `Could not download` / 配额提示，再看自己的 revision；② 修复是给这台机器配凭据（profile env 的
-`GITHUB_TOKEN`，或 `gh auth login`），或等配额按小时重置后重试（不配也能自愈，只是慢）；③ 交付状态照旧以**内容比较**与
-lock 的 `source_revision` 为准 —— `No updates available.` 和 `update_available` 同时出现，不等于内容已经是最新的。
+How to judge: ① read a `Could not download` / quota hint before blaming your own revision; ② the fix is a
+credential on that host (`GITHUB_TOKEN` in the profile env, or `gh auth login`), or simply waiting out the
+hourly reset (an unauthenticated host self-heals, just slowly); ③ a delivery's state is still decided by
+**content comparison** plus the lock's `source_revision` — `No updates available.` and `update_available`
+appearing together does not mean the content is current.
 
 ### 🔧 Never edit the installed copy — and the measured repair when you already did
 
@@ -270,7 +274,7 @@ In a session the same work is `/skills update <name> [--force]`; `/skills check`
 
 ```
 update-hermes-skills/
-├── SKILL.md  (284 lines)
+├── SKILL.md  (288 lines)
 ├── test-prompts.json  (12 lines)
 ├── references/
 │   ├── update-hermes-built-in-skills.md  (174 lines)
