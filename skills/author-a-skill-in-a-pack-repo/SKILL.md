@@ -232,6 +232,13 @@ python3 <profile>/skills/<类目>/<name>/scripts/<name>.py <一个真实输入> 
   吞成空字符串，看起来像「没输出=没装上」。用 `grep -ivE '^\s*$|^[╭╮╰╯│─]'` 滤掉边框再取结论
   （实测判据是那句 `0 update(s) available across 1 checked skill(s)`）；同理 lock 条目的 `source` 字段
   写的是适配器名（`skills.sh`）而不是仓库名，按仓库名去 grep lock 会零命中。
+- **别把一个 gate 的通过当成「都查过了」——先问它扫的是什么形态**：UsingGitAnnex 的引文闸
+  （`verify-quotes.py`）只数**每行以 `>` 开头的块引用**，行内 `*"…"*` 引文它看不见 —— 于是
+  `cheatsheet-for-git-annex-pipelines` 在那张表里恒为 `0 fragments`、总数还报 `529/529 全过`，
+  而它正文正引着官方原话（2026-10-04 实测）。两条规则：**任何你声称 verbatim 的引用都写成 `>` 块引用**
+  （行内写法不在闸的覆盖里）；**闸报的 `0` 先当成「这个闸看不到」而不是「没有」**，并把闸自己的口径读出来
+  ——它在数哪些行、语料是哪个快照（评论页不在 `source/` 快照里时，那段引文从构造上就进不了闸，
+  只能回 wiki 源手动核对）。
 
 ## Support files
 
@@ -246,7 +253,7 @@ python3 <profile>/skills/<类目>/<name>/scripts/<name>.py <一个真实输入> 
 
 ```
 author-a-skill-in-a-pack-repo/
-├── SKILL.md  (256 lines)
+├── SKILL.md  (263 lines)
 ├── test-prompts.json  (14 lines)
 └── references/
     ├── author-a-skill-in-a-pack-repo-darwin-blind-paired-loop.md  (58 lines)

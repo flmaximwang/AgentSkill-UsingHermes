@@ -131,6 +131,16 @@ is not a state to overwrite — it is a finding to judge, and it belongs to this
    identical. `--force` here is safe *because* step 3 already put that content in the pushed revision.
 5. **Read back three things:** `diff -rq` empty (ignoring `__pycache__`), `hermes skills check <name>` →
    `up_to_date`, and the lock's `metadata.source_revision` equal to the clone's `HEAD`.
+6. **Re-read the repo's own quality gates — the backport just moved the text they measure.** A pack that
+   records credentials (a quote-verification count, a scan report, a README index row, a pin table) is now
+   recording numbers about text you changed, so those numbers go stale the moment the backport commits. Re-run
+   each gate in the clone and refresh what it feeds, in the same run. Measured 2026-10-04, two skills
+   backported into `AgentSkill-UsingGitAnnex`: the README still claimed `521/521` quote fragments and an index
+   row naming `P1` as the only runbook; the re-run answered `529/529` and the row became two runbooks. Read the
+   gates' *scope* before trusting their numbers: **a `0 fragments` cell can be the gate's format, not evidence
+   the skill quotes nothing** — that repo's quote gate counts only lines starting with `>`, so the runbook's
+   inline `*"…"*` quote of a joey reply was never in scope and had to be checked by hand against the wiki
+   source (comment pages sit outside the gate's pinned snapshot, so no gate run can ever reach them).
 
 A reconcile that stops at step 3 leaves the profile on the old revision; one that jumps to step 4 destroys
 the foreign content. Name the foreign content in the report — never commit another writer's work silently.

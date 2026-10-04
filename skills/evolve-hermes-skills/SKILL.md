@@ -106,7 +106,8 @@ and it may be exactly the optimisation this run was called to find, while `updat
 the judgment comes first (keep it → backport into the clone byte-exact, commit, push; drop it → say why in
 the report). `hermes skills update` only ever carries a *pushed* revision **into** the profile; it cannot
 publish a local edit outward, so a reconcile that stops at the profile leaves the repo stale and the next
-update destroys the work. Commands, the false-positive list and the read-back: `references/evolve-hermes-skills-routing.md` §3.
+update destroys the work. Commands, the false-positive list, the read-back **and the post-backport re-run of the
+repo's own quality gates** (a backport moves the text those gates measure): `references/evolve-hermes-skills-routing.md` §3.
 
 **🔴 Then ONE `clarify`, recommended-first, covering every finding** — the repo mapping, the findings to
 apply, whether to promote a rung-2 skill, and whether to run Phase 3. Never a per-skill question: the user
@@ -218,12 +219,12 @@ a finding the user can drop.
 
 ```
 evolve-hermes-skills/
-├── SKILL.md  (230 lines)
+├── SKILL.md  (231 lines)
 ├── test-prompts.json  (12 lines)
 ├── test-results.md  (112 lines)
 └── references/
     ├── evolve-hermes-skills-handoff-to-darwin.md  (125 lines)
-    ├── evolve-hermes-skills-routing.md  (214 lines)
+    ├── evolve-hermes-skills-routing.md  (224 lines)
     └── evolve-hermes-skills-session-mining.md  (273 lines)
 ```
 
