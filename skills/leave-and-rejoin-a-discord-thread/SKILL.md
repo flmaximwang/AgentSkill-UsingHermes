@@ -150,7 +150,8 @@ token缺   exit=2   指定不存在的 env 文件
 | 文件 | 承担什么 |
 |---|---|
 | `scripts/discord_thread_membership.py` | `status` / `leave` / `join` / `remove` 四个子命令，stdlib、退出码见上；token 从 profile env 文件读，不回显 |
-| `references/leave-and-rejoin-a-discord-thread-evidence.md` | 原始回执：A/B 的日志原文、权限矩阵、Hermes 侧代码指针、归档 thread 的矛盾点、遗留测试 thread |
+| `references/leave-and-rejoin-a-discord-thread-evidence.md` | 原始回执：A/B 的日志原文、权限矩阵、Hermes 侧代码指针、归档 thread 的矛盾点、NAS 交付与回读、遗留测试 thread |
+| `test-results.md` | 新增头部那一轮的路由盲测（26 条冻结旧题 + 4 正例 + 1 诱饵 × 2 判官）与逐题矩阵；含材料脚本把本技能自己的题重复投放这个坑 |
 
 ## Skill Structure
 
@@ -158,10 +159,11 @@ token缺   exit=2   指定不存在的 env 文件
 
 ```
 leave-and-rejoin-a-discord-thread/
-├── SKILL.md  (169 lines)
+├── SKILL.md  (171 lines)
 ├── test-prompts.json  (27 lines)
+├── test-results.md  (83 lines)
 ├── references/
-│   └── leave-and-rejoin-a-discord-thread-evidence.md  (164 lines)
+│   └── leave-and-rejoin-a-discord-thread-evidence.md  (171 lines)
 └── scripts/
     └── discord_thread_membership.py  (332 lines)
 ```

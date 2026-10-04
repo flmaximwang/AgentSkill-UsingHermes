@@ -151,10 +151,17 @@ hermes/leave-and-rejoin-a-discord-thread`，4 个文件。
 
 | 检查 | 结果 |
 |---|---|
-| 本机 clone 与远端安装副本的 4 个文件 sha256 | **逐字节相同**（`29e002e6…`、`2b1bcc97…`、`8b61d99b…`、`f3306514…`）——修订前那一版 |
-| `lock.json` | `install_path: hermes/leave-and-rejoin-a-discord-thread`、`source_revision: 8952646ea783594a90785ec1557c1017bfade393`（== 推送的 sha） |
+| 首装（修订 `8952646`）后本机 clone 与远端副本的 4 个文件 sha256 | 逐字节相同（`29e002e6…`、`2b1bcc97…`、`8b61d99b…`、`f3306514…`） |
+| `lock.json` | `install_path: hermes/leave-and-rejoin-a-discord-thread`、`source_revision: 8952646ea783594a90785ec1557c1017bfade393` |
+| 第二轮（修订 `25a0e86`，走 `skills update leave-and-rejoin-a-discord-thread`，**不带 `-y`**） | 4 个文件 sha256 与本机 clone 逐字节相同（`f31a6736…`、`6d3b3c96…`、`f68a6387…`、`f3306514…`）；`source_revision: 25a0e86b0df27d9508c1ddf2f6883d48bc54cc63` |
 | `hermes --profile light skills check …` | `0 update(s) available across 1 checked skill(s)` |
-| 从安装副本真跑一次 | 修代理后 `status` exit=0 |
+| 从安装副本真跑一次 | 修代理后 `status` exit=0，`self=1555467925358387270`（`DS220p2022`，即 light profile 的 bot）、`self_is_member=False` |
+
+首装用 `install --category hermes`、改版用 `update` —— 这是包里的既定分工：`--category` 只在安装时读。
+
+> **文档自身的哈希没法自证**：改文档就会改它的哈希，所以"交付状态"以三件外部证据为准 —— `lock.json` 的
+> `source_revision` == clone HEAD、`skills check <name>` 报 up_to_date、从安装副本真跑一次脚本。上表里那两轮的
+> 逐文件 sha256 是各自那一刻的实测回执，属于历史记录。
 
 两个环境事实（下次别误判）：
 
