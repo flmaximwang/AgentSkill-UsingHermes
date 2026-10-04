@@ -53,16 +53,25 @@ job for `evolve-hermes-skills` (`references/evolve-hermes-skills-routing.md` § 
 installed copy*): judge the drift, backport what is worth keeping into the clone, push, and only then
 update. Going straight to `--force` here is the one move that destroys the very edit that needed judging.
 
-## 刚推完的那几分钟：`check` 与 `update` 会互相矛盾（2026-10-04 实测，hub-installed）
+## 刚推完的那几分钟：`check` / `update` / `install` 互相矛盾 —— 先去查 GitHub 配额（2026-10-04 实测）
 
 同一分钟、同一份 lock 状态下：`check` 报 `1 update(s) available`（installed = 上一个 revision，upstream = 刚推的那个），
 而 `update` 回 `No updates available.` 并把内容留在上一个 revision；几分钟后同一台机器上 `check` 又报 `unavailable` + 0 条。
-内容自始至终没变（5 个文件 sha256 == clone 里对应 revision、lock 的 `source_revision` 就是装的那个 revision）。
+再走一次 `install --force`，原因被直接打了出来：
 
-机制未证实（可能是取件路径或索引缓存滞后）；**要落的是判据**：上推之后别用这两句结论判状态 ——
-先比内容（`diff -rq <clone>/skills/<name> <profile>/skills/<类目>/<name>`，或逐文件 sha256）与 lock 的
-`source_revision`，等索引追上再 `update` 一次。`No updates available.` 和 `update_available` 同时出现，
-不等于内容已经是最新的。
+```
+Error: Could not download '<owner>/<repo>/skills/<name>'.
+Hint: GitHub API rate limit exhausted (unauthenticated: 60 requests/hour).
+Set GITHUB_TOKEN in your .env or install the gh CLI and run gh auth login to raise the limit to 5,000/hr.
+```
+
+机制：**没凭据的 headless 主机取件走未认证的 GitHub API，配额 60 次/小时**；一轮 `inspect` + `install` + `update` +
+`check` 就能把它花完（本轮就是如此）。同一个时间窗里，另一台配了凭据的机器上三个同类 skill 都顺利 `update` 到新 revision
+——所以这**不是**"索引/缓存滞后"，别照那个方向查。
+
+判据：① 先看有没有 `Could not download` / 配额提示，再看自己的 revision；② 修复是给这台机器配凭据（profile env 的
+`GITHUB_TOKEN`，或 `gh auth login`），或等配额按小时重置后重试（不配也能自愈，只是慢）；③ 交付状态照旧以**内容比较**与
+lock 的 `source_revision` 为准 —— `No updates available.` 和 `update_available` 同时出现，不等于内容已经是最新的。
 
 ### 🔧 Never edit the installed copy — and the measured repair when you already did
 
@@ -261,7 +270,7 @@ In a session the same work is `/skills update <name> [--force]`; `/skills check`
 
 ```
 update-hermes-skills/
-├── SKILL.md  (275 lines)
+├── SKILL.md  (284 lines)
 ├── test-prompts.json  (12 lines)
 ├── references/
 │   ├── update-hermes-built-in-skills.md  (174 lines)

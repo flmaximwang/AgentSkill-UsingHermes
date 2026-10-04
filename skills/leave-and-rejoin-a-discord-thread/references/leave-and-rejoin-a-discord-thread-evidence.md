@@ -157,10 +157,13 @@ hermes/leave-and-rejoin-a-discord-thread`，4 个文件。
 | `hermes --profile light skills check …` | 前两轮当时是 `0 update(s) available across 1 checked skill(s)`；第三轮同一 revision 上先报 `1`、几分钟后又报 `unavailable` + `0`（见下注） |
 | 从安装副本真跑一次 | 修代理后 `status` exit=0，`self=1555467925358387270`（`DS220p2022`，即 light profile 的 bot）、`self_is_member=False` |
 
-- **刚推完就 `check` 会给出误导性结论**：同一分钟、同一份内容的两次调用可以互相矛盾 —— `check` 报
+- **刚推完就 `check`/`update` 会给出误导性结论**：同一分钟、同一份内容的两次调用可以互相矛盾 —— `check` 报
   `1 update(s) available`、而 `update` 回 `No updates available.` 并把内容留在上一个 revision；几分钟后 `check` 又报
-  `unavailable` + 0 条。机制未证实（取件路径或索引缓存滞后），但判据明确：**漂移看内容比较（sha256 / `diff -rq`）与
-  lock 的 `source_revision`**，别用这两句结论判状态；这一条别当成"promote 没生效"。
+  `unavailable` + 0 条。真因是**取件侧**：NAS 上没有 GitHub 凭据，取件走未认证 GitHub API，配额 60 次/小时，
+  被这一轮的 `inspect`/`install`/`update`/`check` 花完（`install --force` 直接报
+  `GitHub API rate limit exhausted (unauthenticated: 60 requests/hour)`）。判据不变：**漂移看内容比较
+  （sha256 / `diff -rq`）与 lock 的 `source_revision`**，别用这两句结论判状态；完整条目与修复见
+  `update-hermes-skills`。
 
 首装用 `install --category hermes`、改版用 `update` —— 这是包里的既定分工：`--category` 只在安装时读。
 
