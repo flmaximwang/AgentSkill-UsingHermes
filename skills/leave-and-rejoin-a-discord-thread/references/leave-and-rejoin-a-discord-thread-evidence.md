@@ -155,7 +155,8 @@ hermes/leave-and-rejoin-a-discord-thread`，4 个文件。
 | `lock.json` | `install_path: hermes/leave-and-rejoin-a-discord-thread`、`source_revision: 8952646ea783594a90785ec1557c1017bfade393` |
 | 第二轮（修订 `25a0e86`，走 `skills update leave-and-rejoin-a-discord-thread`，**不带 `-y`**） | 4 个文件 sha256 与本机 clone 逐字节相同（`f31a6736…`、`6d3b3c96…`、`f68a6387…`、`f3306514…`）；`source_revision: 25a0e86b0df27d9508c1ddf2f6883d48bc54cc63` |
 | `hermes --profile light skills check …` | 前两轮当时是 `0 update(s) available across 1 checked skill(s)`；第三轮同一 revision 上先报 `1`、几分钟后又报 `unavailable` + `0`（见下注） |
-| 从安装副本真跑一次 | 修代理后 `status` exit=0，`self=1555467925358387270`（`DS220p2022`，即 light profile 的 bot）、`self_is_member=False` |
+| 从安装副本真跑一次 | 修代理后 `status` exit=0；当次未带 `--profile`，读的是**默认 profile** 的 env → `self=1555467925358387270`（`DS220p2022`）、`self_is_member=False` |
+| 两个 profile 各自的 bot（用两份 env 的 token 打 `GET /users/@me`） | 默认 profile = `DS220p2022`（`1555467925358387270`）；`light` = `FatWhale5188`（`1555958899947995199`）——**跑脚本别忘 `--profile`**，否则读的是默认 profile 的 env，身份会错配 |
 
 - **刚推完就 `check`/`update` 会给出误导性结论**：同一分钟、同一份内容的两次调用可以互相矛盾 —— `check` 报
   `1 update(s) available`、而 `update` 回 `No updates available.` 并把内容留在上一个 revision；几分钟后 `check` 又报

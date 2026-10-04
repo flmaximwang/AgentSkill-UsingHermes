@@ -135,10 +135,13 @@ token缺   exit=2   指定不存在的 env 文件
 ```
 修代理前 → error: request failed: URLError: [Errno 111] Connection refused          # exit=1
 修代理后 → auth: /var/services/homes/…/.hermes/.env / proxy: on (…:DISCORD_PROXY)
-           status exit=0，列出两个成员、self_is_member=True
+           status exit=0，列出两个成员、self_is_member=False
 ```
 
 第一次的失败就是上面那条"坑"：NAS 只能走它自己的代理，而代理只写在 profile 的 env 文件里。
+**注意那两行 `auth:` 指的是默认 profile 的 env** —— 当次没带 `--profile`，脚本读的就是它；该 NAS 上两个 profile
+各有一个 bot（默认 profile = `DS220p2022`、`light` = `FatWhale5188`，用两份 env 各自的 token 打 `GET /users/@me` 实测），
+拿这份回执去对身份会错配。
 
 ## 汇报形状
 
@@ -159,11 +162,11 @@ token缺   exit=2   指定不存在的 env 文件
 
 ```
 leave-and-rejoin-a-discord-thread/
-├── SKILL.md  (171 lines)
+├── SKILL.md  (174 lines)
 ├── test-prompts.json  (27 lines)
 ├── test-results.md  (83 lines)
 ├── references/
-│   └── leave-and-rejoin-a-discord-thread-evidence.md  (179 lines)
+│   └── leave-and-rejoin-a-discord-thread-evidence.md  (180 lines)
 └── scripts/
     └── discord_thread_membership.py  (332 lines)
 ```
