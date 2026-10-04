@@ -154,8 +154,13 @@ hermes/leave-and-rejoin-a-discord-thread`，4 个文件。
 | 首装（修订 `8952646`）后本机 clone 与远端副本的 4 个文件 sha256 | 逐字节相同（`29e002e6…`、`2b1bcc97…`、`8b61d99b…`、`f3306514…`） |
 | `lock.json` | `install_path: hermes/leave-and-rejoin-a-discord-thread`、`source_revision: 8952646ea783594a90785ec1557c1017bfade393` |
 | 第二轮（修订 `25a0e86`，走 `skills update leave-and-rejoin-a-discord-thread`，**不带 `-y`**） | 4 个文件 sha256 与本机 clone 逐字节相同（`f31a6736…`、`6d3b3c96…`、`f68a6387…`、`f3306514…`）；`source_revision: 25a0e86b0df27d9508c1ddf2f6883d48bc54cc63` |
-| `hermes --profile light skills check …` | `0 update(s) available across 1 checked skill(s)` |
+| `hermes --profile light skills check …` | 前两轮当时是 `0 update(s) available across 1 checked skill(s)`；第三轮同一 revision 上先报 `1`、几分钟后又报 `unavailable` + `0`（见下注） |
 | 从安装副本真跑一次 | 修代理后 `status` exit=0，`self=1555467925358387270`（`DS220p2022`，即 light profile 的 bot）、`self_is_member=False` |
+
+- **刚推完就 `check` 会给出误导性结论**：第三轮的内容与 revision 全程没变（5 个文件 sha256 == clone HEAD，lock
+  `source_revision` == `dfb8b9e`），而 `check` 先报 `1 update(s) available`、几分钟后同一命令报 `unavailable` 且 0 条。
+  `check` 对的是 skills.sh 的索引，而索引落后于 git。所以**漂移要看内容比较（sha256 / `diff -rq`）与 lock 的
+  `source_revision`**，`check` 的结论等索引追上再读；这一条别当成"promote 没生效"。
 
 首装用 `install --category hermes`、改版用 `update` —— 这是包里的既定分工：`--category` 只在安装时读。
 

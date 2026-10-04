@@ -163,7 +163,7 @@ leave-and-rejoin-a-discord-thread/
 ├── test-prompts.json  (27 lines)
 ├── test-results.md  (83 lines)
 ├── references/
-│   └── leave-and-rejoin-a-discord-thread-evidence.md  (171 lines)
+│   └── leave-and-rejoin-a-discord-thread-evidence.md  (176 lines)
 └── scripts/
     └── discord_thread_membership.py  (332 lines)
 ```
