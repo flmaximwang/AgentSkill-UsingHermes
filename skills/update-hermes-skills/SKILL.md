@@ -53,6 +53,17 @@ job for `evolve-hermes-skills` (`references/evolve-hermes-skills-routing.md` § 
 installed copy*): judge the drift, backport what is worth keeping into the clone, push, and only then
 update. Going straight to `--force` here is the one move that destroys the very edit that needed judging.
 
+## 刚推完的那几分钟：`check` 与 `update` 会互相矛盾（2026-10-04 实测，hub-installed）
+
+同一分钟、同一份 lock 状态下：`check` 报 `1 update(s) available`（installed = 上一个 revision，upstream = 刚推的那个），
+而 `update` 回 `No updates available.` 并把内容留在上一个 revision；几分钟后同一台机器上 `check` 又报 `unavailable` + 0 条。
+内容自始至终没变（5 个文件 sha256 == clone 里对应 revision、lock 的 `source_revision` 就是装的那个 revision）。
+
+机制未证实（可能是取件路径或索引缓存滞后）；**要落的是判据**：上推之后别用这两句结论判状态 ——
+先比内容（`diff -rq <clone>/skills/<name> <profile>/skills/<类目>/<name>`，或逐文件 sha256）与 lock 的
+`source_revision`，等索引追上再 `update` 一次。`No updates available.` 和 `update_available` 同时出现，
+不等于内容已经是最新的。
+
 ### 🔧 Never edit the installed copy — and the measured repair when you already did
 
 **Rule: a hub-installed skill is edited in the clone, never in the installed tree.** An edit made in the
@@ -250,7 +261,7 @@ In a session the same work is `/skills update <name> [--force]`; `/skills check`
 
 ```
 update-hermes-skills/
-├── SKILL.md  (235 lines)
+├── SKILL.md  (275 lines)
 ├── test-prompts.json  (12 lines)
 ├── references/
 │   ├── update-hermes-built-in-skills.md  (174 lines)

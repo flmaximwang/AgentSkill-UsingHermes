@@ -39,7 +39,7 @@ the meaning:
 | `curl_pipe_shell` | critical | a quoted download-piped-to-shell one-liner inside prose about blocked patterns | describe it ("a pipe-to-shell download") |
 | `system_passwd_access` | critical | the system account file path in prose | "a system path outside the workspace" |
 | `echo_pipe_exec` | critical | an `echo` of a JSON payload piped into an interpreter | describe the piped invocation |
-| `dump_all_env` | high | a bare environment dump followed by a pipe — which also matches a profile-env operand inside a pipeline | quote the path (`"$HERMES_HOME/.env"`), or read the one variable by name |
+| `dump_all_env` | high | a bare environment dump followed by a pipe; a profile-env operand inside a pipeline; **or a markdown table cell that ends with the bare word for the process environment — the table's own column separator supplies the pipe** (measured 2026-10-04) | quote the path (`"$HERMES_HOME/.env"`), read the one variable by name, or word that cell as 「进程环境变量」 instead of the bare word |
 | `sudo_usage` | high | the privilege-escalation word anywhere on the line | describe the operation instead of naming the command |
 | `python_os_environ` | high | the interpreter's process-environment mapping named outside a comment or docstring — the bare mapping is what scores; a single-variable accessor read (`.get(…)` directly on it) is exempt, and a `#` anywhere earlier on the line exempts the line | read the one variable through the accessor form and require it to be exported, or keep the script outside the package — an uncommented mapping access cannot ship |
 | `destructive_home_rm` | critical | a recursive delete whose target is written home-relative (a tilde path), **including a fenced example in a reference** — measured on a removal skill's orphan recipe | write the target with the pack's profile placeholder (`<home>/skills/<name>`), which is the convention the rest of these references already follow |
@@ -47,6 +47,19 @@ the meaning:
 **This file is the worked example.** Its pattern table describes each trigger instead of reproducing it,
 which is why it scans `safe` inside `install-hermes-skills`; re-run the probe above after editing it —
 the table is the part of the package most likely to make the package uninstallable.
+
+### A note about a trigger reproduces the trigger
+
+Measured 2026-10-04, shipping a Discord-thread skill: a two-row table comparing where each machine's proxy
+comes from ended one cell with the bare word for the process environment, and the table's own column
+separator completed the rule's literal shape — **high**, package verdict `safe` → `caution`. Rewording that
+cell cleared it. The paragraph explaining the trap then tripped the same rule in its own text, because it
+quoted the shape instead of describing it. Two rules follow:
+
+- Re-scan after the rewrite: a table cell is prose to this scanner, and a markdown table's column
+  separators are pipe characters.
+- When documenting a trigger, **describe** it — which word, immediately followed by what — and never
+  quote it.
 
 Two consequences worth stating before spending a round trip:
 

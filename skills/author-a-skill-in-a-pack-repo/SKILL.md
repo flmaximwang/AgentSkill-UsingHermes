@@ -54,6 +54,10 @@ description: "在 AgentSkill-* 包仓库里新建/改写 skill 时用（证据�
   而不是只看新技能命中；两判官一致＝定版，别开第二轮。
   新增题的构成照抄这个骨架：4 条正例（不同提问者措辞：「一张表」「速查表」「一览」「一行一条命令」）
   + 1 条诱饵；同一批 prompt 同时落进该 skill 的 `test-prompts.json`。
+  **旧题集的 glob 会把新技能自己的题也收进去**：`skills/*/test-prompts.json` 在你建好新技能目录之后就已经包含它了，
+  于是新技能的正例/诱饵被投放两次（2026-10-04 实测：真实的旧题是 26 条，脚本算出 31 条；自己的 4 正例 + 1 诱饵混进
+  「旧题」里，被当成"一题都没被抢走"的既有题）。判官不受影响（同一题两次落在同一答案），**错的是统计口径**。
+  做法：旧题集 glob 显式排除本技能目录，或合并后按题面文本去重再统计。
 - 本机专属值（路径、端口、主机）进 references，脚本用**可覆盖的默认值**（`--vault/--host/--port`），正文只写默认值 + 可覆盖。
 
 **Step 4 · 跑通再推**（输入：skill 目录；输出：真实输出 + 扫描 verdict）
@@ -94,6 +98,11 @@ PY
 家目录相对的递归删除（正文写出一条 `rm -rf` + 家目录路径的句子，**哪怕整句在说「绝对不要」**）与 pipe-to-shell；
 改写成**陈述式**——保留路径与警告、去掉动词/管道形态（例：「Never delete the managed runtime tree (the directory `~/.hermes/node`)」），
 别把整条警告删掉。逐条改写的手册：`install-hermes-skills` → `references/install-hermes-skills-scan-gate.md`。
+
+**同类：描述触发形态的文字本身也会命中**（2026-10-04 实测）。一份把两台机器的代理来源写成 markdown 表格的 skill 里，
+某个单元格以「进程环境」的简称结尾，被表格自己的列分隔符补成了 `dump_all_env` 的字面形态 → 整包从 `safe` 掉到
+`caution`（community 源就得 `--force` 才能装）；改写那个单元格后回到 safe。**第二次命中来自解释这件事的那段说明文字**——
+所以要描述形态、不要复现它。对应条目与改写方式见上面那本手册。
 
 **medium 不等于要改**：实测一个「子进程调 dolt + 正文写 `127.0.0.1:13308` + 报错提示 `pip install pyyaml`」的 skill 拿到 3 条 medium（`hardcoded_ip_port` / `python_subprocess` / `unpinned_pip_install`）仍是 `safe` —— 这三类是本机只读工具的正常形态，不必为了消告警改设计；同理 `shell_rc_mod`（正文提到 shell 启动文件）与 `unpinned_npm_install`（`npm install -g` 不钉版本）各若干条也仍是 `safe`。
 
@@ -253,7 +262,7 @@ python3 <profile>/skills/<类目>/<name>/scripts/<name>.py <一个真实输入> 
 
 ```
 author-a-skill-in-a-pack-repo/
-├── SKILL.md  (263 lines)
+├── SKILL.md  (272 lines)
 ├── test-prompts.json  (14 lines)
 └── references/
     ├── author-a-skill-in-a-pack-repo-darwin-blind-paired-loop.md  (58 lines)
