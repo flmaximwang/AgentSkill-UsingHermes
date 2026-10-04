@@ -14,8 +14,10 @@ Exit codes
     0 ok · 1 usage/api error · 2 token not found · 3 permission denied (403)
     4 thread archived/locked (or otherwise not actionable) · 5 thread not found (404)
 
-Stdlib only. Proxies are honoured the way urllib does it (HTTPS_PROXY / HTTP_PROXY, and on
-macOS the system proxy config); --proxy / --no-proxy override that.
+Stdlib only. Proxy resolution order: --proxy, else this process's HTTPS_PROXY / HTTP_PROXY / ALL_PROXY,
+else DISCORD_PROXY / HTTPS_PROXY / HTTP_PROXY from the profile env file (that last source is how a
+Hermes gateway itself gets its proxy — a hand-run shell inherits none of it); --no-proxy forces a
+direct dial.
 """
 
 from __future__ import annotations
@@ -56,22 +58,56 @@ def env_file_for(home: Path, profile: str, explicit: str | None) -> Path:
     return home / ".env"
 
 
-def read_token(env_file: Path, override: str | None) -> str:
-    if override:
-        return override.strip()
+def read_env_entry(env_file: Path, *keys: str) -> tuple[str, str]:
+    """Return the first (key, value) among *keys* present in the env file, else ("", "")."""
     try:
         text = env_file.read_text(encoding="utf-8-sig", errors="replace")
-    except OSError as exc:
-        print(f"error: cannot read env file {env_file}: {exc}", file=sys.stderr)
-        return ""
+    except OSError:
+        return "", ""
+    wanted = set(keys)
     for line in text.splitlines():
         line = line.strip()
         if not line or line.startswith("#") or "=" not in line:
             continue
         key, value = line.split("=", 1)
-        if key.strip() == "DISCORD_BOT_TOKEN":
-            return value.strip().strip('"').strip("'")
-    return ""
+        key = key.strip()
+        if key in wanted:
+            value = value.strip().strip('"').strip("'")
+            if value:
+                return key, value
+    return "", ""
+
+
+def read_token(env_file: Path, override: str | None) -> str:
+    if override:
+        return override.strip()
+    _, value = read_env_entry(env_file, "DISCORD_BOT_TOKEN")
+    if not value:
+        print(f"error: no DISCORD_BOT_TOKEN in {env_file}", file=sys.stderr)
+    return value
+
+
+def resolve_proxy(explicit: str | None, env_file: Path, no_proxy: bool) -> tuple[str | None, str]:
+    """--proxy wins, then this process's env, then the profile's own env file.
+
+    Hermes' *gateway* takes its proxy from the profile env file (`DISCORD_PROXY`, or
+    HTTPS_PROXY/HTTP_PROXY); a shell that runs this script by hand inherits none of that, and on a host
+    that cannot dial out directly (measured on the DS220+ NAS: direct -> blocked, proxy -> 200) the
+    call fails with a bare connection error. So the env file is consulted here too.
+    Returns (proxy_url_or_None, where_it_came_from).
+    """
+    if no_proxy:
+        return None, "--no-proxy"
+    if explicit:
+        return explicit, "--proxy"
+    for key in ("HTTPS_PROXY", "https_proxy", "HTTP_PROXY", "http_proxy", "ALL_PROXY", "all_proxy"):
+        value = os.environ.get(key)
+        if value:
+            return value, f"env:{key}"
+    key, value = read_env_entry(env_file, "DISCORD_PROXY", "HTTPS_PROXY", "HTTP_PROXY", "ALL_PROXY")
+    if value:
+        return value, f"{env_file}:{key}"
+    return None, "none"
 
 
 def build_opener(proxy: str | None, no_proxy: bool) -> urllib.request.OpenerDirector:
@@ -100,8 +136,10 @@ def call(opener, token: str, method: str, path: str) -> tuple[int, object]:
         status = exc.code
     except Exception as exc:  # network / DNS / proxy failure
         print(f"error: request failed: {type(exc).__name__}: {exc}", file=sys.stderr)
-        print("hint: on a machine behind a local proxy client, HTTPS_PROXY must be visible in "
-              "this process, or pass --proxy http://127.0.0.1:<port>", file=sys.stderr)
+        print("hint: a host that cannot dial out directly needs a proxy. This script picks up "
+              "DISCORD_PROXY / HTTPS_PROXY from the profile env file on its own; if the env file has "
+              "none, pass --proxy http://127.0.0.1:<port>, or --no-proxy to force a direct dial.",
+              file=sys.stderr)
         raise SystemExit(EXIT_ERROR)
     try:
         return status, (json.loads(body) if body.strip() else "")
@@ -254,8 +292,11 @@ def main(argv: list[str] | None = None) -> int:
                        help="Hermes home (default: $HERMES_HOME or $HOME/.hermes)")
         p.add_argument("--env-file", default=None, help="read DISCORD_BOT_TOKEN from this file")
         p.add_argument("--token", default=None, help="token override (prefer the env file)")
-        p.add_argument("--proxy", default=None, help="e.g. http://127.0.0.1:7890")
-        p.add_argument("--no-proxy", action="store_true", help="ignore HTTPS_PROXY/HTTP_PROXY")
+        p.add_argument("--proxy", default=None,
+                       help="proxy URL; default: this process's env, then DISCORD_PROXY / "
+                            "HTTPS_PROXY from the profile env file")
+        p.add_argument("--no-proxy", action="store_true",
+                       help="ignore every proxy source and dial directly")
         p.add_argument("--json", action="store_true", help="machine-readable output (status)")
 
     for name in ("status", "leave", "join"):
@@ -274,7 +315,10 @@ def main(argv: list[str] | None = None) -> int:
         print("hint: pass --profile <name> / --env-file <path>, or --token", file=sys.stderr)
         return EXIT_NO_TOKEN
 
-    opener = build_opener(args.proxy, args.no_proxy)
+    proxy, proxy_src = resolve_proxy(args.proxy, env_file, args.no_proxy)
+    opener = build_opener(proxy, args.no_proxy)
+    if args.command == "status" and not args.json:
+        print(f"auth: {env_file}\nproxy: {'on' if proxy else 'off'} ({proxy_src})")
     if args.command == "status":
         return cmd_status(opener, token, args.thread_id, args.json)
     if args.command == "leave":

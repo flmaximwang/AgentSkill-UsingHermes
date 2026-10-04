@@ -116,8 +116,49 @@ $ python3 scripts/discord_thread_membership.py status 1556208599146172476 --prof
 
 最后一条证明 `--profile` 的 token 解析是真的（`<HERMES_HOME>/profiles/travel-guider/.env`）。
 
-## 7. 网络侧
+## 7. 网络侧：两台机器正好互为反面
 
-本机 `curl --noproxy '*' https://discord.com/api/v10/users/@me` → `http=000`；同一条加默认代理（`HTTPS_PROXY=http://127.0.0.1:7890`）
-→ `200`。脚本用 urllib 的默认代理行为（吃 env + macOS 系统代理），所以在这台机器上不加参数就是通的；`--no-proxy`
-/ `--proxy` 只在确知要换路径时用。
+| 机器 | 直连 Discord API | 代理 | 代理从哪来 |
+|---|---|---|---|
+| 本机 macOS | `curl --noproxy '*'` → `http=000` | 进程环境变量 `HTTPS_PROXY=http://127.0.0.1:7890` → `200` | 来自进程环境变量 |
+| NAS `10.10.74.242`（`light`） | 连接被拒 | env 文件 `DISCORD_PROXY=http://127.0.0.1:7893` → 通 | **只在 profile 的 env 文件里** |
+
+网关的代理是 `<HERMES_HOME>/.env` / `<HERMES_HOME>/profiles/<p>/.env` 里的 `DISCORD_PROXY`，由
+`hermes_cli/env_loader.py` 注入 gateway 进程；**手跑一个 shell 拿不到它**。所以脚本的解析顺序是
+`--proxy` → 进程环境变量 → env 文件（`DISCORD_PROXY`/`HTTPS_PROXY`/`HTTP_PROXY`），`status` 第一行回显来源。
+
+在 NAS 上不做这件事的原始症状（第一次交付后当场跑到）：
+
+```
+error: request failed: URLError: <urlopen error [Errno 111] Connection refused>
+hint: (旧文案：HTTPS_PROXY must be visible in this process …)               # exit=1
+```
+
+## 8. 远端交付与回读（NAS `light` profile，2026-10-04）
+
+```bash
+HB=$HOME/.hermes/hermes-agent/.hermes/bin/hermes      # NAS 上 hermes 不在非交互 ssh 的 PATH 里
+$HB --profile light skills install \
+  flmaximwang/AgentSkill-UsingHermes/skills/leave-and-rejoin-a-discord-thread --category hermes -y
+```
+
+安装输出要点：`Decision: ALLOWED — Allowed (community source, safe verdict)`；`rules: hardcoded_ip_port`
+（3 条 medium，与本地预测一致）；扫描的 source 指向
+`…/tree/8952646ea783594a90785ec1557c1017bfade393/skills/leave-and-rejoin-a-discord-thread`；`Installed:
+hermes/leave-and-rejoin-a-discord-thread`，4 个文件。
+
+回读：
+
+| 检查 | 结果 |
+|---|---|
+| 本机 clone 与远端安装副本的 4 个文件 sha256 | **逐字节相同**（`29e002e6…`、`2b1bcc97…`、`8b61d99b…`、`f3306514…`）——修订前那一版 |
+| `lock.json` | `install_path: hermes/leave-and-rejoin-a-discord-thread`、`source_revision: 8952646ea783594a90785ec1557c1017bfade393`（== 推送的 sha） |
+| `hermes --profile light skills check …` | `0 update(s) available across 1 checked skill(s)` |
+| 从安装副本真跑一次 | 修代理后 `status` exit=0 |
+
+两个环境事实（下次别误判）：
+
+- 远端 hermes 是 `v0.21.5+5673.g00373b5`，它的 `skills inspect` 在打印完技能卡之后抛了一行
+  `Traceback … sys.exit(main())` —— **install 不受影响**，别把这行读成安装失败。
+- NAS 的 `python3` 是 `/usr/bin/python3` **3.8.15**；脚本只用 `from __future__ import annotations` 和 stdlib，
+  实测在 3.8 上跑通（交付前本机只有 3.9/venv 3.11 可测，所以 3.8 的证据来自 NAS 那次真跑）。
