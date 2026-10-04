@@ -1,0 +1,27 @@
+[
+  {
+    "id": 1,
+    "prompt": "一个 thread 里有好几个 Hermes bot，我想让其中一个自己退出这个 thread、别再参与了，能做到吗？",
+    "expected": "给 leave 路径：DELETE /channels/<thread_id>/thread-members/@me 用该 bot 自己的 token，零权限、实测 204；顺带说明 --profile 决定读哪个 profile 的 env 文件。不要把它答成「需要 Manage Threads」或网关诊断。"
+  },
+  {
+    "id": 2,
+    "prompt": "bot 能不能自己退出 Discord 的 thread？需要给它 Manage Threads 之类的权限吗？",
+    "expected": "明确回答：自己退不需要任何权限（实测 204）；Manage Threads 只在「删掉别人的成员资格」时才需要（实测 403 Missing Access 50001）。给出自进退两条命令。"
+  },
+  {
+    "id": 3,
+    "prompt": "把 bot 从 thread 的成员里移除之后，它是不是就不会再回这个 thread 的消息了？",
+    "expected": "纠正这个假设：退出 ≠ 闭嘴（A/B 实测，退出后同一 mention 照样被 admitted 并回复）——投递看父频道可见性，Hermes 的回话判断只读本地 discord_threads.json + mention 规则。要真静音就给配置路：ignored_channels 写 thread id，或 thread_require_mention: true。"
+  },
+  {
+    "id": 4,
+    "prompt": "给我一条能直接跑的命令，让 bot 用自己 profile 里的 token 退出某个 thread。",
+    "expected": "一条可复制命令：python3 <skill>/scripts/discord_thread_membership.py leave <thread_id> --profile <name>，并说明 token 由脚本从 <HERMES_HOME>/profiles/<name>/.env 读、不会回显；不是 curl 一行里塞 token。"
+  },
+  {
+    "id": 5,
+    "prompt": "我的 Discord bot 完全没反应，日志里连 inbound message 都没有，是不是因为它没被加进那个 thread？",
+    "expected": "诱饵：正确答案是 maintain-hermes-gateway（网关诊断：先数 inbound message、再查 allowlist/mention/intents/parked），本 skill 只负责成员资格与静音配置。若本题被判给本 skill 说明头部抢了兄弟的题。"
+  }
+]
