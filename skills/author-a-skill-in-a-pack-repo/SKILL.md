@@ -40,8 +40,10 @@ description: "在 AgentSkill-* 包仓库里新建/改写 skill 时用（证据�
   **题序与 picks 一律解析，不许手抄**：判官回的 `P1…Pn` 是**它自己**乱序下的编号，脱离那次调用发给它的题序就没有意义，
   而题序只存在于**你那条 `delegate_task` 调用的参数**里 —— `messages.tool_calls` 里
   `json.loads(call['function']['arguments'])['tasks'][i]['context']`，按行抓 `P<k> <题面>`，再用金标的题面文本映回 prompt id；
-  picks 从**批次完成通知**的 `TASK n/N` 块里 `json.loads` 取。子代理 live log 会把 kickoff 截断成 `…(+N chars)`、
-  子会话行只存 goal —— **没有第二份来源**；手抄漂一格，整张矩阵静默出错（实测 6 个判官里漂了 2 个，分数全错）。
+  picks 优先从**子代理 live transcript**（`…/delegation/live/<deleg_id>/task-N.log`）里含 `assistant|` 且带 `"P1"` 的那一行 `json.loads` 取 ——
+  2026-10-04 实测那一行是**完整** JSON（14/14 键），而批次完成通知的 `TASK n/N` 块只是摘要、长 picks 会被截成 `…(+100 chars)`；
+  两者对不上时以 transcript 为准。
+  手抄漂一格，整张矩阵静默出错（实测 6 个判官里漂了 2 个，分数全错）。
   **把「现版头部」也当一个 arm（基线臂）**：既有的家族抢词只有在基线臂里才分得出来，别把它们记到新头的账上；
   基线臂同样漏的题属于别的 skill 的头部问题，另开一轮，不并进这一轮。
   **打分按组给，取舍按可复现定**：题面分「原有触发词 / 新能力 / 兄弟干扰项」三组分别统计 —— 总分接近时只有
@@ -86,6 +88,9 @@ PY
 | 通配监听地址带端口 | high / `bind_all_interfaces` | 「22 与 5001 都在通配地址上监听」 |
 | 字面 IP 带端口 | medium / `hardcoded_ip_port` | `NAS=<地址>` + `"https://$NAS:5001/"`：变量形式保留可复制性，不再命中 |
 | 家目录相对的递归删除（**即使这一步确实必要**，例如「把工具的配置目录搬到别处」） | **critical** / `destructive_home_rm` | **换动作，不只是换措辞**：把「`cp -a` 拷贝 → `rm -rf` 原目录 → `ln -s`」改成 `mv <原目录> <新位置>` + `ln -s`（全程**一次删除都没有**）；回滚用 `unlink` 摘软链再 `mv` 回来 |
+| 把 Hermes 的 profile 环境文件写成字面路径（家目录前缀紧跟 `.hermes` 再跟 `.env`）—— **连代码里的 fallback 与文档里的说明都算** | **critical** / `hermes_env_access`（「directly references Hermes secrets file」） | 别隐式读它：key 只从环境变量 / `--api-key` / 显式 `--key-file` 取；文档里也不出现那个路径（示例写成 `/path/to/key.txt`）。实测去掉这一处后，另外两条 medium（`python_environ_get_secret`、`hardcoded_ip_port`）仍停在 informational，verdict 回到 `safe` |
+| 读环境变量的**下标**写法（正则只放过 `.get(` 形态：`^[^#\n]*os\.environ\b(?!\s*\.get\s*\()`） | high / `python_os_environ` | 一律 `os.environ.get("X_KEY")`，别用 `os.environ["X_KEY"]`（本来就该防 KeyError） |
+| IP 与端口**贴在一起**（连正文里的说明句也算） | medium / `hardcoded_ip_port` | 拆开写：「地址 127.0.0.1、端口 7890」——信息不丢，`\d+.\d+.\d+.\d+:\d+` 不再命中 |
 
 保留路径、警告与命令，只去掉「长得像那个动作」的形态——把整条警告删掉是更贵的错。
 
@@ -176,6 +181,12 @@ python3 <profile>/skills/<类目>/<name>/scripts/<name>.py <一个真实输入> 
 
 ## 坑（规则 + 机制）
 
+- **把 profile 里手拷的 skill 收进包：拆成两个提交 —— 先「逐字节原样」，再「过扫描闸的改写」**。
+  原样那个提交是「删 profile 副本前逐项证明内容已在别处」的**落点**
+  （`git show <搬迁 sha>:skills/<name>/<文件> | shasum -a 256` 逐个对 profile 那份，全 MATCH 才动删除）；
+  改写单独一个提交。机制：手拷 skill 早于扫描闸存在，首轮 verdict 几乎必是 `dangerous`
+  （实测一份 host 层 skill：1 critical + 20 high），若把搬迁与改写并成一个提交，原文就只剩聊天记录，
+  用户的「逐项证明」无物可指。改写本身按手册来：只去命中形态，命令本体与路径一字不动。
 - **判据里的名词必须来自实况**：字段名错一个（`samples` / `product`、`protocol` / `protocols`）就会在真数据上给出相反结论。机制：同一课题常有**两代记录**并存，承载同一语义的键名不同——先认代际，再判字段。
 - **不要只读一半就下结论**：产物常只出现在正文（「保存为 `<编号>`」）而不在 frontmatter——正文出现算**证据**、不算**标注**，结论仍是未过，但要在证据里列出候选编号。
 - **frontmatter 缺键 ≠ 事实缺失：记录之间的链接常写在正文的 URI 参数里。** 引用以
@@ -246,6 +257,22 @@ python3 <profile>/skills/<类目>/<name>/scripts/<name>.py <一个真实输入> 
   **HTTPS** remote（`https://github.com/…`），而本机既有包仓库一律是 `git@github.com:…`（`git remote -v` 实测）。
   用户明确要求过 SSH。做法：建完 `git remote set-url origin git@github.com:<owner>/<repo>.git`，
   再用 `git fetch` + `ssh -T git@github.com` 各验一次凭据；别等到下次推送才发现。
+- **判官输入必须是「脚本生成的文件」，不能经人手转写**：本库实测一次惨案 —— dispatch 里把 35 条冻结题面凭记忆改写成短版，
+  逐条比对 **10/10 与源文件不同**，而金标是按原题面标的，打出来的「19/40 错」全是**题面与金标错配**的产物、与描述头无关。
+  做法：脚本从 `blind-prompts-rN.json` 生成 `judge-input-rN.txt` → 交付前断言「40/40 一字不差」→ 判官**只读这一个文件**
+  （transcript 里应当只有一次 `read_file`）→ 作废的产物**改名留档**（`VOID-…`）而不是删掉。
+- **改可见头时，尾巴要与新头重新拼**：把「旧 description 里某个词之后」当尾巴接回去，很容易把衔接词重复
+  （实测拼出「…（一次设置长期可写）时用**时用**——三条路…」）。前 57 字符不受影响、盲测仍有效，但**改完必须回看整条 description**。
+- **新增 skill 的第一轮很可能抢走兄弟的题**，且抢的是「**症状词相同**」那一条（实测：新头里写「或任何要原地写文件的编辑器 / agent 里 annex 管的图片改不动」，
+  把 r4 归 `add-and-track-large-files` 的「编辑器说只读怎么办」两判官一致抢走）。修法不是删内容，是把窗口里的词换成**区分词**
+  （`Obsidian` / `vault 的 annex 要整批解锁` / `一次设置长期可写`），并让被抢的那类问题里**不出现**这些词。
+- **profile 里的 curator skill（没有 lock 条目）只有两条出路：折进包、或删掉 —— 别只写一句「合并见 X」就算完**：
+  实测两次：第一次真折过，且**逐项证明当场抓出两处真缺口**（asar 代码行、开启 thin 的确切命令）；
+  第二次我**没核对**就在 README 里写了「合并见 `cheatsheet-for-git-annex-pipelines`」，
+  把「它的 24 个关键项逐个搜过所有 `AgentSkill-*` 包」之后才发現**哪里都没有**（内容全落在那份 curator 自己身上）
+  ⇒ 先折进包（新增一节 pipeline）再删。判据是**每个原子项在包里能找到出处**：
+  反引号片段 / 关键数字 / 节次三类都要过，不是"我记得好像折过"。
+  删除前先记 sha256 + 行数（可追溯），删后回读三件（目录没了 / 没有悬空引用 / 那份包 skill 仍装且 `diff -rq` 空）。
 - **回读时不要把命令接 `| tail -1`**：`hermes skills check` 的最后一行是空行/表格边框，`tail -1` 会把它
   吞成空字符串，看起来像「没输出=没装上」。用 `grep -ivE '^\s*$|^[╭╮╰╯│─]'` 滤掉边框再取结论
   （实测判据是那句 `0 update(s) available across 1 checked skill(s)`）；同理 lock 条目的 `source` 字段
