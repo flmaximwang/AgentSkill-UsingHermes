@@ -290,7 +290,7 @@ install-hermes-skills/
 ├── SKILL.md  (310 lines)
 ├── test-prompts.json  (12 lines)
 ├── references/
-│   ├── install-hermes-skills-diagnosis.md  (219 lines)
+│   ├── install-hermes-skills-diagnosis.md  (220 lines)
 │   ├── install-hermes-skills-external-pack-adoption.md  (105 lines)
 │   ├── install-hermes-skills-from-clawhub.md  (87 lines)
 │   ├── install-hermes-skills-from-github.md  (595 lines)

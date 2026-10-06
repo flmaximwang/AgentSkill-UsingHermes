@@ -29,6 +29,7 @@ print({k:(v['install_path'],v['metadata'].get('source_revision')) for k,v in d.i
 | `AgentSkill-JobHunt` | private | `~/Documents/AgentSkill/AgentSkill-JobHunt` | —— | **不装**：仓库即 source of truth，profile 里不留副本 |
 | `AgentSkill-UsingBioXTASRAW` | 本地无 remote | `~/Documents/AgentSkill/AgentSkill-UsingBioXTASRAW` | —— | 未安装（历史包） |
 | `AgentSkill-UsingGitAnnex` | private（origin=SSH） | `~/Documents/AgentSkill/AgentSkill-UsingGitAnnex` | `git-annex` | `default`（**11 条**已装：10 个主题 skill + `cheatsheet-for-git-annex`；各条 `source_revision` **混合**——实测 5 种提交，`check` 按内容判、全部 `up_to_date`） |
+| `AgentSkill-PlasmidEngineer` | private（origin=SSH，2026-10-05 建） | `~/Documents/AgentSkill/AgentSkill-PlasmidEngineer` | `plasmid` | `plasmid-engineer`（**7 条**已装：SnapGene 读写 / Tm / 二聚体 / 结合位点 / Gibson 设计 / PCR 台账 / 调参；台账库 `plasmid_engineer` 跑在本机既有 dolt sql-server 上） |
 | `AgentSkill-UsingAliyunpan` | private（origin=SSH） | `~/Documents/AgentSkill/AgentSkill-UsingAliyunpan` | `cloud-drive` | `default`（1 条：`use-the-aliyunpan-cli`） |
 | `AgentSkill-UsingBaiduwp` | private（origin=SSH） | `~/Documents/AgentSkill/AgentSkill-UsingBaiduwp` | `cloud-drive` | `default`（1 条：`use-baidupcs-go`；**包名 `Baiduwp` 是用户指定的，内层 skill 名按要敲的命令叫 `baidupcs-go`**） |
 
