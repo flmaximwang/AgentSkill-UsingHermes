@@ -16,6 +16,12 @@ description: "在 AgentSkill-* 包仓库里新建/改写 skill 时用（证据�
 
 **Step 1 · 认门**（输入：仓库名；输出：clone 路径 + 分支 + 并发状况）
 `git -C <clone> fetch --quiet && git status --short && git log --oneline -3 origin/main`，并读该仓库 README 的「索引 / 安装 loop / 现有 `## skills/<x>` 正文节」——你要沿用它的形状。
+**开写前先 diff clone 与已装副本**（`diff -rq <clone>/skills/<x> <profile>/skills/<cat>/<x>`）：别的 agent
+常常直接改**已装那份**而没回移植，profile 会比仓库新 —— 那几份是它的在途工作，**先逐字节搬回仓库当基线
+（单独一个提交），再在上面改你的**。反了就是静默删掉人家内容（本轮实测：在改同一个 `assets/plan.html` 的
+同时，另一个会话已经改了 profile 里的 `assets/plan.html` / `SKILL.md` / `plan.py` 三份；直接 `cp` 覆盖与
+`skills update --force` 都会把它们的改动吞掉）。漂移一旦发现就**把在途文件也一并回移植**（含 `.py`：先
+`py_compile` + 跑一条只读子命令确认能跑），让仓库 ⊇ profile，别人以后跑 `update` 就不会砸掉它。
 **这套仓库经常有别的会话在同一个 clone 里写**：`?? skills/<别的名字>/`、被改过的 README、`docs/` 里别人的产物都当在途工作，一个字都不要动。
 
 **Step 2 · 证据先行**（输入：判据清单；输出：可实现的字段/命令/阈值）
@@ -241,6 +247,8 @@ python3 <profile>/skills/<类目>/<name>/scripts/<name>.py <一个真实输入> 
   **不要把兜底写成 `**/*.md`**：实测把审查根指到一个大目录（`/tmp`）会抓回 2346 份无关 `.md` 当「记录」，生成一份看起来正常的假报告 —— 假报告比报错贵得多。
   「命中 0 条」也必须退非零（`all()` 对空列表恒真，会让空范围静默退 0）。
 - **配置/规则类 skill 的字段必须能分级**：`severity: fail|info` 一类（硬缺口 vs 只提示）要在**第一版**就实现并示范 —— 否则第一次跑真实数据就是「N 份 0 份全过」，整份报告变成噪音，用户会先怀疑工具而不是规则。
+- **批量改写用户数据的工具必须带「逐文件 git 脏守卫」，默认 dry-run**：用户 vault 与多 agent 同跑的仓库里随时有别人的未提交改动；先改再说就等于把别人的 WIP 卷进你的提交、或被你的格式化带走。写入前逐文件查 `git status --porcelain -- <file>`，脏就跳过并列出来（`--force` 才越权）；**撤回时也按「动手前干净的文件才 `git checkout`」区分**，动手前就已脏的文件只能逐行还原自己的那部分（2026-10-06 实测：三个 vault 里两个有别的会话在改记录，其中一个还有一份记录被删、`archive-id` 被写成占位符）。
+- **别把 `git diff --name-only` 的输出回喂给 pathspec**：`core.quotepath` 默认把非 ASCII 路径转义成 `\346\240\267` 形式，回喂 `git diff -- <path>` **匹配不到、静默返回空 diff** —— 症状是「文件明明改了却显示 `+0/-0`」，特别容易被误读成编码损坏而去抢救不存在的灾难。要原始路径就加 `-z`（NUL 分隔）再按 NUL 切分。
 - **包内脚本不要依赖环境里的 `python3` 有第三方包**：同一台机器上，前台登录 shell 的 `python3` 与后台/非登录 shell
   解析到的 `python3` 可能不是同一个（实测前台是自带 PyYAML 的 3.9、后台落到没装 yaml 的 homebrew python3，
   脚本直接 `ImportError` 退出）⇒ 要么自带一个只吃目标子集的兜底解析器，要么在文档与命令里写死解释器路径；
