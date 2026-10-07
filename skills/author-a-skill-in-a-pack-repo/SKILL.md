@@ -155,6 +155,11 @@ python3 <profile>/skills/<类目>/<name>/scripts/<name>.py <一个真实输入> 
 - **同一个 skill 的第二轮改动走 `update` 而不是重装**：`hermes --profile <目标 profile> skills update <name>`，然后照样 `diff -rq` + `check` 回读；只以「装过了」结案，会留下一个旧副本。
 - **跑过脚本的安装副本会被判成「本地已改」**：在副本目录里以模块方式导入/跑过脚本会留下 `__pycache__/`，hub 就报「kept your local edits」并跳过更新。修法：先删副本里的 `__pycache__` 再 `update`（实测即通过）——磁盘上的内容其实没被改动。
 - **`update` 是单向的**（已推送的修订 → profile），推不出去。回读时 `diff -rq` 若显示安装副本里有 clone 没有的内容（别的会话直接改过安装目录），那是**先判后并**的漂移：逐字节回移植进 clone → pathspec 提交推送 → 再 `update --force`（此时仍会报「kept your local edits」——跳过判据是**记录的哈希**，与两棵树现在是否已相同无关）；顺序反了就是静默删掉别人那份内容。归属与五步走见 evolve 流程。
+- **`diff -rq` 是空的、`update` 却报「kept your local edits」⇒ 那是 lock 的 `source_revision` 落后于 clone，不是漂移**：
+  搬迁 / 回移植提交之后没重装过，lock 就停在被搬进来那一刻的提交（实测 lock 记 `8332cbf`、clone 已到 `fc1ef2d`；
+  跳过判据是**内容哈希**，与两棵树现在是否相同无关）。安全判据（也正是用户要的「逐项证明」）：对**你改动前那个
+  commit** 逐文件比 sha256 —— `shasum -a 256 <安装副本>/<f>` vs `git show <改动前 commit>:<skills 路径>/<f> | shasum -a 256`；
+  全 MATCH ⇒ 安装副本里没有任何仓库没有的东西 ⇒ `--force` 不会丢东西（实测 3/3 MATCH）；有 DIFFER 就先回移植，再 `--force`。
 - **`hermes skills list` 的 Name 列会截断**（显示成 `maintain-hermes-mem…`）：拿完整技能名 grep 它**零命中**，看起来像「根本没装上」。回读以 `diff -rq` 与 `.hub/lock.json` 为准（有 `install_path` + `source_revision` 才算真装上）；要 grep 列表就 grep **名字前缀**，或直接读 lock。
 - **`hermes skills check` 一次只吃一个名字**：`hermes skills check a b c` 直接报 `unrecognized arguments`，
   要核查多个就逐个跑（或只跑刚交付的那个）。
@@ -333,7 +338,7 @@ python3 <profile>/skills/<类目>/<name>/scripts/<name>.py <一个真实输入> 
 
 ```
 author-a-skill-in-a-pack-repo/
-├── SKILL.md  (335 lines)
+├── SKILL.md  (348 lines)
 ├── test-prompts.json  (14 lines)
 └── references/
     ├── author-a-skill-in-a-pack-repo-darwin-blind-paired-loop.md  (58 lines)
