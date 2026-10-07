@@ -97,6 +97,7 @@ PY
 | 把 Hermes 的 profile 环境文件写成字面路径（家目录前缀紧跟 `.hermes` 再跟 `.env`）—— **连代码里的 fallback 与文档里的说明都算** | **critical** / `hermes_env_access`（「directly references Hermes secrets file」） | 别隐式读它：key 只从环境变量 / `--api-key` / 显式 `--key-file` 取；文档里也不出现那个路径（示例写成 `/path/to/key.txt`）。实测去掉这一处后，另外两条 medium（`python_environ_get_secret`、`hardcoded_ip_port`）仍停在 informational，verdict 回到 `safe` |
 | 读环境变量的**下标**写法（正则只放过 `.get(` 形态：`^[^#\n]*os\.environ\b(?!\s*\.get\s*\()`） | high / `python_os_environ` | 一律 `os.environ.get("X_KEY")`，别用 `os.environ["X_KEY"]`（本来就该防 KeyError） |
 | IP 与端口**贴在一起**（连正文里的说明句也算） | medium / `hardcoded_ip_port` | 拆开写：「地址 127.0.0.1、端口 7890」——信息不丢，`\d+.\d+.\d+.\d+:\d+` 不再命中 |
+| 脚本里的**可执行程序白名单**出现 `ssh-keygen` 这类字面量（哪怕它只是「哪些首词算程序名」的清单） | medium / `ssh_keygen` | 不影响 verdict（medium 单独只算 informational ⇒ 仍 `safe`）；要消掉就把该词从清单里删掉，或写成前缀匹配（`"ssh-"`）不落整词 |
 
 保留路径、警告与命令，只去掉「长得像那个动作」的形态——把整条警告删掉是更贵的错。
 
