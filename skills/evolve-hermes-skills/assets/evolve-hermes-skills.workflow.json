@@ -1,0 +1,77 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "evolve-hermes-skills 工作流（一轮会话）",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "output": ".archify/workflow-evolve-hermes-skills-20261008-160854/evolve-hermes-skills.workflow.html"
+  },
+  "lanes": [
+    { "id": "user", "label": "用户（决策闸）" },
+    { "id": "exec", "label": "执行：主 agent · 只读子代理" },
+    { "id": "darwin", "label": "darwin-skill（Phase 3）" },
+    { "id": "land", "label": "落地：clone → profile 副本" }
+  ],
+  "phases": [
+    { "id": "p1", "label": "Phase 1 挖矿", "fromCol": 0, "toCol": 2 },
+    { "id": "p2", "label": "Phase 2 归属 + 交付", "fromCol": 3, "toCol": 4, "variant": "emphasis" },
+    { "id": "p3", "label": "Phase 3 优化", "fromCol": 5, "toCol": 5, "variant": "dashed" }
+  ],
+  "nodes": [
+    { "id": "ask", "lane": "user", "col": 0, "type": "external", "label": "会话结束 · 发令", "sublabel": "evolve 这轮会话的 skill", "width": 140 },
+    { "id": "report", "lane": "exec", "col": 1, "type": "backend", "label": "挖矿报告（只读）", "sublabel": "四种抽取 + 差距分级", "width": 140 },
+    { "id": "gate1", "lane": "exec", "col": 2, "type": "security", "label": "🔴 抽检两条 finding", "sublabel": "回查 message id + 原文", "width": 140 },
+    { "id": "clarify", "lane": "user", "col": 3, "type": "external", "label": "一次 clarify", "sublabel": "推荐在前：归属 + 应用项", "width": 140 },
+    { "id": "clone", "lane": "land", "col": 4, "type": "backend", "label": "pack clone", "sublabel": "改后：生成器 + verify", "width": 140 },
+    { "id": "profile", "lane": "land", "col": 5, "type": "external", "label": "profile 副本", "sublabel": "HERMES_HOME/skills/<cat>/<name>", "width": 140 },
+    { "id": "darwin", "lane": "darwin", "col": 5, "type": "backend", "label": "darwin 优化循环", "sublabel": "测试集 = 本会话真实 prompt", "width": 140 }
+  ],
+  "edges": [
+    { "id": "e1", "from": "ask", "to": "report", "label": "按 chat_id 选会话", "variant": "emphasis" },
+    { "id": "e2", "from": "report", "to": "gate1", "label": "交主 agent 抽检", "variant": "default" },
+    { "id": "e3", "from": "gate1", "to": "clarify", "label": "lock.json → clone", "variant": "security" },
+    { "id": "e4", "from": "clarify", "to": "clone", "label": "rung 1：改 clone", "variant": "emphasis" },
+    { "id": "e5", "from": "clarify", "to": "profile", "label": "rung 2：就地改", "variant": "dashed", "role": "branch" },
+    { "id": "e6", "from": "clone", "to": "profile", "label": "push → update", "variant": "emphasis" },
+    { "id": "e7", "from": "clone", "to": "darwin", "label": "在 clone 上跑", "variant": "default" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "一条铁律：无 receipt 不成 finding",
+      "items": [
+        "receipt = message id、命令的真实输出、用户的原话",
+        "没 receipt 的 finding 在 Phase 1 丢弃，不带到 Phase 2 讨论",
+        "载入过但没出岔子的 skill 不产 finding：写进报告，不要编"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "两条 rung，drift 优先",
+      "items": [
+        "有 repo：只改 clone；绝不能手改 profile 副本",
+        "无 repo：就地改，没有 update 路径（同时提供 promote 进 repo）",
+        "副本与 clone 有 diff：先判内容，只存在于副本的块可能是要留的优化"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "hub 路线是单向的",
+      "items": [
+        "commit + push 才发布；update 只把已 push 的版本带进 profile",
+        "只改 profile 的编辑，下一次 update 会被整目录替换掉",
+        "闸没答复就是 hold：已 commit、未 push，等一句话再推"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "收尾报告先给数字",
+      "items": [
+        "evolve 了几个 skill、应用了几条 finding、合并了几个、revert 了几个",
+        "未交付的写清在哪一步停住（已 commit 未 push 之类）",
+        "证据留在 results.tsv、commit 信息与 references 里，报告只给数字"
+      ]
+    }
+  ]
+}

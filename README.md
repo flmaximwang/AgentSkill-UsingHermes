@@ -33,6 +33,13 @@ hermes skills install flmaximwang/AgentSkill-UsingHermes/skills/load-external-sk
 |---|---|---|---|---|---|---|---|
 | r1 | 2026-10-08 | `maintain-hermes-models` | 4/4 | 23/31 | 1/1 | 0 条 | 定版 |
 
+## 流程图
+
+- `diagrams/evolve-hermes-skills.workflow.html` — `skills/evolve-hermes-skills` 一轮会话的流程图（交互版，可直接点开）。
+- 包内只放 PNG 与源 JSON（`skills/evolve-hermes-skills/assets/`）：自包含 HTML 把字体以 base64 内联，安装扫描会
+  把它判成 high（`encoded_exfil`），整个包就从远端装不上 —— 所以 HTML 留在仓库里、`skills/` 之外。
+- 改图只改源 JSON，再用 archify 的 `finalize` 重生成，不手改 HTML 与 PNG。
+
 ## Workflow
 
 - Run `scripts/auto-generate-skill-structure.py` in the end to generate structures for every SKILL.md.
