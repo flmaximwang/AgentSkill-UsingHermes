@@ -33,6 +33,8 @@ hermes skills install flmaximwang/AgentSkill-UsingHermes/skills/load-external-sk
 | 轮次 | 日期 | 新技能 | 臂 B 新能力 | 臂 B 旧题 | 诱饵 | 旧题被新技能抢走 | 结论 |
 |---|---|---|---|---|---|---|---|
 | r1 | 2026-10-08 | `maintain-hermes-models` | 4/4 | 23/31 | 1/1 | 0 条 | 定版 |
+| r2 | 2026-10-08 | `remove-a-hermes-plugin` | 3/4 | 29/37 | 1/1 | 0 条 | 头改 v2 再测（未过的是 P23「桌面 app 的 Remove 按钮」） |
+| r3 | 2026-10-08 | `remove-a-hermes-plugin`（头 v2） | 3/4 | 28/37 | 1/1 | 0 条 | 定版；P23 两轮四判官一致投兄弟 → 记为接受的代价（语义双关） |
 | r4-diagnose-update | 2026-10-08 | `diagnose-a-failed-hermes-update` | 4/4 | 32/47 | 1/1 | 0 条 | 定版 |
 
 ## 流程图

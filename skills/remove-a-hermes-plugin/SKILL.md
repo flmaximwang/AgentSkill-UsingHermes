@@ -1,6 +1,6 @@
 ---
 name: remove-a-hermes-plugin
-description: "插件删不掉、报 gateway 在跑（Cannot remove plugin files while the messaging gateway is running）或 UI 的 Remove 无效时用：合法绕法（--allow-live-gateway vs 停网关）、跨 profile 清残留、删完要不要重启。装/更新插件与删 skill 是兄弟技能。"
+description: "插件删不掉（Cannot remove plugin…/gateway 在跑/UI 的 Remove 按钮）时用：合法绕法（--allow-live-gateway vs 停网关）、跨 profile 清残留、删完要不要重启。装/更新插件与删 skill 是兄弟技能。"
 version: 1.0.0
 author: Hermes Agent
 license: MIT
