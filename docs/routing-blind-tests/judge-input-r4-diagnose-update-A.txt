@@ -1,0 +1,91 @@
+你是一名 skill 路由判官。下面第一段是候选 skill 列表（只有名字与 description 的前 57 字符），
+第二段是一批**用户提问**。请为每一条提问选出「最该被触发的那个 skill」。
+
+规则：
+- 只能从候选列表里挑一个名字，或写 none（表示这批候选里都不合适）。
+- 只按语义判断；提问里出现某个词不等于该选同名的 skill。
+- 每条只给一个答案，不确定时给最接近的那个，不要跳过任何一条。
+- 编号照抄题面里的 `P<n>`。
+- 除本文件外不要读任何其它文件、不要翻技能目录。
+
+## 候选 skill（22 个）
+1. author-a-skill-in-a-pack-repo — 在 AgentSkill-* 包仓库里新建/改写 skill 时用（证据先行→扫描闸→装完回读）。…
+2. dispatch-work-to-another-profile — Use when work must go to another Hermes profile.…
+3. hermes-session-routing-forensics — Use when a Hermes chat's messages reach the wrong agent.…
+4. install-a-hermes-plugin — 装 Hermes 插件、或插件的 Python 依赖装不上（uv 报 has no publish time / …
+5. install-hermes-skills — Install Hermes skills from GitHub, skills.sh, ClawHub and…
+6. leave-and-rejoin-a-discord-thread — 要让 bot 自己退出某个 Discord thread、或问「把它踢出 thread 后它还会不会回话」时用：`…
+7. load-external-skill-index — Use when surveying a skill repo without installing it — a…
+8. maintain-hermes-desktop-app — Use when the Hermes desktop app or plugin misbehaves. An …
+9. maintain-hermes-gateway — Use when setting up or debugging a Hermes gateway bot. St…
+10. maintain-hermes-memory — Control Hermes' automatic memory and skill writing — the …
+11. maintain-hermes-models — 改某个或所有 profile 的默认模型、换模型 provider 时用：一条命令切全库、免重启、按计费字段回读。…
+12. maintain-hermes-node — Use when a Node/npm CLI package behaves differently insid…
+13. maintain-hermes-profile — Use when bulk-editing a profile's skills or config. Bulk …
+14. maintain-hermes-profile-skill-parity — Use when one bot or profile lacks a skill another one has…
+15. maintain-hermes-profiles — Manage Hermes Agent profiles and their per-profile gatewa…
+16. maintain-hermes-skill-cards — Use when a hub-installed skill shows 2 cards or Hub. Also…
+17. maintain-hermes-skills — Manage the skills inside a Hermes profile — where they co…
+18. recruit-learning-in-profile — Install a skill that exists only inside a Hermes profile …
+19. recruit-learning-in-session — Recruit a session's learning into the skills it touched, …
+20. remove-a-hermes-plugin — 插件删不掉（Cannot remove plugin…/gateway 在跑/UI 的 Remove 按钮）时用：…
+21. remove-hermes-skills — Remove skills from a Hermes profile, and tell a removal f…
+22. update-hermes-skills — Update skills already installed in Hermes, and work out w…
+
+## 提问（52 条）
+P1 我删插件的时候报 Cannot remove plugin files while the messaging gateway is running，说要先 stop gateway 再 start —— 我人在 Discord 上跟你说话，停了网关你不就掉线了吗？
+P2 把这件事交给 rdm-assistance 那个 profile 做
+P3 桌面 app 里那个插件的 Remove 按钮老是弹 Could not remove plugin…，是不是界面有 bug？
+P4 我在 kanban 上给别的 profile 建了卡，工人起了又死了
+P5 profile 里又冒出个新 skill（curator 建的，没 lock 条目），先评估它跟已有技能的关系，再迁到仓库里、从远程重装一遍
+P6 一个 thread 里有好几个 Hermes bot，我想让其中一个自己退出这个 thread、别再参与了，能做到吗？
+P7 limbic 依赖装好了、memory.provider 也写了 limbic，可它好像还没在工作，我还差哪一步？
+P8 我把插件 disable 掉之后 hermes gateway restart 起不来了，hermes gateway status 说服务定义与当前安装不匹配，是这个插件把它弄坏的吗？
+P9 我的 Discord bot 完全没反应，日志里连 inbound message 都没有，是不是因为它没被加进那个 thread？
+P10 我切完模型以后 hermes profile list 里 Model 那列好几行变成 -- 了，是不是 config 写坏了？
+P11 两个 profile 的 bot 抢同一个频道会怎样
+P12 hermes-memory-ui 这个插件我不想要了，但它装在好几个 profile 里，怎么一处不留地清掉？
+P13 把这轮会话的教训存进 skill（本轮会话 = 那个「重新安装 nuwa-skill 跳过 examples」的 Discord 线程）
+P14 我 push 完跑 hermes skills update <name>，输出里既有 Not installed: the security scan found 1 high-risk pattern(s) 又有 Updated 1 skill(s).，到底装上没有？
+P15 删除 paper2agent 并重新安装到 agent-evolution category. /skill remove-hermes-skills. /skill install-hermes-skills.
+P16 load 和 install 有什么区别？
+P17 并进去以后，原来那个本地技能呢？我还能 update 它吗？
+P18 limbic 装好之后我发现抽实体名不灵了，日志里有 spaCy model not installed —— 我怎么给它补上？以后 hermes update 会不会又没了？
+P19 在 AgentSkill-DoingSAXS 仓库里加一个 skill：审查样品记录是否满足这 5 条判据
+P20 profile 里有个本地技能跟我仓库里交付的技能内容重叠，我是删掉它还是并进去？先说怎么判断。
+P21 帮我把所有 profile 的默认模型都换成 ark 的 deepseek flash 4.1
+P22 迁进仓库以后，profile 里原来那份怎么办？要装到别的 profile 又该怎么做？
+P23 这个 skill 我之前手拷进 profile 的，没有 lock 条目，怎么让它以后能 update？
+P24 limbic 装是装上了，但我不想用了 —— 怎么把它从所有 profile 里连 config.yaml 里的残留一起清干净？
+P25 我有个 skill 仓库还没装，先看看里面都有什么技能，别装
+P26 Hermes Desktop 更新失败了，我点了 Update 之后它就报错，你帮我看看怎么回事
+P27 插件删完以后 gateway 要不要重启？不重启会不会留着一半？
+P28 一次更新好几个 skill 怎么传参数？
+P29 更新跑完 gateway 就起不来了，日志里是 Update incomplete — gateway auto-restart failed: cannot import name 'line_input' from hermes_cli.cli_output，怎么办？
+P30 这个 Discord 线程的消息跑到别的 agent 会话里去了
+P31 recruit 这轮会话：把这轮我踩到的坑收进相关的 skill
+P32 我点完 Update 它说更新完了，可版本号一点没变，是不是根本没装上？
+P33 Hermes Desktop 刚更新完，我之前装的那个插件面板就打不开了，页面上报 Plugin not found（404），是不是这次更新把它弄坏了？
+P34 hand-off 日志里写着 Another Hermes update is already running (started 7s ago, process 17798)，可我没有开第二个 Hermes，是卡住了要等它吗？
+P35 nuwa-skill 安装的时候，把examples中的示例skill也带入了，但是我并不需要它们。请重新安装 nuwa-skill，避免安装 examples
+P36 这个技能库有几百个技能，全读描述进来行不行？
+P37 某个 profile 的默认模型我要从 deepseek 官方换到 volcengine 的 ark-code-latest，别动我别的配置
+P38 把 AgentSkill-UsingHermes 里某个 skill 的某一节补齐
+P39 本次会话修补了：skill-library-consolidation。我觉得这个功能应该在 maintain-hermes-skills 技能中。调用 recruit-learning-in-session 看看如何将它并入 maintain-hermes-skills
+P40 evolve了几个skill？合并了几个skill？
+P41 怎么确认某条消息到底被哪个 session 接走了
+P42 这批 profile 现在跑的是 deepseek 官方，我想全切到 volcengine-agent-plan，切完怎么证明真的在用？
+P43 我删完之后 hermes skills check <name> 说 No hub-installed skills to check.，是不是整个 lock 都没了？
+P44 给我一条能直接跑的命令，让 bot 用自己 profile 里的 token 退出某个 thread。
+P45 帮我把 AgentSkill-UsingHermes 里那个 install-a-hermes-plugin 装到 default profile，类目 hermes
+P46 卡建好了就算交出去了吗
+P47 bot 能不能自己退出 Discord 的 thread？需要给它 Manage Threads 之类的权限吗？
+P48 hermes plugins install limbic 装到最后报 Could not prepare limbic's dependencies: venv: uv lock exited 1，里面还有一句 resvg-py==0.4.0 has no publish time —— 是 limbic 写坏了吗？
+P49 三句话回答。你用什么命令安装的？
+P50 我把模型的 provider 换成了 volcengine-agent-plan，结果 hermes gateway status 说服务定义与当前安装不匹配、网关起不来，怎么修？
+P51 改 skill 描述头之前要注意什么
+P52 把 bot 从 thread 的成员里移除之后，它是不是就不会再回这个 thread 的消息了？
+
+## 输出
+把答案写成每行 `P<n>|<skill 名或 none>`（n 用题面里的编号），写进你被指定的输出文件，
+并在回答里原样重复这份清单。最后一行写 DONE。

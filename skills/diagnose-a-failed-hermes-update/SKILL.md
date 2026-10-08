@@ -147,8 +147,9 @@ marker 不存在 + `read_live_update()` 为 None + `checkout_lock_held()` 为 Fa
 
 ```
 diagnose-a-failed-hermes-update/
-├── SKILL.md  (156 lines)
+├── SKILL.md  (157 lines)
 ├── test-prompts.json  (27 lines)
+├── test-results.md  (55 lines)
 └── references/
     └── desktop-update-handoff-failure-modes.md  (122 lines)
 ```
