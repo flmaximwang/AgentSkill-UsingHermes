@@ -1,0 +1,183 @@
+{
+  "P1": {
+    "owner": "update-hermes-skills",
+    "kind": "should_trigger",
+    "origin": "update-hermes-skills#1"
+  },
+  "P2": {
+    "owner": "hermes-session-routing-forensics",
+    "kind": "should_trigger",
+    "origin": "hermes-session-routing-forensics#3"
+  },
+  "P3": {
+    "owner": "update-hermes-skills",
+    "kind": "should_trigger",
+    "origin": "update-hermes-skills#2"
+  },
+  "P4": {
+    "owner": "maintain-hermes-models",
+    "kind": "should_trigger",
+    "origin": "maintain-hermes-models#2"
+  },
+  "P5": {
+    "owner": "load-external-skill-index",
+    "kind": "should_trigger",
+    "origin": "load-external-skill-index#3"
+  },
+  "P6": {
+    "owner": "maintain-hermes-skills",
+    "kind": "should_trigger",
+    "origin": "maintain-hermes-skills#3"
+  },
+  "P7": {
+    "owner": "dispatch-work-to-another-profile",
+    "kind": "should_trigger",
+    "origin": "dispatch-work-to-another-profile#3"
+  },
+  "P8": {
+    "owner": "leave-and-rejoin-a-discord-thread",
+    "kind": "should_trigger",
+    "origin": "leave-and-rejoin-a-discord-thread#1"
+  },
+  "P9": {
+    "owner": "author-a-skill-in-a-pack-repo",
+    "kind": "should_trigger",
+    "origin": "author-a-skill-in-a-pack-repo#2"
+  },
+  "P10": {
+    "owner": "maintain-hermes-skills",
+    "kind": "should_trigger",
+    "origin": "maintain-hermes-skills#1"
+  },
+  "P11": {
+    "owner": "leave-and-rejoin-a-discord-thread",
+    "kind": "should_trigger",
+    "origin": "leave-and-rejoin-a-discord-thread#2"
+  },
+  "P12": {
+    "owner": "evolve-hermes-skills",
+    "kind": "should_trigger",
+    "origin": "evolve-hermes-skills#2"
+  },
+  "P13": {
+    "owner": "dispatch-work-to-another-profile",
+    "kind": "should_trigger",
+    "origin": "dispatch-work-to-another-profile#2"
+  },
+  "P14": {
+    "owner": "leave-and-rejoin-a-discord-thread",
+    "kind": "should_trigger",
+    "origin": "leave-and-rejoin-a-discord-thread#4"
+  },
+  "P15": {
+    "owner": "leave-and-rejoin-a-discord-thread",
+    "kind": "should_trigger",
+    "origin": "leave-and-rejoin-a-discord-thread#5"
+  },
+  "P16": {
+    "owner": "install-hermes-skill-from-a-profile",
+    "kind": "should_trigger",
+    "origin": "install-hermes-skill-from-a-profile#1"
+  },
+  "P17": {
+    "owner": "install-hermes-skill-from-a-profile",
+    "kind": "should_trigger",
+    "origin": "install-hermes-skill-from-a-profile#2"
+  },
+  "P18": {
+    "owner": "author-a-skill-in-a-pack-repo",
+    "kind": "should_trigger",
+    "origin": "author-a-skill-in-a-pack-repo#1"
+  },
+  "P19": {
+    "owner": "install-hermes-skills",
+    "kind": "should_trigger",
+    "origin": "install-hermes-skills#1"
+  },
+  "P20": {
+    "owner": "maintain-hermes-models",
+    "kind": "should_not_trigger",
+    "expect_pick": "maintain-hermes-gateway",
+    "origin": "maintain-hermes-models#5"
+  },
+  "P21": {
+    "owner": "dispatch-work-to-another-profile",
+    "kind": "should_trigger",
+    "origin": "dispatch-work-to-another-profile#1"
+  },
+  "P22": {
+    "owner": "install-hermes-skill-from-a-profile",
+    "kind": "should_trigger",
+    "origin": "install-hermes-skill-from-a-profile#3"
+  },
+  "P23": {
+    "owner": "remove-hermes-skills",
+    "kind": "should_trigger",
+    "origin": "remove-hermes-skills#1"
+  },
+  "P24": {
+    "owner": "maintain-hermes-models",
+    "kind": "should_trigger",
+    "origin": "maintain-hermes-models#3"
+  },
+  "P25": {
+    "owner": "load-external-skill-index",
+    "kind": "should_trigger",
+    "origin": "load-external-skill-index#1"
+  },
+  "P26": {
+    "owner": "maintain-hermes-skills",
+    "kind": "should_trigger",
+    "origin": "maintain-hermes-skills#2"
+  },
+  "P27": {
+    "owner": "maintain-hermes-models",
+    "kind": "should_trigger",
+    "origin": "maintain-hermes-models#1"
+  },
+  "P28": {
+    "owner": "evolve-hermes-skills",
+    "kind": "should_trigger",
+    "origin": "evolve-hermes-skills#1"
+  },
+  "P29": {
+    "owner": "load-external-skill-index",
+    "kind": "should_trigger",
+    "origin": "load-external-skill-index#2"
+  },
+  "P30": {
+    "owner": "maintain-hermes-models",
+    "kind": "should_trigger",
+    "origin": "maintain-hermes-models#4"
+  },
+  "P31": {
+    "owner": "hermes-session-routing-forensics",
+    "kind": "should_trigger",
+    "origin": "hermes-session-routing-forensics#1"
+  },
+  "P32": {
+    "owner": "hermes-session-routing-forensics",
+    "kind": "should_trigger",
+    "origin": "hermes-session-routing-forensics#2"
+  },
+  "P33": {
+    "owner": "install-hermes-skills",
+    "kind": "should_trigger",
+    "origin": "install-hermes-skills#2"
+  },
+  "P34": {
+    "owner": "remove-hermes-skills",
+    "kind": "should_trigger",
+    "origin": "remove-hermes-skills#2"
+  },
+  "P35": {
+    "owner": "author-a-skill-in-a-pack-repo",
+    "kind": "should_trigger",
+    "origin": "author-a-skill-in-a-pack-repo#3"
+  },
+  "P36": {
+    "owner": "leave-and-rejoin-a-discord-thread",
+    "kind": "should_trigger",
+    "origin": "leave-and-rejoin-a-discord-thread#3"
+  }
+}

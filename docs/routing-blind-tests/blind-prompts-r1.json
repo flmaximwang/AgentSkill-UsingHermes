@@ -1,0 +1,281 @@
+{
+  "round": "r1",
+  "seed": 20261008,
+  "skills": [
+    "author-a-skill-in-a-pack-repo",
+    "dispatch-work-to-another-profile",
+    "evolve-hermes-skills",
+    "hermes-session-routing-forensics",
+    "install-hermes-skill-from-a-profile",
+    "install-hermes-skills",
+    "leave-and-rejoin-a-discord-thread",
+    "load-external-skill-index",
+    "maintain-hermes-desktop-app",
+    "maintain-hermes-gateway",
+    "maintain-hermes-memory",
+    "maintain-hermes-models",
+    "maintain-hermes-node",
+    "maintain-hermes-profile",
+    "maintain-hermes-profile-skill-parity",
+    "maintain-hermes-profiles",
+    "maintain-hermes-skill-cards",
+    "maintain-hermes-skills",
+    "remove-hermes-skills",
+    "update-hermes-skills"
+  ],
+  "prompts": [
+    {
+      "prompt": "我 push 完跑 hermes skills update <name>，输出里既有 Not installed: the security scan found 1 high-risk pattern(s) 又有 Updated 1 skill(s).，到底装上没有？",
+      "owner": "update-hermes-skills",
+      "kind": "should_trigger",
+      "origin": "update-hermes-skills#1",
+      "id": "P1"
+    },
+    {
+      "prompt": "两个 profile 的 bot 抢同一个频道会怎样",
+      "owner": "hermes-session-routing-forensics",
+      "kind": "should_trigger",
+      "origin": "hermes-session-routing-forensics#3",
+      "id": "P2"
+    },
+    {
+      "prompt": "一次更新好几个 skill 怎么传参数？",
+      "owner": "update-hermes-skills",
+      "kind": "should_trigger",
+      "origin": "update-hermes-skills#2",
+      "id": "P3"
+    },
+    {
+      "prompt": "某个 profile 的默认模型我要从 deepseek 官方换到 volcengine 的 ark-code-latest，别动我别的配置",
+      "owner": "maintain-hermes-models",
+      "kind": "should_trigger",
+      "origin": "maintain-hermes-models#2",
+      "id": "P4"
+    },
+    {
+      "prompt": "这个技能库有几百个技能，全读描述进来行不行？",
+      "owner": "load-external-skill-index",
+      "kind": "should_trigger",
+      "origin": "load-external-skill-index#3",
+      "id": "P5"
+    },
+    {
+      "prompt": "并进去以后，原来那个本地技能呢？我还能 update 它吗？",
+      "owner": "maintain-hermes-skills",
+      "kind": "should_trigger",
+      "origin": "maintain-hermes-skills#3",
+      "id": "P6"
+    },
+    {
+      "prompt": "卡建好了就算交出去了吗",
+      "owner": "dispatch-work-to-another-profile",
+      "kind": "should_trigger",
+      "origin": "dispatch-work-to-another-profile#3",
+      "id": "P7"
+    },
+    {
+      "prompt": "一个 thread 里有好几个 Hermes bot，我想让其中一个自己退出这个 thread、别再参与了，能做到吗？",
+      "owner": "leave-and-rejoin-a-discord-thread",
+      "kind": "should_trigger",
+      "origin": "leave-and-rejoin-a-discord-thread#1",
+      "id": "P8"
+    },
+    {
+      "prompt": "把 AgentSkill-UsingHermes 里某个 skill 的某一节补齐",
+      "owner": "author-a-skill-in-a-pack-repo",
+      "kind": "should_trigger",
+      "origin": "author-a-skill-in-a-pack-repo#2",
+      "id": "P9"
+    },
+    {
+      "prompt": "本次会话修补了：skill-library-consolidation。我觉得这个功能应该在 maintain-hermes-skills 技能中。调用 evolve-hermes-skills 看看如何将它并入 maintain-hermes-skills",
+      "owner": "maintain-hermes-skills",
+      "kind": "should_trigger",
+      "origin": "maintain-hermes-skills#1",
+      "id": "P10"
+    },
+    {
+      "prompt": "bot 能不能自己退出 Discord 的 thread？需要给它 Manage Threads 之类的权限吗？",
+      "owner": "leave-and-rejoin-a-discord-thread",
+      "kind": "should_trigger",
+      "origin": "leave-and-rejoin-a-discord-thread#2",
+      "id": "P11"
+    },
+    {
+      "prompt": "evolve了几个skill？合并了几个skill？",
+      "owner": "evolve-hermes-skills",
+      "kind": "should_trigger",
+      "origin": "evolve-hermes-skills#2",
+      "id": "P12"
+    },
+    {
+      "prompt": "我在 kanban 上给别的 profile 建了卡，工人起了又死了",
+      "owner": "dispatch-work-to-another-profile",
+      "kind": "should_trigger",
+      "origin": "dispatch-work-to-another-profile#2",
+      "id": "P13"
+    },
+    {
+      "prompt": "给我一条能直接跑的命令，让 bot 用自己 profile 里的 token 退出某个 thread。",
+      "owner": "leave-and-rejoin-a-discord-thread",
+      "kind": "should_trigger",
+      "origin": "leave-and-rejoin-a-discord-thread#4",
+      "id": "P14"
+    },
+    {
+      "prompt": "我的 Discord bot 完全没反应，日志里连 inbound message 都没有，是不是因为它没被加进那个 thread？",
+      "owner": "leave-and-rejoin-a-discord-thread",
+      "kind": "should_trigger",
+      "origin": "leave-and-rejoin-a-discord-thread#5",
+      "id": "P15"
+    },
+    {
+      "prompt": "profile 里又冒出个新 skill（curator 建的，没 lock 条目），先评估它跟已有技能的关系，再迁到仓库里、从远程重装一遍",
+      "owner": "install-hermes-skill-from-a-profile",
+      "kind": "should_trigger",
+      "origin": "install-hermes-skill-from-a-profile#1",
+      "id": "P16"
+    },
+    {
+      "prompt": "这个 skill 我之前手拷进 profile 的，没有 lock 条目，怎么让它以后能 update？",
+      "owner": "install-hermes-skill-from-a-profile",
+      "kind": "should_trigger",
+      "origin": "install-hermes-skill-from-a-profile#2",
+      "id": "P17"
+    },
+    {
+      "prompt": "在 AgentSkill-DoingSAXS 仓库里加一个 skill：审查样品记录是否满足这 5 条判据",
+      "owner": "author-a-skill-in-a-pack-repo",
+      "kind": "should_trigger",
+      "origin": "author-a-skill-in-a-pack-repo#1",
+      "id": "P18"
+    },
+    {
+      "prompt": "nuwa-skill 安装的时候，把examples中的示例skill也带入了，但是我并不需要它们。请重新安装 nuwa-skill，避免安装 examples",
+      "owner": "install-hermes-skills",
+      "kind": "should_trigger",
+      "origin": "install-hermes-skills#1",
+      "id": "P19"
+    },
+    {
+      "prompt": "我把模型的 provider 换成了 volcengine-agent-plan，结果 hermes gateway status 说服务定义与当前安装不匹配、网关起不来，怎么修？",
+      "owner": "maintain-hermes-models",
+      "kind": "should_not_trigger",
+      "expect_pick": "maintain-hermes-gateway",
+      "origin": "maintain-hermes-models#5",
+      "id": "P20"
+    },
+    {
+      "prompt": "把这件事交给 rdm-assistance 那个 profile 做",
+      "owner": "dispatch-work-to-another-profile",
+      "kind": "should_trigger",
+      "origin": "dispatch-work-to-another-profile#1",
+      "id": "P21"
+    },
+    {
+      "prompt": "迁进仓库以后，profile 里原来那份怎么办？要装到别的 profile 又该怎么做？",
+      "owner": "install-hermes-skill-from-a-profile",
+      "kind": "should_trigger",
+      "origin": "install-hermes-skill-from-a-profile#3",
+      "id": "P22"
+    },
+    {
+      "prompt": "删除 paper2agent 并重新安装到 agent-evolution category. /skill remove-hermes-skills. /skill install-hermes-skills.",
+      "owner": "remove-hermes-skills",
+      "kind": "should_trigger",
+      "origin": "remove-hermes-skills#1",
+      "id": "P23"
+    },
+    {
+      "prompt": "这批 profile 现在跑的是 deepseek 官方，我想全切到 volcengine-agent-plan，切完怎么证明真的在用？",
+      "owner": "maintain-hermes-models",
+      "kind": "should_trigger",
+      "origin": "maintain-hermes-models#3",
+      "id": "P24"
+    },
+    {
+      "prompt": "我有个 skill 仓库还没装，先看看里面都有什么技能，别装",
+      "owner": "load-external-skill-index",
+      "kind": "should_trigger",
+      "origin": "load-external-skill-index#1",
+      "id": "P25"
+    },
+    {
+      "prompt": "profile 里有个本地技能跟我仓库里交付的技能内容重叠，我是删掉它还是并进去？先说怎么判断。",
+      "owner": "maintain-hermes-skills",
+      "kind": "should_trigger",
+      "origin": "maintain-hermes-skills#2",
+      "id": "P26"
+    },
+    {
+      "prompt": "帮我把所有 profile 的默认模型都换成 ark 的 deepseek flash 4.1",
+      "owner": "maintain-hermes-models",
+      "kind": "should_trigger",
+      "origin": "maintain-hermes-models#1",
+      "id": "P27"
+    },
+    {
+      "prompt": "把这轮会话的教训存进 skill（本轮会话 = 那个「重新安装 nuwa-skill 跳过 examples」的 Discord 线程）",
+      "owner": "evolve-hermes-skills",
+      "kind": "should_trigger",
+      "origin": "evolve-hermes-skills#1",
+      "id": "P28"
+    },
+    {
+      "prompt": "load 和 install 有什么区别？",
+      "owner": "load-external-skill-index",
+      "kind": "should_trigger",
+      "origin": "load-external-skill-index#2",
+      "id": "P29"
+    },
+    {
+      "prompt": "我切完模型以后 hermes profile list 里 Model 那列好几行变成 -- 了，是不是 config 写坏了？",
+      "owner": "maintain-hermes-models",
+      "kind": "should_trigger",
+      "origin": "maintain-hermes-models#4",
+      "id": "P30"
+    },
+    {
+      "prompt": "这个 Discord 线程的消息跑到别的 agent 会话里去了",
+      "owner": "hermes-session-routing-forensics",
+      "kind": "should_trigger",
+      "origin": "hermes-session-routing-forensics#1",
+      "id": "P31"
+    },
+    {
+      "prompt": "怎么确认某条消息到底被哪个 session 接走了",
+      "owner": "hermes-session-routing-forensics",
+      "kind": "should_trigger",
+      "origin": "hermes-session-routing-forensics#2",
+      "id": "P32"
+    },
+    {
+      "prompt": "三句话回答。你用什么命令安装的？",
+      "owner": "install-hermes-skills",
+      "kind": "should_trigger",
+      "origin": "install-hermes-skills#2",
+      "id": "P33"
+    },
+    {
+      "prompt": "我删完之后 hermes skills check <name> 说 No hub-installed skills to check.，是不是整个 lock 都没了？",
+      "owner": "remove-hermes-skills",
+      "kind": "should_trigger",
+      "origin": "remove-hermes-skills#2",
+      "id": "P34"
+    },
+    {
+      "prompt": "改 skill 描述头之前要注意什么",
+      "owner": "author-a-skill-in-a-pack-repo",
+      "kind": "should_trigger",
+      "origin": "author-a-skill-in-a-pack-repo#3",
+      "id": "P35"
+    },
+    {
+      "prompt": "把 bot 从 thread 的成员里移除之后，它是不是就不会再回这个 thread 的消息了？",
+      "owner": "leave-and-rejoin-a-discord-thread",
+      "kind": "should_trigger",
+      "origin": "leave-and-rejoin-a-discord-thread#3",
+      "id": "P36"
+    }
+  ]
+}

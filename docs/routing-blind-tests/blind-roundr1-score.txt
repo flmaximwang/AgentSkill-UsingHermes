@@ -1,0 +1,109 @@
+=== 臂 A（blind-judgeA-r1.txt, blind-judgeC-r1.txt） ===
+题    kind               owner / 正确 pick                判官 picks                       结
+P1   should_trigger     update-hermes-skills           update-hermes-skills,update-hermes-skills ✓
+P2   should_trigger     hermes-session-routing-forensics maintain-hermes-profiles,maintain-hermes-profiles ✗
+     题面：两个 profile 的 bot 抢同一个频道会怎样
+P3   should_trigger     update-hermes-skills           update-hermes-skills,update-hermes-skills ✓
+P4   should_trigger     maintain-hermes-models         maintain-hermes-profile,maintain-hermes-profile ✗
+     题面：某个 profile 的默认模型我要从 deepseek 官方换到 volcengine 的 ark-code-latest，别动我别的配置
+P5   should_trigger     load-external-skill-index      load-external-skill-index,load-external-skill-index ✓
+P6   should_trigger     maintain-hermes-skills         update-hermes-skills,update-hermes-skills ✗
+     题面：并进去以后，原来那个本地技能呢？我还能 update 它吗？
+P7   should_trigger     dispatch-work-to-another-profile dispatch-work-to-another-profile,dispatch-work-to-another-profile ✓
+P8   should_trigger     leave-and-rejoin-a-discord-thread leave-and-rejoin-a-discord-thread,leave-and-rejoin-a-discord-thread ✓
+P9   should_trigger     author-a-skill-in-a-pack-repo  author-a-skill-in-a-pack-repo,author-a-skill-in-a-pack-repo ✓
+P10  should_trigger     maintain-hermes-skills         evolve-hermes-skills,evolve-hermes-skills ✗
+     题面：本次会话修补了：skill-library-consolidation。我觉得这个功能应该在 maintain-hermes-skills 技能中。调用 evolve-hermes
+P11  should_trigger     leave-and-rejoin-a-discord-thread leave-and-rejoin-a-discord-thread,leave-and-rejoin-a-discord-thread ✓
+P12  should_trigger     evolve-hermes-skills           evolve-hermes-skills,evolve-hermes-skills ✓
+P13  should_trigger     dispatch-work-to-another-profile dispatch-work-to-another-profile,dispatch-work-to-another-profile ✓
+P14  should_trigger     leave-and-rejoin-a-discord-thread leave-and-rejoin-a-discord-thread,leave-and-rejoin-a-discord-thread ✓
+P15  should_trigger     leave-and-rejoin-a-discord-thread maintain-hermes-gateway,leave-and-rejoin-a-discord-thread ✗  (两判官不一致)
+     题面：我的 Discord bot 完全没反应，日志里连 inbound message 都没有，是不是因为它没被加进那个 thread？
+P16  should_trigger     install-hermes-skill-from-a-profile install-hermes-skill-from-a-profile,update-hermes-skills ✗  (两判官不一致)
+     题面：profile 里又冒出个新 skill（curator 建的，没 lock 条目），先评估它跟已有技能的关系，再迁到仓库里、从远程重装一遍
+P17  should_trigger     install-hermes-skill-from-a-profile update-hermes-skills,update-hermes-skills ✗
+     题面：这个 skill 我之前手拷进 profile 的，没有 lock 条目，怎么让它以后能 update？
+P18  should_trigger     author-a-skill-in-a-pack-repo  author-a-skill-in-a-pack-repo,author-a-skill-in-a-pack-repo ✓
+P19  should_trigger     install-hermes-skills          install-hermes-skills,install-hermes-skills ✓
+P20  should_not_trigger maintain-hermes-models（不该）→ maintain-hermes-gateway maintain-hermes-gateway,maintain-hermes-gateway ✓  [落在正确答案上的判官：2/2]
+P21  should_trigger     dispatch-work-to-another-profile dispatch-work-to-another-profile,dispatch-work-to-another-profile ✓
+P22  should_trigger     install-hermes-skill-from-a-profile install-hermes-skill-from-a-profile,install-hermes-skill-from-a-profile ✓
+P23  should_trigger     remove-hermes-skills           remove-hermes-skills,remove-hermes-skills ✓
+P24  should_trigger     maintain-hermes-models         maintain-hermes-profiles,maintain-hermes-profiles ✗
+     题面：这批 profile 现在跑的是 deepseek 官方，我想全切到 volcengine-agent-plan，切完怎么证明真的在用？
+P25  should_trigger     load-external-skill-index      load-external-skill-index,load-external-skill-index ✓
+P26  should_trigger     maintain-hermes-skills         evolve-hermes-skills,maintain-hermes-skills ✗  (两判官不一致)
+     题面：profile 里有个本地技能跟我仓库里交付的技能内容重叠，我是删掉它还是并进去？先说怎么判断。
+P27  should_trigger     maintain-hermes-models         maintain-hermes-profiles,maintain-hermes-profiles ✗
+     题面：帮我把所有 profile 的默认模型都换成 ark 的 deepseek flash 4.1
+P28  should_trigger     evolve-hermes-skills           evolve-hermes-skills,evolve-hermes-skills ✓
+P29  should_trigger     load-external-skill-index      load-external-skill-index,load-external-skill-index ✓
+P30  should_trigger     maintain-hermes-models         maintain-hermes-profiles,maintain-hermes-profile ✗  (两判官不一致)
+     题面：我切完模型以后 hermes profile list 里 Model 那列好几行变成 -- 了，是不是 config 写坏了？
+P31  should_trigger     hermes-session-routing-forensics hermes-session-routing-forensics,hermes-session-routing-forensics ✓
+P32  should_trigger     hermes-session-routing-forensics hermes-session-routing-forensics,hermes-session-routing-forensics ✓
+P33  should_trigger     install-hermes-skills          install-hermes-skills,install-hermes-skills ✓
+P34  should_trigger     remove-hermes-skills           remove-hermes-skills,remove-hermes-skills ✓
+P35  should_trigger     author-a-skill-in-a-pack-repo  author-a-skill-in-a-pack-repo,author-a-skill-in-a-pack-repo ✓
+P36  should_trigger     leave-and-rejoin-a-discord-thread leave-and-rejoin-a-discord-thread,leave-and-rejoin-a-discord-thread ✓
+分组：旧题 24/31 · 新能力 0/4 · 兄弟干扰项 1/1
+
+=== 臂 B（blind-judgeB-r1.txt, blind-judgeD-r1.txt） ===
+题    kind               owner / 正确 pick                判官 picks                       结
+P1   should_trigger     update-hermes-skills           update-hermes-skills,update-hermes-skills ✓
+P2   should_trigger     hermes-session-routing-forensics maintain-hermes-profiles,maintain-hermes-gateway ✗  (两判官不一致)
+     题面：两个 profile 的 bot 抢同一个频道会怎样
+P3   should_trigger     update-hermes-skills           update-hermes-skills,update-hermes-skills ✓
+P4   should_trigger     maintain-hermes-models         maintain-hermes-models,maintain-hermes-models ✓
+P5   should_trigger     load-external-skill-index      load-external-skill-index,load-external-skill-index ✓
+P6   should_trigger     maintain-hermes-skills         maintain-hermes-skills,update-hermes-skills ✗  (两判官不一致)
+     题面：并进去以后，原来那个本地技能呢？我还能 update 它吗？
+P7   should_trigger     dispatch-work-to-another-profile dispatch-work-to-another-profile,dispatch-work-to-another-profile ✓
+P8   should_trigger     leave-and-rejoin-a-discord-thread leave-and-rejoin-a-discord-thread,leave-and-rejoin-a-discord-thread ✓
+P9   should_trigger     author-a-skill-in-a-pack-repo  author-a-skill-in-a-pack-repo,author-a-skill-in-a-pack-repo ✓
+P10  should_trigger     maintain-hermes-skills         evolve-hermes-skills,evolve-hermes-skills ✗
+     题面：本次会话修补了：skill-library-consolidation。我觉得这个功能应该在 maintain-hermes-skills 技能中。调用 evolve-hermes
+P11  should_trigger     leave-and-rejoin-a-discord-thread leave-and-rejoin-a-discord-thread,leave-and-rejoin-a-discord-thread ✓
+P12  should_trigger     evolve-hermes-skills           evolve-hermes-skills,evolve-hermes-skills ✓
+P13  should_trigger     dispatch-work-to-another-profile dispatch-work-to-another-profile,dispatch-work-to-another-profile ✓
+P14  should_trigger     leave-and-rejoin-a-discord-thread leave-and-rejoin-a-discord-thread,leave-and-rejoin-a-discord-thread ✓
+P15  should_trigger     leave-and-rejoin-a-discord-thread maintain-hermes-gateway,maintain-hermes-gateway ✗
+     题面：我的 Discord bot 完全没反应，日志里连 inbound message 都没有，是不是因为它没被加进那个 thread？
+P16  should_trigger     install-hermes-skill-from-a-profile install-hermes-skill-from-a-profile,evolve-hermes-skills ✗  (两判官不一致)
+     题面：profile 里又冒出个新 skill（curator 建的，没 lock 条目），先评估它跟已有技能的关系，再迁到仓库里、从远程重装一遍
+P17  should_trigger     install-hermes-skill-from-a-profile install-hermes-skill-from-a-profile,update-hermes-skills ✗  (两判官不一致)
+     题面：这个 skill 我之前手拷进 profile 的，没有 lock 条目，怎么让它以后能 update？
+P18  should_trigger     author-a-skill-in-a-pack-repo  author-a-skill-in-a-pack-repo,author-a-skill-in-a-pack-repo ✓
+P19  should_trigger     install-hermes-skills          install-hermes-skills,install-hermes-skills ✓
+P20  should_not_trigger maintain-hermes-models（不该）→ maintain-hermes-gateway maintain-hermes-gateway,maintain-hermes-gateway ✓  [落在正确答案上的判官：2/2]
+P21  should_trigger     dispatch-work-to-another-profile dispatch-work-to-another-profile,dispatch-work-to-another-profile ✓
+P22  should_trigger     install-hermes-skill-from-a-profile install-hermes-skill-from-a-profile,install-hermes-skill-from-a-profile ✓
+P23  should_trigger     remove-hermes-skills           install-hermes-skills,install-hermes-skills ✗
+     题面：删除 paper2agent 并重新安装到 agent-evolution category. /skill remove-hermes-skills. /skill instal
+P24  should_trigger     maintain-hermes-models         maintain-hermes-models,maintain-hermes-models ✓
+P25  should_trigger     load-external-skill-index      load-external-skill-index,load-external-skill-index ✓
+P26  should_trigger     maintain-hermes-skills         evolve-hermes-skills,evolve-hermes-skills ✗
+     题面：profile 里有个本地技能跟我仓库里交付的技能内容重叠，我是删掉它还是并进去？先说怎么判断。
+P27  should_trigger     maintain-hermes-models         maintain-hermes-models,maintain-hermes-models ✓
+P28  should_trigger     evolve-hermes-skills           evolve-hermes-skills,evolve-hermes-skills ✓
+P29  should_trigger     load-external-skill-index      load-external-skill-index,load-external-skill-index ✓
+P30  should_trigger     maintain-hermes-models         maintain-hermes-models,maintain-hermes-models ✓
+P31  should_trigger     hermes-session-routing-forensics hermes-session-routing-forensics,hermes-session-routing-forensics ✓
+P32  should_trigger     hermes-session-routing-forensics hermes-session-routing-forensics,hermes-session-routing-forensics ✓
+P33  should_trigger     install-hermes-skills          install-hermes-skills,install-hermes-skills ✓
+P34  should_trigger     remove-hermes-skills           remove-hermes-skills,remove-hermes-skills ✓
+P35  should_trigger     author-a-skill-in-a-pack-repo  author-a-skill-in-a-pack-repo,author-a-skill-in-a-pack-repo ✓
+P36  should_trigger     leave-and-rejoin-a-discord-thread leave-and-rejoin-a-discord-thread,leave-and-rejoin-a-discord-thread ✓
+分组：旧题 23/31 · 新能力 4/4 · 兄弟干扰项 1/1
+
+=== 臂间对照（各取第一份判官） ===
+旧题被新技能抢走：0 条 
+A→B 落点变化的题：7 条 ['P4', 'P6', 'P17', 'P23', 'P24', 'P27', 'P30']（应全部落在既有兄弟之间 = 判官噪声）
+  P4  maintain-hermes-profile → maintain-hermes-models   题面：某个 profile 的默认模型我要从 deepseek 官方换到 volcengine 的 ark-code-late
+  P6  update-hermes-skills → maintain-hermes-skills   题面：并进去以后，原来那个本地技能呢？我还能 update 它吗？
+  P17  update-hermes-skills → install-hermes-skill-from-a-profile   题面：这个 skill 我之前手拷进 profile 的，没有 lock 条目，怎么让它以后能 update？
+  P23  remove-hermes-skills → install-hermes-skills   题面：删除 paper2agent 并重新安装到 agent-evolution category. /skill remov
+  P24  maintain-hermes-profiles → maintain-hermes-models   题面：这批 profile 现在跑的是 deepseek 官方，我想全切到 volcengine-agent-plan，切完怎
+  P27  maintain-hermes-profiles → maintain-hermes-models   题面：帮我把所有 profile 的默认模型都换成 ark 的 deepseek flash 4.1
+  P30  maintain-hermes-profiles → maintain-hermes-models   题面：我切完模型以后 hermes profile list 里 Model 那列好几行变成 -- 了，是不是 config 

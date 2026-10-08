@@ -1,0 +1,27 @@
+[
+  {
+    "id": 1,
+    "prompt": "帮我把所有 profile 的默认模型都换成 ark 的 deepseek flash 4.1",
+    "expected": "走 switch-profile-models.py 一条命令全库切（先 --dry-run 看会改谁）：只换每份 config.yaml 顶层 model: 块的块体、头行保留；缺 providers.<provider>: 段的 profile 由脚本从主 home 复制补上（profile 不继承主 home 的 providers）；写前整份备份到 <home>/backups/model-switch-<ts>/。回读三件：hermes profile list 的 Model 列、hermes config check、verify-profile-models.py 按 state.db 的 billing_base_url 证明真在用。明确说不需要重启网关（每轮解析 + 模型进缓存签名），重启会打断别的 bot 的轮次。"
+  },
+  {
+    "id": 2,
+    "prompt": "某个 profile 的默认模型我要从 deepseek 官方换到 volcengine 的 ark-code-latest，别动我别的配置",
+    "expected": "只改那一个 profile：switch-profile-models.py --profiles <名> --model ark-code-latest --provider … --base-url …，只重写 model: 块体，其它 config 叶子一个字不动；该 profile 里没有 providers.<名字>: 就地补一段（凭证从主 home 同名字段复制）。写完从该 profile 的 state.db 回读最近会话的 model 与 billing_base_url，并说明「还没来消息就只能是 ⏳，不是失败」。"
+  },
+  {
+    "id": 3,
+    "prompt": "这批 profile 现在跑的是 deepseek 官方，我想全切到 volcengine-agent-plan，切完怎么证明真的在用？",
+    "expected": "证明分两层：config 侧看 hermes profile list 的 Model 列 / config get model.default；运行侧看每个 home 的 state.db —— sessions 表按 started_at 最新的那行里 billing_provider / billing_base_url 是那次调用实际算钱到的端点，切完要等该 profile 真来一条消息才会更新（那之前只能是 ⏳），需要硬结论时用 hermes -p <profile> -z \"…\" 造一次探针会话再回读，并点名留下的 source='oneshot' 记录。先 curl 探活端点确认别名存在（--noproxy '*'）。"
+  },
+  {
+    "id": 4,
+    "prompt": "我切完模型以后 hermes profile list 里 Model 那列好几行变成 -- 了，是不是 config 写坏了？",
+    "expected": "是顶层键重复：把「带 model: 头行的新块」拼在原有 model: 行之后会写出两份顶层 model:，PyYAML 的 safe_load 静默通过、而 Hermes 的严格加载器（ruamel）拒收整份文件并回落到 last-good，症状只有 Model 列变成 -- 加一句 running on your last good settings 的 warning。修法：删掉重复的头行（只留块体），判据用顶层键计数而不是能否 safe_load；switch-profile-models.py 已把这条做成写前拒绝并逐份打印理由。"
+  },
+  {
+    "id": 5,
+    "prompt": "我把模型的 provider 换成了 volcengine-agent-plan，结果 hermes gateway status 说服务定义与当前安装不匹配、网关起不来，怎么修？",
+    "expected": "这是网关服务层的问题（LaunchAgent/service 定义 vs 当前安装、端口、profile 与 gateway 的对应关系），走 maintain-hermes-profiles：本机是「一个多路复用网关服务多个 profile」，先 hermes gateway list / status 看实况，再按它的步骤处理 —— 不要因为题面里出现「模型 / provider」就当成换模型任务，本技能不改网关服务。"
+  }
+]

@@ -23,6 +23,16 @@ Verb keywords: install, remove, maintain
 hermes skills install flmaximwang/AgentSkill-UsingHermes/skills/load-external-skill-index --category hermes
 ```
 
+## 路由盲测
+
+改 description 头部（前 57 字符）或新增 skill 之后，跑一轮盲测：两个候选臂（不含 / 含新 skill）各两名互不
+相见的判官，对着同一份冻结题面逐条选 skill。生成器、打分器、五件套与完整口径在
+`docs/routing-blind-tests/`（README 里另有「本目录实测的口径坑」）。
+
+| 轮次 | 日期 | 新技能 | 臂 B 新能力 | 臂 B 旧题 | 诱饵 | 旧题被新技能抢走 | 结论 |
+|---|---|---|---|---|---|---|---|
+| r1 | 2026-10-08 | `maintain-hermes-models` | 4/4 | 23/31 | 1/1 | 0 条 | 定版 |
+
 ## Workflow
 
 - Run `scripts/auto-generate-skill-structure.py` in the end to generate structures for every SKILL.md.

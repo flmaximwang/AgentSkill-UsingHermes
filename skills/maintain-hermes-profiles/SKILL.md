@@ -76,6 +76,11 @@ Everything else names its profile explicitly. `-p` is a global flag and belongs 
 subcommand (`hermes -p <name> gateway start`, never `hermes gateway start -p <name>`), and a switch
 is CLI-only until the Desktop GUI gains a switcher.
 
+Changing a profile's **default model** is *not* a profile switch: the `model:` block in that profile's
+`config.yaml` is resolved per turn, so the next message picks it up and **no gateway restart is needed**
+(procedure and verification: the `maintain-hermes-models` skill). Restarting for a model change bounces
+every other profile's in-flight turn on this host for nothing.
+
 ## The lifecycle verbs, and where they bite
 
 `create` lands an **empty shell** — no model key, so a real question-and-answer turn (not a file listing) is
@@ -140,7 +145,7 @@ and the two issue links are the honest answer to give.
 
 ```
 maintain-hermes-profiles/
-├── SKILL.md  (151 lines)
+├── SKILL.md  (156 lines)
 └── references/
     ├── maintain-hermes-profiles-gateways.md  (111 lines)
     ├── maintain-hermes-profiles-lifecycle.md  (221 lines)
