@@ -108,7 +108,13 @@ fixes the three strings), and `update` cannot move a skill to a different source
 Poll for drift in the same pass, per skill: `diff -rq <repo>/skills/<name> <home>/skills/<cat>/<name>`.
 A copy that differs because it is *ahead* means lessons live only in the installed copy and were never
 backported; a hub copy with any local edit is skipped by every later `update`. Report both lists rather
-than regenerating over them.
+than regenerating over them. Compare the copy against the **revision its lock recorded**, not against the
+clone's `HEAD` (those differ for every skill nobody has reinstalled, which is most of them). When you do it
+in Python, mind that `git ls-tree -r <rev>:skills/<name>` prints paths **relative to that subtree**
+(`references/a.md`, not `skills/<name>/references/a.md`) — stripping the full prefix off those strings
+yields a wrong set and a silently empty "content differs" verdict: measured 2026-10-08, it read a genuinely
+*ahead* copy (45 extra lines that never entered the repo) as clean. List from the root
+(`git ls-tree -r --name-only <rev> -- skills/<name>`) or compare basenames.
 
 ## 7. When a renamed skill cannot be re-installed
 
