@@ -159,6 +159,39 @@ The sequence, the path overrides and the conflict rules: `references/recruit-lea
 Per-skill 🔴 checkpoint after each optimisation, as darwin requires; a `revert` goes back on the ladder as
 a finding the user can drop.
 
+## Variant — folding MEMORY.md wholesale into skills
+
+When the ask is 「把 MEMORY.md 里可以并入 <X> 的记忆固化为 skill，然后从 memory 中删除，其他记忆留下」,
+the run is a batch, not a session mine. The shape that worked (2026-10-08, 49 entries → 4 kept, 45 folded):
+
+1. **Agree the mapping before touching anything** — one table, entry number → target skill (or 留). Number
+   the entries by position in `MEMORY.md` and state the rule `行号 = 2n` once; the plan, the per-task specs
+   and the final review all quote that same numbering, so any row can be argued about without re-reading chat.
+2. **Turn the mapping into a plan** (`loomerto`, one task per destination repo) **plus one closing task**
+   (回灌 profile / 删 memory / 独立复核). Fan out one subagent per task — 8 in parallel here — and hand each
+   one a **spec file** under the plan dir; the spec carries target paths, source line numbers and `done_when`.
+   The plan's block `doc` is what a later reader sees, so write the spec's path into it.
+3. **Subagents own their clone only**: edit, `git add <pathspec>`, commit `-F` a message file, push, write
+   `evidence/<task>/evidence.md`. They must **not** run `hermes skills update` — concurrent lock writes race.
+   The 回灌 is the parent's job, once, sequentially, followed by `diff -rq` per skill (excluding `__pycache__`).
+4. **Delete from memory only once the evidence is in**: `cp` + sha256 the old `MEMORY.md` first, then rewrite
+   it keeping the surviving entries **byte-identical to the backup** (compare the `§`-split blocks, not the
+   eyeball), and have an **independent** subagent re-grep every removed entry to its landing file — the
+   verdict is a table of `n | keyword | file:line | OK / NOT-FOUND` with NOT-FOUND empty.
+
+Three things this run paid for:
+
+- **`hermes skills update` does not carry support files added upstream after the install** — it refreshes only
+  the lock's recorded `files`. Plain `update` printed `Updated 1 skill(s)` while a routed-to `references/*.md`
+  was still missing; `--force` is what copies it. Always end the 回灌 with `diff -rq`.
+- **This Mac has no `timeout`/`gtimeout`**: a spec that guards the push with `timeout 120 git push` fails with
+  `command not found` and **the push never happens** (4 of 8 subagents hit it). Guard with
+  `GIT_TERMINAL_PROMPT=0` instead, and treat "the command didn't error" as no evidence — read back
+  `git rev-parse origin/main`.
+- **Paths inside memory rot faster than the skills they point at**: every `~/Repositories/AgentSkill/…` entry
+  in that file was dead (the clones live in `/Users/maxim/Documents/AgentSkill/AgentSkill-*`). Verify each path
+  you write into a skill, and write the erratum into the skill instead of copying the stale one.
+
 ## Failure modes
 
 | Trigger | First fix | If it still fails |
