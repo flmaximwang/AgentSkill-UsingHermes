@@ -103,6 +103,19 @@ Then have the user switch away from the Skills page and back (the
 - **Two cards can be legitimate**: two registries (e.g. `skillopt` on ClawHub plus
   a same-named `skills.sh` project) each contribute a catalog row. Read the source
   labels first; only the local-row duplicate is a bug.
+- **A card can read `book2skill/local-local`, not the install name** — measured on
+  `cangjie-skill` (ClawHub `@terrybenedict0515/cangjie-skill`, 21 files, `safe`): the
+  installed `SKILL.md` carries `name: book2skill`, so `hermes skills list` renders it as
+  `book2skill/local-local` (the SKILL.md name, not the install name), and the
+  `ClawHub`→`hub` label collapse applies exactly as a name-key miss would predict. The
+  same install was also **missing its 6 `templates/` files**, which is the payload-side
+  symptom of the same class. Do not "fix" this by editing the skill's `SKILL.md` name
+  (an update overwrites it) — align the lock key to the SKILL.md name only when the
+  three-string invariant actually disagrees. Related dead end, reported rather than
+  forced: the upstream GitHub `kangarooking/cangjie-skill` has **no usable install route**
+  — the whole repo as a bundle is `dangerous` (permanently blocked; the `critical` finding
+  sits in `tests/`) and the raw-URL route ships only a 4-file empty shell. So a missing
+  `templates/` here is a publisher-entry gap, not a wrong card alignment.
 - **Look catalog rows up case-insensitively** — the registry row is often
   `SkillOpt` while the local skill is `skillopt`, and the UI compares names
   case-sensitively. Snapshot: `https://nousresearch.github.io/hermes-agent/docs/api/skills.json`
@@ -120,7 +133,7 @@ Then have the user switch away from the Skills page and back (the
 
 ```
 maintain-hermes-skill-cards/
-├── SKILL.md  (129 lines)
+├── SKILL.md  (142 lines)
 └── scripts/
     ├── align_skill_card.py  (133 lines)
     └── check-lock-alignment.py  (120 lines)

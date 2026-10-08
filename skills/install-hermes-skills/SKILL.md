@@ -181,7 +181,13 @@ at all (`references/install-hermes-skills-repo-structure-routing.md`).
 and two shapes are accepted by **nothing** (`install` and `inspect` then report it two *different*
 ways — see the github reference's "Error text → meaning" table):
 
-- a **two-segment** `owner/repo` → use `owner/repo/` (trailing slash) or a raw URL instead;
+- a **two-segment** `owner/repo`（**两段标识符**）→ use `owner/repo/` (trailing slash) or a raw URL instead.
+  Measured (走 `do_install → _resolve_source_meta_and_bundle`，逐个 `inspect`+`fetch`): **9 个适配器全返 `None`**，
+  只有 **`skills-sh`**（`GET https://skills.sh/<id>` → **308**，那是仓库页不是技能页）与 **`lobehub`**
+  （`…/<id>.json` → **404**）真发 HTTP，其余 7 个在**标识符形态检查处短路**（`github` 源要求 ≥3 段，
+  路径段进不了它就返回）。所以同一事实有两种文案：`install` 报 `Could not download '<id>'`、
+  `inspect` 报 `Could not find '<id>' in any source.` —— **两句都不提「少一段」**。结论：没有源认领两段标识符，
+  别去猜拼写、别去加 tap、别去清索引缓存；根布局技能改用尾斜杠 `owner/repo/` 或根 `SKILL.md` 的 raw URL。
 - a `blob` link, or a three-segment identifier ending in `/SKILL.md`.
 
 ## Replacing an installed skill with a better bloodline
@@ -287,7 +293,7 @@ deciding field; the content hash is.
 
 ```
 install-hermes-skills/
-├── SKILL.md  (310 lines)
+├── SKILL.md  (316 lines)
 ├── test-prompts.json  (12 lines)
 ├── references/
 │   ├── install-hermes-skills-diagnosis.md  (220 lines)

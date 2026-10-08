@@ -182,6 +182,22 @@ python3 <profile>/skills/<类目>/<name>/scripts/<name>.py <一个真实输入> 
 - 值分两类就分两类报：「**有原文逐字依据的（我已直接写/准备写）**」与「**推断出来的（等你一句话）**」——
   混在一起报，他会以为整批都要他判，决策点就被淹掉了。
 
+## 把 profile 里的本地 skill 迁入包仓库（固定流程）
+
+一条命令链，顺序别换（在 ObsidianManagement 那批 12 个 skill 上实测）：
+
+1. `rsync -a --exclude '.DS_Store' <profile>/skills/<cat>/<name>/ skills/<name>/`
+   —— 仓库**现已带 `.gitignore`**（`.DS_Store` / `*.tmp`），早期「仓库无 .gitignore」的记载已过时；但仍只按指定文件 `git add`，别 `-A`。
+2. 改 README：索引表 + 安装 loop 里加名字 + 新增一段 `## skills/<name>` 正文节（照 Step 8 的四处）。
+3. 用 `~/.hermes/hermes-agent/venv/bin/python3` 跑 `tools.skills_guard.scan_skill` **预判 verdict**（见 Step 4）。
+4. `git add skills/<name>` → commit → push `main`（按 pathspec，见 Step 5/6）。
+5. 需要 profile 里有那份时：`hermes --profile <目标> skills install "<owner>/<repo>/skills/<name>" --category <类目> -y`。
+6. **删掉 profile 里的旧手拷目录（否则同名两份）**：有 lock 条目走 `hermes skills uninstall`，没有就直接删目录。
+
+**用户的迁移约定（决定第 5 步做不做）**：新建 AgentSkill-* 包 = 把 skill 从 profile **移出** —— 仓库为唯一
+**source of truth**、README 只写安装命令、**本次不装**（profile 里那份随后删掉 → 0 个同名目录）。
+例外是按需装回的包：只有 ObsidianManagement 那批按 `--category obsidian` 装回。
+
 ## 检查点
 
 | 触发 | 动作 |
@@ -339,7 +355,7 @@ python3 <profile>/skills/<类目>/<name>/scripts/<name>.py <一个真实输入> 
 
 ```
 author-a-skill-in-a-pack-repo/
-├── SKILL.md  (348 lines)
+├── SKILL.md  (365 lines)
 ├── test-prompts.json  (14 lines)
 └── references/
     ├── author-a-skill-in-a-pack-repo-darwin-blind-paired-loop.md  (58 lines)

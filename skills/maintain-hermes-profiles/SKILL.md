@@ -127,6 +127,21 @@ hermes gateway status               # is the service supervised, and under which
 Read-only, safe on a live machine. `hermes gateway start|stop|restart` and anything under `launchctl`
 are **not** read-only — on a machine whose bots are serving users, a wrong one disconnects them.
 
+## 本机命名 profile 现状（快照）
+
+- **非默认 profile 的技能操作，两条写法都实测通**：`hermes --profile <name> skills list|install|check|update`
+  （`--profile` 是**全局 flag，放在子命令前**），以及
+  `HERMES_HOME=/Users/maxim/.hermes/profiles/<name> hermes skills …`（等价选中该 profile）。
+- **投资双 agent profile（2026-10-02）**：
+  - **`quant-investor` = 原 `investment-advisor` 改名** —— 级联已做：profile 内 `cron/jobs.json`、
+    `scripts/*.sh|py`、技能正文里硬编码的 `profiles/investment-advisor` 路径、分发包目录、`distribution.yaml` 的
+    `name`，全部已改；multiplexer 已服务 `quant-investor:feishu`。
+  - **`value-investor` = 价值投资学派**（`turtle-skill`→`investment` 类目 / UsingGit 13 个→`git` / StructuredResponse 2 个→`secretary`；
+    `config.yaml` 抄 default、`.env` 有 DEEPSEEK+PARALLEL+TUSHARE+OBSIDIAN_VAULT_PATH、`SOUL.md` 已写；**无 bot channel**）。
+  - 龟龟 skill = `wsadneal-debug/turtle_project` 的 `龟龟skill` 分支下 `skill/skills/turtle-skill`
+    （默认分支 `main` 无该目录 → 三段式标识符**结构上不可用**；官方正路 = raw URL **钉 commit SHA**，本次 11 文件 SAFE，
+    只掉一个不被引用的 `agents/openai.yaml`）。
+
 ## Route by what was asked
 
 | The request is about | Read |
@@ -145,7 +160,7 @@ and the two issue links are the honest answer to give.
 
 ```
 maintain-hermes-profiles/
-├── SKILL.md  (156 lines)
+├── SKILL.md  (171 lines)
 └── references/
     ├── maintain-hermes-profiles-gateways.md  (111 lines)
     ├── maintain-hermes-profiles-lifecycle.md  (221 lines)

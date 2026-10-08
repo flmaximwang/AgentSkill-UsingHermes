@@ -102,6 +102,13 @@ Measured before/after: the just-edited skill read `update_available` (copy ahead
 backport + push + `--force` it read `up_to_date` with the lock's `source_revision` at the new commit
 (`2887ff0` for `sync-and-share-content`, `00c823f` for `update-hermes-skills`).
 
+**A `kept your local edits` line when you never edited anything is usually `__pycache__`.** Running a
+skill's own bundled script generates `__pycache__/` inside the installed directory, and the on-disk
+hash then differs from the recorded one — so `update` skips it. Fix: delete the installed copy's
+`__pycache__/` first, then re-run `update` (measured to pass on the retry; nothing on disk was actually
+changed). `hermes skills update <name>` takes **no `-y`** either (only `--force`; see Shared commands),
+so a `kept your local edits` line is never cleared by `-y`.
+
 Measured (sandbox, revision and hash both forged stale):
 
 ```
@@ -274,7 +281,7 @@ In a session the same work is `/skills update <name> [--force]`; `/skills check`
 
 ```
 update-hermes-skills/
-├── SKILL.md  (288 lines)
+├── SKILL.md  (295 lines)
 ├── test-prompts.json  (12 lines)
 ├── references/
 │   ├── update-hermes-built-in-skills.md  (174 lines)
