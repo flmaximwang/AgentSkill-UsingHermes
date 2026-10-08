@@ -15,6 +15,9 @@ because the naive version silently does the wrong thing or destroys something un
 - `skills.disabled` in `config.yaml` has grown dead entries, or on-disk skill dirs and the
   config list disagree.
 - A settings change must be written to `~/.hermes/config.yaml` (the file tools refuse it).
+- The user wants a profile's **default model** (or every profile's) pointed at another provider — the
+  `model:` block edit, the per-profile `providers:` entry it depends on, and why no gateway restart is
+  needed (§19).
 - The user asks to clean up `~/.hermes/skills/.archive/`, or wants the curator to stop
   retiring bundled skills.
 - The user asks why a skill "can't be turned off", or why a skills pane lists far more
@@ -772,7 +775,66 @@ fix that moves nothing.
   count of the turns whose output shape matches the rule) — a diff of the skill body against the old prompt
   text tells you which layer the behaviour was really coming from.
 
+### Changing one profile's *default behaviour* (a delivery convention, a report format)
+
+- Write the hard rule into that profile's **`SOUL.md`** — the identity slot rides in every prompt, while a
+  skill body arrives only when something loads it (the row above). Mirror it into the skill that owns the
+  action, and have the SOUL rule name that skill for the detail.
+- **Prove the rule reaches the prompt, read-only**: build that home's system prompt and grep it —
+  `cd <hermes install> && env -u PYTHONPATH HERMES_HOME=<home> venv/bin/python`, a stub agent
+  (`SimpleNamespace(load_soul_identity=True, skip_context_files=True, valid_tool_names=[], …)`), then
+  `agent.system_prompt.build_system_prompt(agent)`. Run it from the checkout root so `hermes_yaml`/`agent`
+  import; an index > 0 for the new heading is the proof, and it shows the rule sits in the identity slot.
+- **The report must state the boundary**: this reaches *new* sessions only. A gateway agent is cached per
+  session key with a **frozen system prompt** (`gateway/run_turn_runner.py`: "Reuse this session's cached
+  AIAgent (frozen system prompt + tool schemas)"), so an existing thread keeps the old rule until `/new`
+  in that thread. On this machine a gateway restart is host-wide (one multiplexer serves every profile)
+  and kills other bots' in-flight turns — offer it, never do it unasked.
+
 Layer map, gate semantics, and the re-runnable probe: `references/maintain-hermes-profile-prompt-assembly-and-guidance-gates.md`.
+
+## 19. Switching a profile's default model (and doing it across every profile)
+
+A default-model change is a **top-level `model:` block edit**, and it does **not** need a gateway restart.
+
+- The block is `model: {default, provider, base_url, api_mode}`; `hermes profile list` / `hermes profile
+  show <name>` read it straight from the file.
+- **Profiles do not inherit the main home's `providers:` section.** A profile whose `provider:` names a
+  custom provider with no matching `providers.<name>:` entry has nothing to resolve credentials from —
+  copy that subtree out of `~/.hermes/config.yaml` into the profile. Two profiles on this machine
+  (artist, game-research) needed exactly that when the fleet moved to ARK on 2026-10-08.
+- `provider: <name>` and `provider: custom:<name>` both resolve and render identically in `hermes profile
+  show` — either form is fine. Do not "normalize" a working profile for cosmetics (travel-guider has
+  carried `custom:` throughout).
+- **Keep the `model:` header line; replace only its body.** A replacement block that carries its own
+  `model:` line, prepended to `lines[:1]`, writes a duplicate top-level key — and **PyYAML's `safe_load`
+  accepts duplicate keys silently**, so a parse check passes while Hermes' strict loader (ruamel) refuses
+  the file and falls back to last-good. The failure is quiet: `hermes profile list` prints `--` in the
+  Model column and the CLI warns "running on your last good settings". Validate with a
+  duplicate-top-level-key count, never with `safe_load` alone.
+- Back up first (`<home>/backups/model-switch-<ts>/<label>/config.yaml`), then verify.
+- **No gateway restart is required.** The gateway resolves the model per turn —
+  `_resolve_gateway_model(_load_gateway_config())`, i.e. `load_user_config_effective` on an
+  mtime-invalidated cache — and the resolved model + provider + base_url + api-key hash are part of the
+  cached-agent signature (`gateway/run_agent_cache.py::_agent_config_signature`), so an edit rebuilds the
+  agent on that profile's next message. `model.default` is deliberately absent from
+  `_CACHE_BUSTING_CONFIG_KEYS` for that reason. Say this rather than offering a host-wide restart, which
+  would bounce every other bot's in-flight turn.
+- **Verify by what the provider billed, not by reading the file back.** Run one throwaway turn
+  (`hermes -p <name> -z "Reply with exactly the single word: PONG"`), then read that home's `state.db`:
+  newest `sessions` row by `started_at` → `model`, `billing_provider`, `billing_base_url`
+  (`session_model_usage` carries the same per model). Measured 2026-10-08: artist / game-research /
+  default each recorded `deepseek-v4-1-flash` with `billing_base_url=https://ark.cn-beijing.volces.com/api/plan/v3`.
+- **Probe the endpoint before editing N files**, and name the profile's alias exactly:
+  `curl -s --noproxy '*' -m 30 <base_url>/chat/completions -H "Authorization: Bearer <key>" -d
+  '{"model":"<id>","messages":[{"role":"user","content":"hi"}],"max_tokens":16}'`. The ARK plan
+  endpoint answers with its own `model` field (`deepseek-v4-1-flash-260910`), which is how a model alias
+  is confirmed to exist.
+- The one-shot probes leave `source='oneshot'` sessions in each home they touched — say which ones.
+- Bulk recipe: `scripts/switch_profile_models.py --model … --provider … --base-url … [--dry-run]
+  [--profiles a,b]` — idempotent, refuses a config with an unexpected top-level shape, backs up every file
+  it writes. Run `--dry-run` against the live home first: `changed (0)` plus every label under "already on
+  target" is the drift check.
 
 ## Support files
 
@@ -807,10 +869,12 @@ What stays here:
 
 ```
 maintain-hermes-profile/
-├── SKILL.md  (816 lines)
-└── references/
-    ├── maintain-hermes-profile-prompt-assembly-and-guidance-gates.md  (81 lines)
-    └── maintain-hermes-profile-skills-tree-layout.md  (296 lines)
+├── SKILL.md  (880 lines)
+├── references/
+│   ├── maintain-hermes-profile-prompt-assembly-and-guidance-gates.md  (81 lines)
+│   └── maintain-hermes-profile-skills-tree-layout.md  (296 lines)
+└── scripts/
+    └── switch_profile_models.py  (154 lines)
 ```
 
 <!-- Generated by Scripts -->
