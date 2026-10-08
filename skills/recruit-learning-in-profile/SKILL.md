@@ -139,6 +139,17 @@ missing step. Full five-phase runbook and the failure branches:
 
 ## What not to do
 
+- **Never build the in-repo path by reusing the profile-relative path under a `dirname`.** The pack
+  layout is `skills/<category>/<name>`, but the profile-relative path is `<category>/<name>`, so a copy
+  loop like `mkdir -p "$REPO/$(dirname $p)"` drops the `skills/` prefix and lands the whole migration at
+  the repo root — while `diff -rq` against the profile still reports IDENTICAL, because only the prefix
+  moved. Write the prefix out (`cp -R "$PROFILE_SKILLS/$p" "$REPO/skills/$p"`) and, before committing,
+  check `find "$REPO" -type f` **and** that `ls "$REPO"/skills/*/*` is non-empty (a `Path.glob('skills/*/*')`
+  returning `[]` is the tell).
+- **Predict the scan verdict per skill directory, never on the repo root.** Once `.git` exists, a repo-root
+  scan reports every `.git/hooks/*.sample` as an `unexpected_executable` medium finding (14 of them
+  measured) — the verdict is still `safe`, but the finding count invites a rewriting pass nothing needs.
+  The install route fetches the skill directory alone, so that is the unit that has to scan `safe`.
 - **Never hand-copy the skill into the repo and stop there.** A copy with no lock entry is invisible to
   `check` / `update` / `uninstall` for the rest of its life, and two directories holding one skill name is
   the drift state to check for at the end.
@@ -167,7 +178,7 @@ missing step. Full five-phase runbook and the failure branches:
 
 ```
 recruit-learning-in-profile/
-├── SKILL.md  (177 lines)
+├── SKILL.md  (188 lines)
 ├── test-prompts.json  (17 lines)
 └── references/
     ├── recruit-learning-in-profile-pipeline.md  (182 lines)
