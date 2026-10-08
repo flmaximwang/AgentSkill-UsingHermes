@@ -127,6 +127,30 @@ lsof -p <gateway pid> | grep -oE "/installs/[^ ]*/environments/[a-f0-9]+" | sort
 
   它和最新 generation 不一致 ⇒ 还没重启，新依赖没生效。
 
+## 四·补 · 「重建 ⇒ 手装的数据失效」是实测过的，不是推理
+
+`hermes pm repair` 是随需触发重建的闸门：它不支持改功能或插件（`repair` 与 `extras`/`plugins`
+同时传会被拒），只把**记录的依赖图**重建成一套全新 generation。实测（2026-10-08，default profile）：
+
+```
+19:04  hermes pm repair  → 新 generation 05032129c9c7…/venv
+       脚本 --list：05032129… MISSING en_core_web_sm
+                    028894ca… present en_core_web_sm   ← 上一套还有
+       --check：exit 3（缺）
+       补装：scripts/install-runtime-model.py → installed and importable
+       回读：EntityExtractor(['en']).available = True（抽到 Nous Research/ORG、Shenzhen/GPE）
+```
+
+三个容易看错的点：
+
+- **stamp 不变也会新建目录**：repair 走的是「重建记录下来的图」，所以 `facts.json` 里的
+  `stamp` 前后一致（实测同为 `d11192e8…`），但 generation 目录是新的 —— 判断「有没有换环境」
+  要看目录/记录里的 `environment`，不能只看 stamp。
+- **旧 generation 会被清掉**：修完之后 environments 从 4 套变 3 套（更早那套没了）；
+  运行中的进程靠 lease 钉住自己那套，重启后才换到新的。
+- **同一个 `--list` 里就能看出分化**：新那套 `MISSING`、上一套 `present` —— 这正是「手装的东西
+  只活在某一套里」的直接证据，不需要去读 PM 源码推。
+
 ## 五、spaCy 模型这一类「索引里没有的运行时数据」
 
 - 官方发布在 GitHub release（`https://github.com/explosion/spacy-models/releases/...`），不在 PyPI 上，

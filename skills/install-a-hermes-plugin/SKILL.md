@@ -110,6 +110,9 @@ python3 skills/install-a-hermes-plugin/scripts/install-runtime-model.py --model 
 必须把 `VIRTUAL_ENV=<venv>` 传给子进程，否则报
 `error: No virtual environment found; run uv venv to create an environment, or pass --system`。
 
+想现场看一次「重建 ⇒ 数据失效」而**不必卸任何插件**：`hermes pm repair` 会按记录的依赖图
+重建一套全新 generation（非破坏性），随后 `--check` 立刻变 missing，补装十秒回来。
+
 ### 5 · 重启才生效
 
 - 会话里：`/restart`（先 drain 正在跑的请求）。
@@ -139,6 +142,9 @@ lsof -p <gateway pid> | grep environments  # 看是哪个 generation ⇒ 判断�
 - 副作用实测：装 limbic 把 `hermes-memory-ui` 挪进 `plugins.disabled`（exclusive）。
 - spaCy 模型实测：装前 `EntityExtractor(['en']).available = False`，装 `en-core-web-sm 3.8.0`
   后为 `True`；样例抽到 `Nous Research/ORG`、`Shenzhen/GPE`。
+- **「重建 ⇒ 手装的数据失效」实测**：`hermes pm repair` 新建 generation 后，`--list` 对新那套报
+  `MISSING en_core_web_sm`、`--check` 退 3，而上一套仍是 `present`；补装后
+  `EntityExtractor(['en']).available` 回到 `True`（同一份脚本、约十秒）。
 - 这些数字属于那一次安装，不是通用常量。
 
 ## Support files
@@ -154,10 +160,10 @@ lsof -p <gateway pid> | grep environments  # 看是哪个 generation ⇒ 判断�
 
 ```
 install-a-hermes-plugin/
-├── SKILL.md  (165 lines)
+├── SKILL.md  (171 lines)
 ├── test-prompts.json  (27 lines)
 ├── references/
-│   └── install-a-hermes-plugin-dependency-resolution.md  (167 lines)
+│   └── install-a-hermes-plugin-dependency-resolution.md  (191 lines)
 └── scripts/
     └── install-runtime-model.py  (204 lines)
 ```
