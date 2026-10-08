@@ -1,0 +1,27 @@
+[
+  {
+    "id": 1,
+    "prompt": "Hermes Desktop 更新失败了，我点了 Update 之后它就报错，你帮我看看怎么回事",
+    "expected": "走本技能：先读 ~/.hermes/logs/desktop-update-handoff.log 的最后一段（hand-off start: → hermes update exit code: N）与 hand-off 自己打的 marker 行，确认它走到了哪一步；再跑只读探针看 marker / checkout 锁的真实状态；然后按 exit code 判层。结论一句话在前，最后只给一条能跑通的命令并说明代价（几分钟、重启 gateway 会断线）。不要跳到「重装 Desktop」或「改插件」。"
+  },
+  {
+    "id": 2,
+    "prompt": "hand-off 日志里写着 Another Hermes update is already running (started 7s ago, process 17798)，可我没有开第二个 Hermes，是卡住了要等它吗？",
+    "expected": "取出 pid 与 hand-off pid 比：它是 hand-off 自己 fork 出来的 marker custodian（同一个 hand-off pid 的子进程、与 hermes update 子进程是兄弟），不是祖先也不是 HERMES_UPDATE_HANDOFF_PID ⇒ 这不是「真有并发」，是子进程认不出自家 marker 声明，所以「等一会儿再点」是错的建议，在代码变之前每次点都一样失败。继续按两条身份写法不一致去查（shell 整秒 vs Python 5 ms），要拿真代码 A/B 实测，然后给终端更新这一条路。"
+  },
+  {
+    "id": 3,
+    "prompt": "我点完 Update 它说更新完了，可版本号一点没变，是不是根本没装上？",
+    "expected": "先看段末的 `hermes update exit code: N`：2 = 子进程被拒、代码一行没动（不是「没装上」），0 才是已提交。再核 $HERMES_HOME/.hermes-update-result.json 的 ok/exit_code 与 update_receipts/latest.json 有没有本次记录（hand-off 连 hermes update 都没起起来时不会有新记录，这本身就是判据）。确认现场干净（marker 不存在 + read_live_update() 为 None + 锁没被持有）后给终端里那一条命令。"
+  },
+  {
+    "id": 4,
+    "prompt": "更新跑完 gateway 就起不来了，日志里是 Update incomplete — gateway auto-restart failed: cannot import name 'line_input' from hermes_cli.cli_output，怎么办？",
+    "expected": "这是更新腿的收尾失败：代码已拉到新版本，但 gateway 还跑着旧模块（mixed sys.modules）。按本技能的 Step 1 把层钉住（这是我这次更新的后续步骤失败，不是平台侧 bot 问题），做法是手跑 hermes gateway restart 再核 fleet 版本；已提交但后置步骤失败的更新在结果文件里仍是 ok:true + 一条 warning，别报成「更新失败」也别报成「还在老版本」。"
+  },
+  {
+    "id": 5,
+    "prompt": "Hermes Desktop 刚更新完，我之前装的那个插件面板就打不开了，页面上报 Plugin not found（404），是不是这次更新把它弄坏了？",
+    "expected": "这是 Desktop 的两层作用域问题（UI 是 app 级、插件的 Python 后端是 profile 级，404 是后端没装/没启用），走 maintain-hermes-desktop-app：核 plugins.enabled 与目标 profile 的 plugins/<id>/dashboard/manifest.json，装到 app 当前那个 profile 再重启 App。不是更新失败，不要读 hand-off 日志、不要重新跑更新。"
+  }
+]
