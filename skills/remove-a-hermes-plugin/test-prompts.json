@@ -1,0 +1,27 @@
+[
+  {
+    "id": 1,
+    "prompt": "我删插件的时候报 Cannot remove plugin files while the messaging gateway is running，说要先 stop gateway 再 start —— 我人在 Discord 上跟你说话，停了网关你不就掉线了吗？",
+    "expected": "这条拦截是无差别的：只要该 HERMES_HOME 的网关在跑就拒，哪怕插件是 disabled、Emits/Listens 全空（hermes_cli/plugins_cmd.py:_refuse_live_gateway_mutation）。**不要在网关会话里停网关**：会话进程是网关的子进程、回复也由它投递，stop 会杀掉这一轮。做法两根：① 命令行 `hermes plugins remove <name> --allow-live-gateway` 直接删文件（删前用 `hermes plugins show <name>` 证明无回调、`lsof -p <网关 pid> | grep <name>` 证明没打开文件）；② 真要走 stop→remove→start 就由用户在终端自己跑，或用延迟 detach 的脚本在回复投递之后再重启。回读四件：config 无残留 / 目录没了 / .install-metadata.json 无 key / `hermes plugins show` 报 not found。"
+  },
+  {
+    "id": 2,
+    "prompt": "hermes-memory-ui 这个插件我不想要了，但它装在好几个 profile 里，怎么一处不留地清掉？",
+    "expected": "插件目录是**每 profile 一份**：`ls -d ~/.hermes/plugins/*/ ~/.hermes/profiles/*/plugins/*/` 先枚举，再逐个 `HERMES_HOME=<该 profile> hermes plugins remove <name> --allow-live-gateway`（删的那份会顺带清它自己 config 的 plugins.enabled/disabled 与同目录的 .install-metadata.json）。剩下的残留在**没装文件的 profile** 的 config 里（可能挂在 enabled 也可能挂在 disabled）：用 `HERMES_HOME=<p> hermes config set plugins.enabled '[...]'` 重建列表，改前备份、改后 `diff -u` 证明只少一行 —— 别把别的 profile 的列表当模板抄，会静默多开插件。"
+  },
+  {
+    "id": 3,
+    "prompt": "桌面 app 里那个插件的 Remove 按钮老是弹 Could not remove plugin…，是不是界面有 bug？",
+    "expected": "不是 bug：`hermes_cli/plugins_cmd_remove.py` 的 dashboard 那条路（`dashboard_remove_user_plugin`）**永远不传 --allow-live-gateway**，所以只要网关在跑就必被拒；UI 这条路绕不过去，改用 CLI（同一函数带 flag 就能删）。"
+  },
+  {
+    "id": 4,
+    "prompt": "插件删完以后 gateway 要不要重启？不重启会不会留着一半？",
+    "expected": "按证据判、别照着报错里那句「stop → 改 → start」套：`hermes plugins show <name>` 看 Status 是否 disabled、Emits/Listens 是否都 none，再看 `lsof -p <网关 pid> | grep <name>` 无打开文件 —— 两者成立就是没加载它的回调，重启只是卫生，不是必需。只有 enabled 且带 emits/listens 的插件（回调真进了运行中的网关）才需要 stop→改→start；重启会打断所有 profile 在跑的会话（bot 闪断），属于要先确认的动作。"
+  },
+  {
+    "id": 5,
+    "prompt": "我把插件 disable 掉之后 hermes gateway restart 起不来了，hermes gateway status 说服务定义与当前安装不匹配，是这个插件把它弄坏的吗？",
+    "expected": "走 maintain-hermes-gateway：这是网关服务层的问题（LaunchAgent 服务定义 vs 当前安装、端口、profile 与网关的对应关系），先 `hermes gateway list` / `status` 看实况再按它的步骤处理；插件的 disable/删除不改服务定义，本技能不负责网关服务本身。"
+  }
+]
