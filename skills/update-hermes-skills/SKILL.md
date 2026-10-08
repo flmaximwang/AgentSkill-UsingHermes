@@ -109,6 +109,15 @@ hash then differs from the recorded one — so `update` skips it. Fix: delete th
 changed). `hermes skills update <name>` takes **no `-y`** either (only `--force`; see Shared commands),
 so a `kept your local edits` line is never cleared by `-y`.
 
+**`--force` is also the only way to pull in support files the clone added after install.** `update`
+refreshes just the paths recorded in the lock's `files` list, so a `references/*.md` added upstream
+after the install never lands in the installed copy — while the route table in `SKILL.md` may already
+point at it. Measured 2026-10-08 on `update-hermes-skills` itself: plain `update` printed
+`Updated 1 skill(s)` yet `diff -rq` still reported `Only in <clone>/references:
+update-hermes-skill-sh-skills.md`; `hermes skills update update-hermes-skills --force` copied the file
+and rewrote the lock's `files` list. Always finish with `diff -rq` — "Updated N skill(s)" does not mean
+the trees now agree.
+
 Measured (sandbox, revision and hash both forged stale):
 
 ```
