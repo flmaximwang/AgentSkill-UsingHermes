@@ -1,6 +1,6 @@
 # Handing the session's gaps to darwin-skill
 
-Phase 3 of `evolve-hermes-skills`. Phase 1 produced findings with receipts and a `dimension_hint`; this
+Phase 3 of `recruit-learning-in-session`. Phase 1 produced findings with receipts and a `dimension_hint`; this
 file turns them into a `darwin-skill` run that is *about this session* rather than about the skill in the
 abstract, and keeps the result inside this pack's conventions.
 

@@ -6,7 +6,8 @@ Verb keywords: install, remove, maintain
 - Remove: Remove things already existed
 - Maintain: Move and check things already existed. Also modify existed content without contacting remote.
 - Update: Contact with remote and modify existed content.
-- Evolve: Analyze the current situation, and modify existed content or add new things.
+- Recruit: 把一轮会话里学到的东西收进它涉及的 skill：分析现状 → 改已有内容或新增。
+- Evolve: Recruit 的旧叫法。`evolve-hermes-skills` 已改名为 `recruit-learning-in-session`，description 里保留旧触发词，所以「evolve 这轮会话」仍会路由到它。
 - Load: Read something that exists elsewhere into context — no profile directory, no lock entry.
 
 ## Load vs install
@@ -35,7 +36,7 @@ hermes skills install flmaximwang/AgentSkill-UsingHermes/skills/load-external-sk
 
 ## 流程图
 
-- 图随 skill 走：`skills/evolve-hermes-skills/assets/` 里有 PNG、交互版 HTML（浏览器打开即可）与源 JSON。
+- 图随 skill 走：`skills/recruit-learning-in-session/assets/` 里有 PNG、交互版 HTML（浏览器打开即可）与源 JSON。
   改图只改源 JSON，再用 archify 的 `finalize` 重生成，不手改 PNG/HTML。
 - **HTML 必须用「剥掉字体」的 archify 副本生成**：原模板把 6 段 woff2 以 base64 内联，安装扫描判
   `encoded_exfil`（high），整包会掉到 caution、远端要 `--force` 才装得上。做法：`cp -R` 一份 archify，

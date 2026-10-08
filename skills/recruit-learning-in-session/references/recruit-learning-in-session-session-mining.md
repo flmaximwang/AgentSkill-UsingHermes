@@ -1,6 +1,6 @@
 # Mining a finished session
 
-The read half of `evolve-hermes-skills`: how to resolve which session to evolve, the four extractions the
+The read half of `recruit-learning-in-session`: how to resolve which session to recruit, the four extractions the
 subagent must run, the brief to paste into it, the report schema, and how the parent spot-checks the
 result. Every command here was run against this machine's profile (`~/.hermes`, macOS, 2026-09-30) and the
 outputs shown are real; where a claim is inferred rather than measured it says so.
@@ -21,7 +21,7 @@ python3 -c "import sqlite3; c=sqlite3.connect('$HERMES_HOME/state.db'); [print(r
 Measured while this file was being written:
 
 ```
-('20260930_163743_baa9e162', '2026-09-30 16:37:43', '1554774220251332690', 35, '创建 evolve-hermes-skills 技能')
+('20260930_163743_baa9e162', '2026-09-30 16:37:43', '1554774220251332690', 35, '创建 recruit-learning-in-session 技能')
 ('20260930_162008_8587d70c', '2026-09-30 16:20:08', '1554769799991529472', 216, '安装 remove-hermes-skills skill')
 ('20260930_161657_430e707b', '2026-09-30 16:16:57', '1554768993779326989', 120, '迁移 hermes-skills 与 agent-evolution 重叠 skill')
 ```
@@ -33,15 +33,15 @@ is wrong on a machine with concurrent sessions.**
 Resolution, in order:
 
 1. **By channel.** `chat_id` on this profile is the Discord channel/thread id (`sessions` also carries
-   `thread_id` and `source`). Take the row whose `chat_id` equals the channel the evolve request arrived
+   `thread_id` and `source`). Take the row whose `chat_id` equals the channel the recruit request arrived
    in. One row per thread is the normal case. **That row is live while you work** — measured 2026-09-30:
    `message_count` read `76` when the session was handed over, `82` when the child first counted it, `85`
    at its last read, and the session was still appending. So pass the **id** (never a count) to the child,
    tell it the numbers in the brief are stale by design, and re-count inside whatever cites a count.
 2. **By newest.** CLI sessions (`source` = `local`/`cli`) have no channel to match. Take the newest by
-   `last_activity_at`, then **assert** it: the last few `user` messages must contain the evolve request.
+   `last_activity_at`, then **assert** it: the last few `user` messages must contain the recruit request (or the older 'evolve' wording).
 3. **By asking.** If the assertion fails — the newest session's tail is about something else — print the
-   three newest `id / title / started_at` triples and ask the user which session to evolve. Do not guess,
+   three newest `id / title / started_at` triples and ask the user which session to recruit. Do not guess,
    and never union two sessions into one report: the receipts stop being receipts.
 
 ```sql
@@ -151,7 +151,7 @@ Ledger entries are appended live, so an entry created *after* the subagent ran i
 re-run this one query at the end of Phase 2 if the session is long, and reconcile before optimising.
 
 **Measured blind spot: a skill delivered through a clone + `hermes skills install` leaves no ledger entry
-at all.** Building `evolve-hermes-skills` that way produced `0` grep hits for its name in the ledger, an
+at all.** Building this skill that way produced `0` grep hits for its name in the ledger, an
 empty `metadata` object in its lock entry (no `installed_at`, unlike a skills.sh install of an older
 revision), and a `.usage.json` row with `created_by: "installed"` whose `created_at` is the install time.
 The ledger records mutations *inside* a skills tree by the skill tools; editing a clone and installing from
@@ -172,7 +172,7 @@ hermes-agent                created_by=None       state=active
 ```
 
 Cross-check the hub lock for a repo-maintained skill (exact commands in
-`evolve-hermes-skills-routing.md` §1); `created_by` alone cannot see a repo.
+`recruit-learning-in-session-routing.md` §1); `created_by` alone cannot see a repo.
 
 ## §3 The subagent brief
 

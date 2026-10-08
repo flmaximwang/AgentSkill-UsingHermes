@@ -1,9 +1,9 @@
 ---
-name: evolve-hermes-skills
-description: "Evolve skills from a session, and reconcile a copy drifted from its pack repo. Mines the session's own transcript for the skills it loaded, the gaps where the real process outran them, and the skills that appeared while it ran; settles per skill whether the user maintains an external pack repo (edit the clone, commit, push, `hermes skills update`) or edits the profile copy in place; then feeds each gap through darwin-skill's optimisation loop. Use at the end of a session when the user says 'evolve the skills' / 'evolve-hermes-skills', '把这轮会话的教训存进 skill', '分析这次会话里我调用过的 skill', '看看流程有什么 skill 没覆盖的', 'curator 这轮新建了哪些 skill', or when a profile skill's installed copy disagrees with its pack clone and someone has to say which side is the good text."
+name: recruit-learning-in-session
+description: "Recruit a session's learning into the skills it touched, and reconcile a copy drifted from its pack repo. Mines the session's own transcript for the skills it loaded, the gaps where the real process outran them, and the skills that appeared while it ran; settles per skill whether the user maintains an external pack repo (edit the clone, commit, push, `hermes skills update`) or edits the profile copy in place; then feeds each gap through darwin-skill's optimisation loop. Use at the end of a session when the user says 'recruit this session's learning' / 'recruit-learning-in-session' (or the older 'evolve the skills' / 'evolve-hermes-skills', which still routes here), '把这轮会话的教训存进 skill', '分析这次会话里我调用过的 skill', '看看流程有什么 skill 没覆盖的', 'curator 这轮新建了哪些 skill', or when a profile skill's installed copy disagrees with its pack clone and someone has to say which side is the good text."
 ---
 
-# Evolve Hermes Skills
+# Recruit Learning In Session
 
 Every sibling verb in this pack takes **a skill** as its unit — install it, update it, remove it, maintain
 it. This one takes **a finished session**: the skills it loaded, the places where the real process outran
@@ -42,7 +42,7 @@ deliverable is the report, never an edit.
 Give it, explicitly: `$HERMES_HOME`; the session id (resolve it as below — do **not** let it pick "the
 newest session", this machine runs several Discord threads at once); the instruction not to edit
 anything; and the report schema. The full brief, the extraction commands and the measured receipts are in
-`references/evolve-hermes-skills-session-mining.md` — read it before spawning, and paste the brief rather
+`references/recruit-learning-in-session-session-mining.md` — read it before spawning, and paste the brief rather
 than paraphrasing it.
 
 Resolve the session yourself first, so you can hand over an id and can tell the user which session is
@@ -55,8 +55,8 @@ python3 -c "import sqlite3; c=sqlite3.connect('$HERMES_HOME/state.db'); [print(r
 
 The session whose `chat_id` equals the channel/thread the request arrived in is the answer. If that
 matches two rows or none, or you cannot see the channel (a CLI session), fall back to the newest row and
-then **assert** it: the tail of that session must contain the evolve request itself. If the assertion
-fails, show the user the three newest `id / title` pairs and ask which one to evolve — never guess, and
+then **assert** it: the tail of that session must contain the request itself (the recruit ask — or its older wording 「evolve 一下」). If the assertion
+fails, show the user the three newest `id / title` pairs and ask which one to recruit — never guess, and
 never merge two sessions into one report.
 
 The subagent extracts four things (commands in the reference):
@@ -89,7 +89,7 @@ subagent.
 
 Before asking anything, detect where each touched skill lives, so the user is confirming a mapping
 instead of recalling one. Two rungs, best first; the detection commands and both delivery sequences are in
-`references/evolve-hermes-skills-routing.md`:
+`references/recruit-learning-in-session-routing.md`:
 
 1. **External pack repo** — the skill is installed from a repo the user maintains. Resolve it through the
    hub lock: the entry in `$HERMES_HOME/skills/.hub/lock.json` whose `install_path` matches the installed
@@ -107,7 +107,7 @@ the judgment comes first (keep it → backport into the clone byte-exact, commit
 the report). `hermes skills update` only ever carries a *pushed* revision **into** the profile; it cannot
 publish a local edit outward, so a reconcile that stops at the profile leaves the repo stale and the next
 update destroys the work. Commands, the false-positive list, the read-back **and the post-backport re-run of the
-repo's own quality gates** (a backport moves the text those gates measure): `references/evolve-hermes-skills-routing.md` §3.
+repo's own quality gates** (a backport moves the text those gates measure): `references/recruit-learning-in-session-routing.md` §3.
 
 **🔴 Then ONE `clarify`, recommended-first, covering every finding** — the repo mapping, the findings to
 apply, whether to promote a rung-2 skill, and whether to run Phase 3. Never a per-skill question: the user
@@ -155,7 +155,7 @@ pack's authoring conventions — body length, prefixed references, a routed entr
 in the same commit — **the pack wins**, because those conventions are what make the skill installable here
 at all.
 
-The sequence, the path overrides and the conflict rules: `references/evolve-hermes-skills-handoff-to-darwin.md`.
+The sequence, the path overrides and the conflict rules: `references/recruit-learning-in-session-handoff-to-darwin.md`.
 Per-skill 🔴 checkpoint after each optimisation, as darwin requires; a `revert` goes back on the ladder as
 a finding the user can drop.
 
@@ -205,20 +205,20 @@ a finding the user can drop.
 
 | The question is | Read |
 |---|---|
-| how to read the transcript, the subagent brief, the extraction commands, the report schema, the gap classes | `references/evolve-hermes-skills-session-mining.md` |
-| which skills have an external repo, the two delivery sequences, what the no-repo rung costs, how to promote a local skill, and the drift-reconcile branch | `references/evolve-hermes-skills-routing.md` |
-| what the 57-char description window actually routes, which head the last blind round chose, and which leaks are accepted | `test-results.md` |
-| what to hand darwin-skill, which paths to override, how its constraints interact with this pack's | `references/evolve-hermes-skills-handoff-to-darwin.md` |
+| how to read the transcript, the subagent brief, the extraction commands, the report schema, the gap classes | `references/recruit-learning-in-session-session-mining.md` |
+| which skills have an external repo, the two delivery sequences, what the no-repo rung costs, how to promote a local skill, and the drift-reconcile branch | `references/recruit-learning-in-session-routing.md` |
+| what the 57-char description window actually routes, which head the last blind round chose, and which leaks are accepted | `test-results.md` — **the record is from the `evolve-hermes-skills` round, kept verbatim on purpose**: it quotes the prompts the judges saw, so the old name in it is evidence, not a stale pointer. The head changed with the rename, which is the signal to run a fresh round |
+| what to hand darwin-skill, which paths to override, how its constraints interact with this pack's | `references/recruit-learning-in-session-handoff-to-darwin.md` |
 | how a skill gets installed, updated or removed, or what the hub can and cannot see | the siblings `install-hermes-skills`, `update-hermes-skills`, `remove-hermes-skills` |
 | what belongs in a skill in this pack, prose and structure rules, the generator and the lint | `maintain-hermes-skills` → `references/maintain-hermes-skills-authoring-conventions.md` + `scripts/README.md` |
 | what the curator does on its own, and what its ledger records | `maintain-hermes-memory` → `references/maintain-hermes-skill-curator.md` — **only where that skill is installed**: it ships in this pack but not every profile has it, so check `hermes skills list` first or install it from the pack; this row dead-ends otherwise |
 
 ## The workflow figure
 
-`assets/evolve-hermes-skills.workflow.png` (still) and `assets/evolve-hermes-skills.workflow.html`
+`assets/recruit-learning-in-session.workflow.png` (still) and `assets/recruit-learning-in-session.workflow.html`
 (interactive — open it in a browser) are this skill in one picture: three phases, their three 🔴 gates,
 the two rungs landing on the clone or in place, and the one-way hub route into the profile copy. Both
-come from `assets/evolve-hermes-skills.workflow.json` through archify's `finalize` — change the source,
+come from `assets/recruit-learning-in-session.workflow.json` through archify's `finalize` — change the source,
 never the artefacts.
 
 Generate the HTML with a **font-stripped copy of the archify package**: delete every `@font-face {...}`
@@ -232,18 +232,18 @@ remote. The stripped render is unchanged — CJK and Latin both fall back to the
 <!-- Generated by Scripts -->
 
 ```
-evolve-hermes-skills/
+recruit-learning-in-session/
 ├── SKILL.md  (249 lines)
-├── test-prompts.json  (12 lines)
+├── test-prompts.json  (17 lines)
 ├── test-results.md  (112 lines)
 ├── assets/
-│   ├── evolve-hermes-skills.workflow.html
-│   ├── evolve-hermes-skills.workflow.json  (77 lines)
-│   └── evolve-hermes-skills.workflow.png
+│   ├── recruit-learning-in-session.workflow.html
+│   ├── recruit-learning-in-session.workflow.json  (205 lines)
+│   └── recruit-learning-in-session.workflow.png
 └── references/
-    ├── evolve-hermes-skills-handoff-to-darwin.md  (125 lines)
-    ├── evolve-hermes-skills-routing.md  (224 lines)
-    └── evolve-hermes-skills-session-mining.md  (273 lines)
+    ├── recruit-learning-in-session-handoff-to-darwin.md  (125 lines)
+    ├── recruit-learning-in-session-routing.md  (224 lines)
+    └── recruit-learning-in-session-session-mining.md  (273 lines)
 ```
 
 <!-- Generated by Scripts -->

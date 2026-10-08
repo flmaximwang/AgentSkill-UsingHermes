@@ -1,6 +1,6 @@
 # Routing a finding to its owner
 
-The decision half of `evolve-hermes-skills`: which of the touched skills the user maintains in an external
+The decision half of `recruit-learning-in-session`: which of the touched skills the user maintains in an external
 repo, what the repo route delivers that the in-place route cannot, and the exact sequence for each. The
 ladder is a ladder, not a menu: walk rung 1 when it applies, and step down to rung 2 only when the skill
 genuinely has no repo.
@@ -177,7 +177,7 @@ takes a path).
 edit has no update path, no drift detection and no uninstall; the only backup is the curator's pre-run
 `tar.gz` snapshot. Two consequences the user should hear in the same breath: the edit will not survive a
 reinstall from a repo that also ships the skill (the hub replaces the directory wholesale), and no future
-`evolve-hermes-skills` run can tell whether the file has drifted — there is nothing to drift from.
+`recruit-learning-in-session` run can tell whether the file has drifted — there is nothing to drift from.
 
 That is the honest trade, and it is why §5 exists.
 

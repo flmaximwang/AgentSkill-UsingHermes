@@ -7,6 +7,11 @@
   {
     "id": 2,
     "prompt": "evolve了几个skill？合并了几个skill？",
-    "expected": "两行给数字，不写分节报告：evolve 了 2 个 skill（install-hermes-skills 8 条 finding + evolve-hermes-skills 1 条），合并 0 个——并点明那次合并（skill-library-consolidation 并进 maintain-hermes-skills）是别的会话做的，不揽功。"
+    "expected": "两行给数字，不写分节报告：evolve 了 2 个 skill（install-hermes-skills 8 条 finding + recruit-learning-in-session 1 条），合并 0 个——并点明那次合并（skill-library-consolidation 并进 maintain-hermes-skills）是别的会话做的，不揽功。"
+  },
+  {
+    "id": 3,
+    "prompt": "recruit 这轮会话：把这轮我踩到的坑收进相关的 skill",
+    "expected": "recognised as the recruit request（新名）→ 先用 chat_id 定位本会话 → 派 1 个只读 subagent 按 schema 挖 → 抽查 ≥2 条 receipt → 逐个 touched skill 探落点 → 一个 clarify → rung 1/2 投递 → Phase 3 darwin 带 per-skill checkpoint；结论先行、先给数字。"
   }
 ]

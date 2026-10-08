@@ -1,6 +1,6 @@
 ---
 name: install-hermes-skill-from-a-profile
-description: "Install a skill that exists only inside a Hermes profile — curator-created, agent-authored mid-session, or hand-copied — by deciding what it is against the skills that already exist, moving it into its pack repo, and installing it back from remote, so a lock entry owns it for the first time. Use when a new skill turns up in some profile (「某个 profile 里出现了新技能」), when a profile-local skill has to become a repo-delivered one, when one skill has to reach several profiles at once, or when a pack repo has to be created for it. Routes each phase to the sibling that owns it — the overlap audit to maintain-hermes-skills, the install mechanics to install-hermes-skills, the fleet fan-out to maintain-hermes-profile-skill-parity, a finished session's own harvest to evolve-hermes-skills — and owns only the sequence and its gates."
+description: "Install a skill that exists only inside a Hermes profile — curator-created, agent-authored mid-session, or hand-copied — by deciding what it is against the skills that already exist, moving it into its pack repo, and installing it back from remote, so a lock entry owns it for the first time. Use when a new skill turns up in some profile (「某个 profile 里出现了新技能」), when a profile-local skill has to become a repo-delivered one, when one skill has to reach several profiles at once, or when a pack repo has to be created for it. Routes each phase to the sibling that owns it — the overlap audit to maintain-hermes-skills, the install mechanics to install-hermes-skills, the fleet fan-out to maintain-hermes-profile-skill-parity, a finished session's own harvest to recruit-learning-in-session — and owns only the sequence and its gates."
 ---
 
 # Install a skill that lives only inside a profile
@@ -32,7 +32,7 @@ The landing decision and the end-state fork: `references/install-hermes-skill-fr
 
 | The request is | Owner |
 |---|---|
-| harvest a *finished session* into skill edits | `evolve-hermes-skills` — same promotion rung, different input: a session, not a discovered skill |
+| harvest a *finished session* into skill edits | `recruit-learning-in-session` — same promotion rung, different input: a session, not a discovered skill |
 | install a skill handed over as a github / skills.sh / clawhub / url / bare name | `install-hermes-skills` |
 | move an **installed** skill to another category | `install-hermes-skills` → `references/install-hermes-skills-relocating-a-skill.md` |
 | close a gap where profile A carries a skill profile B lacks | `maintain-hermes-profile-skill-parity` — that skill owns fleet state; this one owns the first delivery |

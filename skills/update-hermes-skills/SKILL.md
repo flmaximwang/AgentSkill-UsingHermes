@@ -49,7 +49,7 @@ lacks loses exactly that content — run the copy-ahead check first, and stop if
 
 **`update` is one-directional: a pushed revision → the profile.** It cannot publish a local edit outward,
 so it is not the tool that reconciles a drifted copy — an installed copy that is *ahead* of its clone is a
-job for `evolve-hermes-skills` (`references/evolve-hermes-skills-routing.md` § *Reconciling a drifted
+job for `recruit-learning-in-session` (`references/recruit-learning-in-session-routing.md` § *Reconciling a drifted
 installed copy*): judge the drift, backport what is worth keeping into the clone, push, and only then
 update. Going straight to `--force` here is the one move that destroys the very edit that needed judging.
 
@@ -180,8 +180,8 @@ successful, so report the identifier you installed.
 - **Local copies** have no lock entry: `check`, `update`, `audit` and `uninstall` cannot see them.
   Re-install through the hub if you want them maintained.
 - **A local edit inside an installed skill.** No update command pushes content outward — an installed copy
-  that has drifted ahead of its clone is reconciled through the clone first (`evolve-hermes-skills` →
-  `references/evolve-hermes-skills-routing.md` § *Reconciling a drifted installed copy*). `--force` before
+  that has drifted ahead of its clone is reconciled through the clone first (`recruit-learning-in-session` →
+  `references/recruit-learning-in-session-routing.md` § *Reconciling a drifted installed copy*). `--force` before
   that publishes nothing and deletes the edit; this command only ever carries a pushed revision home.
 - **npx-installed skills** are managed by the skills CLI's own lock, not the hub one — same registry,
   different updater (`references/update-hermes-skill-sh-skills.md`).

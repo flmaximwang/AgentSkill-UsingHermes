@@ -1,7 +1,7 @@
 [
   {
     "id": 1,
-    "prompt": "本次会话修补了：skill-library-consolidation。我觉得这个功能应该在 maintain-hermes-skills 技能中。调用 evolve-hermes-skills 看看如何将它并入 maintain-hermes-skills",
+    "prompt": "本次会话修补了：skill-library-consolidation。我觉得这个功能应该在 maintain-hermes-skills 技能中。调用 recruit-learning-in-session 看看如何将它并入 maintain-hermes-skills",
     "expected": "先按 lock.json 判容器，不按名字/目录：skill-library-consolidation 无 lock 条目 = profile-local，maintain-hermes-skills 是 repo-delivered；再逐条做 overlap 事实矩阵（claim 不拿词汇去 grep，两侧引 file:line），出「已有/净增」两张表，逐条点名落点；按 subject 分流——决定半进 maintain-hermes-skills 的新引用 + 路由行 + description，机制半交 install-/remove-/update- 兄弟；说清退役时机与「先交付验证再退役」。（本会话实测：22 条已覆盖里 6 条属 MH、12 条属兄弟、10 条重复丢弃。）"
   },
   {
