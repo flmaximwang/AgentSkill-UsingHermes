@@ -215,13 +215,17 @@ a finding the user can drop.
 
 ## The workflow figure
 
-`assets/evolve-hermes-skills.workflow.png` is this skill in one picture: three phases, their three
-🔴 gates, the two rungs landing on the clone or in place, and the one-way hub route into the profile
-copy. It is generated from the source JSON beside it
-(`assets/evolve-hermes-skills.workflow.json`) with archify's `finalize` — change the source, never the
-image. The interactive version sits outside the package, at `diagrams/evolve-hermes-skills.workflow.html`
-in the pack repo, because the self-contained HTML inlines its font as base64 and an install scanner reads
-that as a high-severity finding for the whole package.
+`assets/evolve-hermes-skills.workflow.png` (still) and `assets/evolve-hermes-skills.workflow.html`
+(interactive — open it in a browser) are this skill in one picture: three phases, their three 🔴 gates,
+the two rungs landing on the clone or in place, and the one-way hub route into the profile copy. Both
+come from `assets/evolve-hermes-skills.workflow.json` through archify's `finalize` — change the source,
+never the artefacts.
+
+Generate the HTML with a **font-stripped copy of the archify package**: delete every `@font-face {...}`
+block from the copy's `assets/template.html` and run that copy's `bin/archify.mjs finalize`. The stock
+template inlines its fonts as base64, and an install scanner scores that as a high-severity
+`encoded_exfil` for the whole pack, which drops it to `caution` and makes it uninstallable from the
+remote. The stripped render is unchanged — CJK and Latin both fall back to the system fonts.
 
 ## Skill Structure
 
@@ -229,10 +233,11 @@ that as a high-severity finding for the whole package.
 
 ```
 evolve-hermes-skills/
-├── SKILL.md  (244 lines)
+├── SKILL.md  (249 lines)
 ├── test-prompts.json  (12 lines)
 ├── test-results.md  (112 lines)
 ├── assets/
+│   ├── evolve-hermes-skills.workflow.html
 │   ├── evolve-hermes-skills.workflow.json  (77 lines)
 │   └── evolve-hermes-skills.workflow.png
 └── references/

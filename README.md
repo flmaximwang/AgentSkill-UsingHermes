@@ -35,10 +35,12 @@ hermes skills install flmaximwang/AgentSkill-UsingHermes/skills/load-external-sk
 
 ## 流程图
 
-- `diagrams/evolve-hermes-skills.workflow.html` — `skills/evolve-hermes-skills` 一轮会话的流程图（交互版，可直接点开）。
-- 包内只放 PNG 与源 JSON（`skills/evolve-hermes-skills/assets/`）：自包含 HTML 把字体以 base64 内联，安装扫描会
-  把它判成 high（`encoded_exfil`），整个包就从远端装不上 —— 所以 HTML 留在仓库里、`skills/` 之外。
-- 改图只改源 JSON，再用 archify 的 `finalize` 重生成，不手改 HTML 与 PNG。
+- 图随 skill 走：`skills/evolve-hermes-skills/assets/` 里有 PNG、交互版 HTML（浏览器打开即可）与源 JSON。
+  改图只改源 JSON，再用 archify 的 `finalize` 重生成，不手改 PNG/HTML。
+- **HTML 必须用「剥掉字体」的 archify 副本生成**：原模板把 6 段 woff2 以 base64 内联，安装扫描判
+  `encoded_exfil`（high），整包会掉到 caution、远端要 `--force` 才装得上。做法：`cp -R` 一份 archify，
+  把其 `assets/template.html` 里的 `@font-face {...}` 全删，再用副本的 `bin/archify.mjs` 生成 —— 画面不变
+  （中英文字都回落到系统字体），四道闸对的就是这一份文件。
 
 ## Workflow
 
