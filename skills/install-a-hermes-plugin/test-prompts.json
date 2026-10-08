@@ -1,0 +1,27 @@
+[
+  {
+    "id": 1,
+    "prompt": "hermes plugins install limbic 装到最后报 Could not prepare limbic's dependencies: venv: uv lock exited 1，里面还有一句 resvg-py==0.4.0 has no publish time —— 是 limbic 写坏了吗？",
+    "expected": "不是插件的问题，是包索引：Hermes core 的 [tool.uv] exclude-newer = \"14 days\" 需要每个文件的发布时间，而 PM 把 pip.conf 里的 index-url 桥接成 uv 的索引（国内镜像的 simple 页没有 data-upload-time，实测计数 0；pypi.org 有）。被精确 pin 的版本因此永远选不出来，报错收尾会写 your workspace requires hermes-agent[acp]，插件名根本不出现。诊断：grep index-url ~/.config/pip/pip.conf，再 curl 那个索引的 simple 页数 data-upload-time；注意 ~/.config/uv/uv.toml 里的 index-url 在 uv 0.11 不生效、别拿它当证据。修法：UV_DEFAULT_INDEX=https://pypi.org/simple hermes plugins install limbic --yes-deps（持久化就是在 $HERMES_HOME/.env 末尾加同一行）。"
+  },
+  {
+    "id": 2,
+    "prompt": "limbic 依赖装好了、memory.provider 也写了 limbic，可它好像还没在工作，我还差哪一步？",
+    "expected": "差重启：依赖进的是 PM 新建的整套 environment，运行中的 gateway 进程还在用旧的那一套（lsof -p <网关 pid> | grep environments 能看出是哪个 generation），会话里发 /restart（不要在网关会话里执行重启命令，harness 会拦且这一轮回复会被杀），或到终端跑 hermes gateway restart。另外两个容易漏的点：hermes memory status 要看到 Provider: limbic / Plugin: installed ✓ available ✓；kind: exclusive 的记忆插件会把原来那个同类插件挪进 plugins.disabled（本次是 hermes-memory-ui），要主动说明这个副作用。首次使用还会从 HuggingFace 下 ~2.5GB ONNX 模型到缓存目录。"
+  },
+  {
+    "id": 3,
+    "prompt": "limbic 装好之后我发现抽实体名不灵了，日志里有 spaCy model not installed —— 我怎么给它补上？以后 hermes update 会不会又没了？",
+    "expected": "会没：spaCy 模型不在 PyPI 上（发在 GitHub release），进不了依赖声明，只能手动装；而手动装的东西落在**某一个 generation 的 venv**（<hermes root>/installs/<install>/environments/<generation>/venv），PM 下次重建 environment 就不带上它（症状是功能静默变弱 + 一行 warning，不报错）。做法：跑本 skill 的 scripts/install-runtime-model.py --model en_core_web_sm（--check/--list/--dry-run/--venv 可选），它自己挑最新的 generation 并把 VIRTUAL_ENV 传给子进程 —— 不传的话 spacy download 会因为 uv 猜不到环境而报 No virtual environment found。回读：在插件目录下 import 它的 EntityExtractor，available 从 False 变 True。"
+  },
+  {
+    "id": 4,
+    "prompt": "limbic 装是装上了，但我不想用了 —— 怎么把它从所有 profile 里连 config.yaml 里的残留一起清干净？",
+    "expected": "这是删插件，走 remove-a-hermes-plugin：每 profile 一份 $HERMES_HOME/plugins/<name>，先 ls -d 枚举出所有副本，再逐个 hermes plugins remove <name> --allow-live-gateway（网关在跑时会拦，UI 的 Remove 永远不带这个 flag），没装文件的 profile 里残留的 plugins.enabled/disabled 用 hermes config set 重建列表并 diff 证明只少一行。本技能只管装与让它生效，不管删除。"
+  },
+  {
+    "id": 5,
+    "prompt": "帮我把 AgentSkill-UsingHermes 里那个 install-a-hermes-plugin 装到 default profile，类目 hermes",
+    "expected": "这是装 skill（不是装插件）：走 install-hermes-skills，用三段式标识符 hermes skills install flmaximwang/AgentSkill-UsingHermes/skills/install-a-hermes-plugin --category hermes -y，装完回读 diff -rq 与 hermes skills check。本技能的触发面是 hermes plugins install 那套（插件目录 + PM 依赖 + environment + 重启），不处理 skills 的取件与 lock。"
+  }
+]
