@@ -23,7 +23,7 @@ print({k:(v['install_path'],v['metadata'].get('source_revision')) for k,v in d.i
 | `AgentSkill-DoingSAXS` | public | `~/Documents/AgentSkill/AgentSkill-DoingSAXS` | `saxs` | `default` |
 | `AgentSkill-UsingATSAS` | private | `~/Documents/AgentSkill/AgentSkill-UsingATSAS` | `mals` | `default` |
 | `AgentSkill-ObsidianManagement` | public | `~/Documents/AgentSkill/AgentSkill-ObsidianManagement` | `obsidian` | `obsidian-maintenance`（按需装） |
-| `AgentSkill-UsingHermes` | public（已是 tap，路径段 `skills/`） | `~/Documents/AgentSkill/AgentSkill-UsingHermes` | `hermes` | **只有 `default`** —— 2026-10-08 用户定：其他 profile 不需要会维护 Hermes 框架本身，别再往它们铺（已在 plasmid-engineer 装过的那批不下架，属于那台 profile 的既有状态） |
+| `AgentSkill-UsingHermes` | public（已是 tap，路径段 `skills/`） | `~/Documents/AgentSkill/AgentSkill-UsingHermes` | `hermes` | **只有 `default`** —— 2026-10-08 用户定：其他 profile 不需要会维护 Hermes 框架本身，别再往它们铺；已在别处装过的那批**不因此次口径自动下架**，去留要单独问 |
 | `AgentSkill-AgentOrchestration` | public | `~/Documents/AgentSkill/AgentSkill-AgentOrchestration` | `agent-orchestration` | **全部 profile** |
 | `AgentSkill-AgentEvolution` | private（origin=SSH） | `~/Documents/AgentSkill/AgentSkill-AgentEvolution` | `agent-evolution` | `default` |
 | `AgentSkill-JobHunt` | private | `~/Documents/AgentSkill/AgentSkill-JobHunt` | —— | **不装**：仓库即 source of truth，profile 里不留副本 |
