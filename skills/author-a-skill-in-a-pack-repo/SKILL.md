@@ -66,6 +66,13 @@ description: "在 AgentSkill-* 包仓库里新建/改写 skill 时用（证据�
   于是新技能的正例/诱饵被投放两次（2026-10-04 实测：真实的旧题是 26 条，脚本算出 31 条；自己的 4 正例 + 1 诱饵混进
   「旧题」里，被当成"一题都没被抢走"的既有题）。判官不受影响（同一题两次落在同一答案），**错的是统计口径**。
   做法：旧题集 glob 显式排除本技能目录，或合并后按题面文本去重再统计。
+  **轮次名必须带自己在做的 skill 名**（`r4-<skill>`，别用裸 `rN`）：同一个 clone 里常有别的会话并发写，
+  生成器按 `--round` 拼文件名，谁后跑谁覆盖谁、且静默 —— 2026-10-08 实测另一个会话的 r3 生成件被覆盖，
+  补救做法（题面/题号按上一轮逐条断言、候选集按当时实况重建、原件与重建逐项分清）见
+  `docs/routing-blind-tests/NOTE-2026-10-08-r3-输入被并发会话覆盖并重建.md`。
+  **打分器必须显式给 `--new-skill <名>`**：它的默认值是 `maintain-hermes-models`，不给就会把「新能力组」
+  统计成那个技能、你自己的正例被算进「旧题」，连「旧题被新技能抢走」这条判据也一起失效 ——
+  数字看着正常、结论全错（2026-10-08 实测踩过，两个组的数读反了）。
 - 本机专属值（路径、端口、主机）进 references，脚本用**可覆盖的默认值**（`--vault/--host/--port`），正文只写默认值 + 可覆盖。
 
 **Step 4 · 跑通再推**（输入：skill 目录；输出：真实输出 + 扫描 verdict）
@@ -355,7 +362,7 @@ python3 <profile>/skills/<类目>/<name>/scripts/<name>.py <一个真实输入> 
 
 ```
 author-a-skill-in-a-pack-repo/
-├── SKILL.md  (365 lines)
+├── SKILL.md  (372 lines)
 ├── test-prompts.json  (14 lines)
 └── references/
     ├── author-a-skill-in-a-pack-repo-darwin-blind-paired-loop.md  (58 lines)
