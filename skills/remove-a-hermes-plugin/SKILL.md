@@ -1,0 +1,103 @@
+---
+name: remove-a-hermes-plugin
+description: "Use when a Hermes plugin removal is blocked by the gateway."
+version: 1.0.0
+author: Hermes Agent
+license: MIT
+metadata:
+  hermes:
+    tags: [hermes, plugins, gateway, profiles, removal]
+---
+
+# Remove a Hermes plugin cleanly
+
+## When to Use
+
+- `hermes plugins remove` (or a UI Remove button) refuses with "Cannot remove plugin files while the
+  messaging gateway is running".
+- A plugin must be gone from *every* profile, not just the active one, and the stale
+  `plugins.enabled` / `plugins.disabled` entries cleaned up with it.
+- Someone asks whether the gateway really has to be restarted after a plugin change.
+
+## Symptom
+
+```
+Could not remove plugin 'X': Cannot remove plugin files while the messaging gateway is running
+and its loaded plugin callbacks import from the installed checkouts. Run `hermes gateway stop`,
+apply the change, then `hermes gateway start`. To skip this check pass --allow-live-gateway
+(callbacks may fail until restart).
+```
+
+The guard (`hermes_cli/plugins_cmd.py:_refuse_live_gateway_mutation`) is a **blanket** refusal:
+it fires whenever a gateway is live for the active `HERMES_HOME`, even for a plugin that is
+`disabled` and declares no emits/listens. The dashboard/desktop remove path
+(`dashboard_remove_user_plugin`) never passes the flag, so clicking Remove in a UI can *never*
+succeed while a gateway runs — the CLI is the only way.
+
+## Procedure
+
+1. **Never stop the gateway from inside a gateway session.** A Discord/Telegram session's agent
+   process is a *child* of the gateway process (`ps -o ppid` up from your own PID proves it), and
+   the reply itself is delivered by that gateway. `hermes gateway stop` mid-turn kills the session
+   and the answer is lost.
+
+2. **Removal is one checkout per profile.** Each profile has its own plugin dir:
+   `$HERMES_HOME/plugins/<name>` — the default profile's is `~/.hermes/plugins/`. A plugin can be
+   installed in several profiles at once; enumerate before removing:
+   ```bash
+   ls -d ~/.hermes/plugins/*/ ~/.hermes/profiles/*/plugins/*/
+   ```
+   Remove each copy (the flag skips the guard):
+   ```bash
+   hermes plugins remove <name> --allow-live-gateway
+   HERMES_HOME=~/.hermes/profiles/<p> hermes plugins remove <name> --allow-live-gateway
+   ```
+   Removal also drops the plugin's entries from *that* profile's `config.yaml`
+   (`plugins.enabled` / `plugins.disabled`) and from that dir's `.install-metadata.json`.
+
+3. **Clean stale config entries in the other profiles via the CLI.** A profile that never had the
+   files can still list the plugin under `plugins.enabled`/`disabled`. `hermes config set` accepts a
+   JSON array and edits surgically (comments preserved), so rebuild the list with the plugin
+   dropped:
+   ```bash
+   HERMES_HOME=~/.hermes/profiles/<p> hermes config set plugins.enabled '["a", "b"]'
+   ```
+   **Pitfall:** do not copy one profile's list into another. Back up first and prove the edit with a
+   diff — a wrong list silently *enables new plugins* in that profile:
+   ```bash
+   cp ~/.hermes/profiles/<p>/config.yaml <scratch>/<p>.config.yaml   # before
+   diff -u <scratch>/<p>.config.yaml ~/.hermes/profiles/<p>/config.yaml
+   ```
+   The diff must show only the removed line.
+
+4. **Decide whether a gateway restart is really needed.** Restarting drops every profile's live
+   session (all bots blip), so it is a confirmation-worthy step — and for a `disabled`,
+   callback-free plugin it is not required. Evidence to collect instead of guessing:
+   ```bash
+   hermes plugins show <name>            # Status: disabled  /  Emits: (none)  /  Listens: (none)
+   lsof -p <gateway_pid> | grep <name>   # no open files from the removed tree
+   ```
+   Only enabled plugins with emits/listens (callbacks loaded into the running gateway) need the
+   stop → change → start cycle. Otherwise report the removal as complete and offer the restart.
+
+## Verification (all four must hold)
+
+```bash
+# 1. no config anywhere still names the plugin
+grep -rn "<name>" ~/.hermes/config.yaml ~/.hermes/profiles/*/config.yaml
+# 2. no dir left
+ls -d ~/.hermes/plugins/*/ ~/.hermes/profiles/*/plugins/*/
+# 3. no install-metadata key
+for f in ~/.hermes/plugins/.install-metadata.json ~/.hermes/profiles/*/plugins/.install-metadata.json; do
+  python3 -c "import json,sys;print(sys.argv[1],list(json.load(open(sys.argv[1])).keys()))" "$f"; done
+# 4. the plugin is unknown to the CLI
+hermes plugins show <name>        # -> Plugin '<name>' not found.
+```
+
+## Restoring
+
+Installed plugins are pinned git checkouts, so removal is reversible: `hermes plugins show <name>`
+before the removal prints the source repo, and `.install-metadata.json` records the exact revision.
+```bash
+hermes plugins install <owner>/<repo>     # re-adds from the catalog pin
+```
