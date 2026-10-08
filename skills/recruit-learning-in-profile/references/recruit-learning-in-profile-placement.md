@@ -1,6 +1,6 @@
 # Where the skill lands, and which end state it is delivered into
 
-The decision half of `install-hermes-skill-from-a-profile`. The audit that feeds it — container mapping,
+The decision half of `recruit-learning-in-profile`. The audit that feeds it — container mapping,
 claim-by-claim overlap, the *already there* / *net-new* two lists — is
 `maintain-hermes-skills` → `references/maintain-hermes-skills-overlap-and-merge.md`, and this file does not
 repeat it; what follows is the choice it produces, the pack to create when nothing fits, and the two end

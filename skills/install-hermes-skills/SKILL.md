@@ -152,7 +152,7 @@ clawhub index, but its files no longer exist upstream` — a dead publisher entr
 | `owner/repo/path`, or `skills.sh/<owner>/<repo>/<skill>` | `references/install-hermes-skills-from-skill-sh.md` |
 | a bare name / keyword, "the official X", a bundled or optional skill | `references/install-hermes-skills-from-names.md` |
 | "删除 X 并重新安装到 `<category>`", "move this skill to another category" — the same bloodline with a new `install_path` | `references/install-hermes-skills-relocating-a-skill.md` |
-| a skill that lives **only inside a profile** — curator-created, agent-authored mid-session, or hand-copied, with no lock entry — to be evaluated against the existing skills, moved into its pack repo and installed back from remote | the sibling `install-hermes-skill-from-a-profile` |
+| a skill that lives **only inside a profile** — curator-created, agent-authored mid-session, or hand-copied, with no lock entry — to be evaluated against the existing skills, moved into its pack repo and installed back from remote | the sibling `recruit-learning-in-profile` |
 | `@publisher/slug` (clawhub.ai) | `references/install-hermes-skills-from-clawhub.md` |
 | a lone `SKILL.md` with no repo behind it | the raw-URL route in the github reference |
 | a GitHub repo or a tap — direct path vs tap vs bare URL, identifier grammar, what "keep it current" costs | `references/install-hermes-skills-github-sources.md` |

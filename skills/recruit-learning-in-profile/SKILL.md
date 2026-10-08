@@ -1,9 +1,9 @@
 ---
-name: install-hermes-skill-from-a-profile
-description: "Install a skill that exists only inside a Hermes profile — curator-created, agent-authored mid-session, or hand-copied — by deciding what it is against the skills that already exist, moving it into its pack repo, and installing it back from remote, so a lock entry owns it for the first time. Use when a new skill turns up in some profile (「某个 profile 里出现了新技能」), when a profile-local skill has to become a repo-delivered one, when one skill has to reach several profiles at once, or when a pack repo has to be created for it. Routes each phase to the sibling that owns it — the overlap audit to maintain-hermes-skills, the install mechanics to install-hermes-skills, the fleet fan-out to maintain-hermes-profile-skill-parity, a finished session's own harvest to recruit-learning-in-session — and owns only the sequence and its gates."
+name: recruit-learning-in-profile
+description: "Install a skill that exists only inside a Hermes profile — curator-created, agent-authored mid-session, or hand-copied — by deciding what it is against the skills that already exist, moving it into its pack repo, and installing it back from remote, so a lock entry owns it for the first time. Use when a new skill turns up in some profile (「某个 profile 里出现了新技能」, or in the user's own words 'recruit this profile's learning' / 'recruit-learning-in-profile' — the older name 'install-hermes-skill-from-a-profile' still routes here), when a profile-local skill has to become a repo-delivered one, when one skill has to reach several profiles at once, or when a pack repo has to be created for it. Routes each phase to the sibling that owns it — the overlap audit to maintain-hermes-skills, the install mechanics to install-hermes-skills, the fleet fan-out to maintain-hermes-profile-skill-parity, a finished session's own harvest to recruit-learning-in-session — and owns only the sequence and its gates."
 ---
 
-# Install a skill that lives only inside a profile
+# Recruit Learning In Profile
 
 The unit is **a skill with no home**: a directory under some profile's skills tree with nothing behind
 it — no lock entry, no repo, no update path. Nothing can check it, update it, uninstall it, or copy it
@@ -25,8 +25,8 @@ The phases are a pipeline, not a menu. A request that stops at Phase 1 (a placem
 moved) is a valid end, and the placement answer is the only thing that licenses Phase 2. Phase 4 is the
 one step where being early is destructive.
 
-Commands for every phase, with the measured receipts: `references/install-hermes-skill-from-a-profile-pipeline.md`.
-The landing decision and the end-state fork: `references/install-hermes-skill-from-a-profile-placement.md`.
+Commands for every phase, with the measured receipts: `references/recruit-learning-in-profile-pipeline.md`.
+The landing decision and the end-state fork: `references/recruit-learning-in-profile-placement.md`.
 
 ## What this is not
 
@@ -74,7 +74,7 @@ of three landing places — merged into an existing skill, a new skill in an exi
 own. The audit method (map each container, prove overlap claim by claim, report *already there* vs
 *net-new* as two lists) is `maintain-hermes-skills` → `references/maintain-hermes-skills-overlap-and-merge.md`; what this
 pipeline adds is the *sequence around* it and the end-state question, both in
-`references/install-hermes-skill-from-a-profile-placement.md`.
+`references/recruit-learning-in-profile-placement.md`.
 
 🔴 CHECKPOINT — **one `clarify`, recommended-first, before anything is written**: the landing place, the
 wanted end state (repo only, or repo plus an installed copy), the category, and whether the loose copy
@@ -111,7 +111,7 @@ hermes skills install "<owner>/<repo>/skills/<name>" --category <cat> -y
 `--category` is read at install time only and decides the landing directory; `community` + `caution`
 needs `--force`, and a `dangerous` verdict is not overridable. For more than one profile the command is
 re-run per profile (`hermes -p <profile> …`) — skills are per-profile trees and nothing propagates.
-Details and the per-profile loop: `references/install-hermes-skill-from-a-profile-pipeline.md` §3.
+Details and the per-profile loop: `references/recruit-learning-in-profile-pipeline.md` §3.
 
 ## Phase 4 — Verify, then retire the loose copy
 
@@ -135,7 +135,7 @@ where the archive is. One state to report rather than misread: installing into t
 lockless copy already occupies replaces that directory in place, so the original is consumed by the
 install instead of left beside it — the profile ends with one directory, which is the goal, not a
 missing step. Full five-phase runbook and the failure branches:
-`references/install-hermes-skill-from-a-profile-pipeline.md`.
+`references/recruit-learning-in-profile-pipeline.md`.
 
 ## What not to do
 
@@ -155,8 +155,8 @@ missing step. Full five-phase runbook and the failure branches:
 
 | The question is | Read |
 |---|---|
-| the five phases with commands, gates, scan-verdict prediction, the per-profile install loop, the retire side, and the failure-branch table | `references/install-hermes-skill-from-a-profile-pipeline.md` |
-| where this skill should land, whether it needs a pack of its own, the end-state fork (repo only vs repo plus installed), the `clarify` template, and what must not be copied into the receiving side | `references/install-hermes-skill-from-a-profile-placement.md` |
+| the five phases with commands, gates, scan-verdict prediction, the per-profile install loop, the retire side, and the failure-branch table | `references/recruit-learning-in-profile-pipeline.md` |
+| where this skill should land, whether it needs a pack of its own, the end-state fork (repo only vs repo plus installed), the `clarify` template, and what must not be copied into the receiving side | `references/recruit-learning-in-profile-placement.md` |
 | how a skill is installed, updated, removed, or moved between categories | `install-hermes-skills`, `update-hermes-skills`, `remove-hermes-skills` |
 | which profile carries what, and how to prove it | `maintain-hermes-profile-skill-parity` |
 | what belongs in a skill in this pack, and how it is written | `maintain-hermes-skills` → `references/maintain-hermes-skills-authoring-conventions.md` |
@@ -166,12 +166,12 @@ missing step. Full five-phase runbook and the failure branches:
 <!-- Generated by Scripts -->
 
 ```
-install-hermes-skill-from-a-profile/
+recruit-learning-in-profile/
 ├── SKILL.md  (177 lines)
 ├── test-prompts.json  (17 lines)
 └── references/
-    ├── install-hermes-skill-from-a-profile-pipeline.md  (182 lines)
-    └── install-hermes-skill-from-a-profile-placement.md  (118 lines)
+    ├── recruit-learning-in-profile-pipeline.md  (182 lines)
+    └── recruit-learning-in-profile-placement.md  (118 lines)
 ```
 
 <!-- Generated by Scripts -->

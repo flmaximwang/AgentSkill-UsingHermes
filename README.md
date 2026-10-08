@@ -6,8 +6,8 @@ Verb keywords: install, remove, maintain
 - Remove: Remove things already existed
 - Maintain: Move and check things already existed. Also modify existed content without contacting remote.
 - Update: Contact with remote and modify existed content.
-- Recruit: 把一轮会话里学到的东西收进它涉及的 skill：分析现状 → 改已有内容或新增。
-- Evolve: Recruit 的旧叫法。`evolve-hermes-skills` 已改名为 `recruit-learning-in-session`，description 里保留旧触发词，所以「evolve 这轮会话」仍会路由到它。
+- Recruit: 把一份学习成果收编进它该在的地方（分析现状 → 改已有内容或新增）。学到的那份在会话里 → `recruit-learning-in-session`；只存在于某个 profile 里、无仓库无 lock 条目 → `recruit-learning-in-profile`。
+- Evolve: Recruit 的旧叫法。`evolve-hermes-skills` 已改名为 `recruit-learning-in-session`、`install-hermes-skill-from-a-profile` 已改名为 `recruit-learning-in-profile`，两者的 description 里都保留旧触发词，所以「evolve 这轮会话」「把 profile 里这个 skill 收进仓库」仍会路由到它们。
 - Load: Read something that exists elsewhere into context — no profile directory, no lock entry.
 
 ## Load vs install

@@ -117,7 +117,7 @@ optimisation); this pack owns the Hermes-specific half.
   uncommitted count inside *your* commit, and a fresh clone's `verify-skill-package.py` then fails against
   the pushed reference. Check `git status --short` for the skill you are about to regenerate; if it is
   dirty, hold both the tree and the row that needed it. Measured 2026-10-01: a route row for
-  `install-hermes-skill-from-a-profile` would have carried a sibling's uncommitted 527→595 line count for
+  `recruit-learning-in-profile` would have carried a sibling's uncommitted 527→595 line count for
   `install-hermes-skills-from-github.md`, and was deferred until that commit landed.
 - **A profile copy that is *ahead* of the clone is content the repo lacks, and `update --force` deletes
   exactly that.** Run `diff -rq <clone>/skills/<name> "$HERMES_HOME/skills/<install_path>"` immediately

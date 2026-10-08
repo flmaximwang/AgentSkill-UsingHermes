@@ -10,7 +10,7 @@ description: "在 AgentSkill-* 包仓库里新建/改写 skill 时用（证据�
 - 触发：用户说「构建一个 <仓库> 中的 skill：<名字>」「在 AgentSkill-<X> 里加一个 skill」「把这条 skill 的某节补齐/改写」，或直接给出**判据清单式**需求（「审查 X 是否满足 1…5」）。
   —— 判据清单本身就是任务书：**先把每条判据落成「记录侧看哪个键 / 下游侧查哪张表」，再动手写**。
 - 前提判据：这个 skill 的 **source of truth 是用户的某个包仓库**，改内容要动 clone、再由 hub 分发回 profile。
-- 不属于：把 profile 里**已存在**的 skill 迁进仓库（→ `install-hermes-skill-from-a-profile`）；装/更新/卸载的机制与适配器细节（→ `install-hermes-skills` / `update-hermes-skills` / `remove-hermes-skills`）；同一 clone 有并发写者时的提交与推送细则（→ `co-write-a-shared-repo`，本 skill 只给该场景下的**决议**）；通用 skill 内容打磨与 eval 迭代（→ `skill-creator`）。
+- 不属于：把 profile 里**已存在**的 skill 迁进仓库（→ `recruit-learning-in-profile`）；装/更新/卸载的机制与适配器细节（→ `install-hermes-skills` / `update-hermes-skills` / `remove-hermes-skills`）；同一 clone 有并发写者时的提交与推送细则（→ `co-write-a-shared-repo`，本 skill 只给该场景下的**决议**）；通用 skill 内容打磨与 eval 迭代（→ `skill-creator`）。
 
 ## 流程
 

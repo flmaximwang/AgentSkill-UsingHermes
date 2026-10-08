@@ -59,7 +59,7 @@ is `maintain-hermes-skills` → `references/maintain-hermes-skills-overlap-and-m
 do not approximate it with a topic comparison.
 
 What this phase has to produce for Phase 2: **one landing place** (merge / new skill in an existing pack /
-its own pack — `references/install-hermes-skill-from-a-profile-placement.md`) and the wanted **end state**
+its own pack — `references/recruit-learning-in-profile-placement.md`) and the wanted **end state**
 (repo only, or repo plus an installed copy). Both go to the user in the single `clarify` that checkpoint
 prescribes, recommended-first.
 
@@ -166,7 +166,7 @@ The state that misleads: installing into the **same** `--category` the lockless 
 replaces that directory in place, so a "the profile copy is gone" check that looks at the directory it used
 to be in sees the installed tree and reads it as untouched. Report it as *consumed by the install*, and
 state the end state that was chosen (repo only, or repo plus installed) — the two measured precedents are
-in `references/install-hermes-skill-from-a-profile-placement.md` §3.
+in `references/recruit-learning-in-profile-placement.md` §3.
 
 ## §5 Failure branches
 
