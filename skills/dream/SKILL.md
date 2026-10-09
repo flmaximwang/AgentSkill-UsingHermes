@@ -177,6 +177,10 @@ verdict / diff / check 原文）· ≤3 条决策点（每条：要你定什么 
 - **不要凭记忆转写判官题面**：题面必须是 `judge-input.json` 的产物，判官只读那一个文件、一次 `read_file`。
 - **不要跳过扫描闸直接 push**：`dangerous` 的 revision 在 hub 上永远装不上，`--force` 也覆盖不了。
 - **不要在写完后由同一个上下文自己验**：自评有乐观偏差，验证必须是另一条子代理。
+- **路由盲测只测得到 description 的前 57 字符**：判官输入里每个候选只有「名字 + description 头 57 字」，
+  所以**正文里补一句转指对路由毫无影响**（本轮实测：给 `organize-batch-saxs-dataset` 正文补了转指，
+  抢题数一动不动）。要收窄边界只有两条路：改**描述头**（把吸题的词挪出去）或改**题面/gold**（题面缺上下文
+  的弱 gold 会一直被别人抢，臂 A 里连它自己的主人都不认领）。改完必须重跑同一轮复核，别只看 diff。
 - **不要留下没有类目的 local skill**：`skills/<名字>/` 直接躺在 skills/ 下，category 列空白（本机实测
   50 条）。迁移型的随装回落进包的类目；留本地型的当场 `mv` 进现有类目，别只报不修。
 - **不要为「只关某个 profile 的记录或流程」建包**：新包只吃通用方法（S2 第 5 条两条判据都要满足）。
@@ -209,7 +213,7 @@ verdict / diff / check 原文）· ≤3 条决策点（每条：要你定什么 
 
 ```
 dream/
-├── SKILL.md  (222 lines)
+├── SKILL.md  (226 lines)
 ├── test-prompts.json  (27 lines)
 ├── test-results.md  (53 lines)
 ├── references/
