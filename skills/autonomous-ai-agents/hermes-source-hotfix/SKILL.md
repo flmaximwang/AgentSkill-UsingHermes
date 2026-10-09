@@ -47,8 +47,7 @@ evidence that the command failed.
 
 1. Check tree is clean: `git -C ~/.hermes/hermes-agent status --short`.
 2. Check if upstream already fixed it: `git fetch origin main` (macOS has NO
-   `timeout` command — don't prefix; on a shallow checkout this pulls the whole
-   history, see "`hermes update` stops at Fetching updates" below) then
+   `timeout` command — don't prefix) then
    `git log --oneline HEAD..origin/main --grep=<keyword> -i`.
 3. Patch minimally, following existing code patterns in the same block.
 4. Verify: `venv/bin/python -m py_compile <file>`.
@@ -60,51 +59,10 @@ evidence that the command failed.
 - Update auto-stashes local changes (`_stash_local_changes_if_needed` in
   hermes_cli/main.py) and tries to restore after; conflicts can silently drop
   the patch.
-- An update that aborts BEFORE the pull (failed fetch, refused preflight) exits
-  without unstashing, so an applied patch can sit in `git stash list` as
-  `hermes-update-autostash-*` indefinitely while the working tree looks clean.
-  When a hotfix has vanished, run `git stash list` and inspect EVERY entry with
-  `git stash show -p` before re-patching, and never bulk-drop those entries on
-  the updater's "leftover autostash" warning — one of them is often the only
-  copy of a real hotfix, and the newest is not necessarily the one that matters.
 - After any update, if the original symptom returns, check
   `git -C ~/.hermes/hermes-agent diff` — reapply if gone.
 - Keep the exact patch snippet in this skill's references/ so reapplying is
   mechanical.
-
-## `hermes update` stops at "Fetching updates"
-
-`_git_run(..., network=True)` wraps the update fetch in a **hard-coded 300 s cap**
-(`NETWORK_GIT_TIMEOUT_SECONDS` in `hermes_cli/update_cmd.py` — grep it before assuming a config or env
-knob exists) and runs a plain `git fetch origin <branch>` with no `--depth`. On a **shallow** checkout
-that is an implicit unshallow, so the fetch pulls the entire history — hundreds of thousands of objects —
-and on a slow link it is killed at the cap. The message it prints,
-`timed out after 300s with no response from the remote`, comes from the timeout branch unconditionally,
-so it reads as a dead connection even while the pack is downloading at full speed. Read the state before
-theorizing:
-
-```bash
-cd ~/.hermes/hermes-agent
-git rev-parse --is-shallow-repository; wc -l < .git/shallow    # shallow + many grafts ⇒ unshallow
-git ls-remote origin main                                      # remote tip in ~1 s; compare `git rev-parse HEAD`
-ls -la .git/objects/pack/tmp_pack_*                            # debris left by each killed attempt
-```
-
-Every killed attempt leaves a `tmp_pack_*` whose size is (link throughput × 300 s), and
-`clear_stale_tmp_packs` deletes that debris when the next run starts — `git fetch` cannot resume, so each
-attempt restarts from zero and the run never converges. The cap is the only thing between that command
-and success, so finish the fetch once **outside** the updater (no cap); the checkout then stops being
-shallow and every later update transfers only a delta:
-
-```bash
-cd ~/.hermes/hermes-agent && git fetch --progress origin main
-```
-
-Run it detached with progress rather than in a foreground tool call — expect minutes to tens of minutes.
-Confirm it is really transferring before waiting on it: `Receiving objects: N% … MiB | X MiB/s` climbing
-is progress (compare the throwaway `tmp_pack_*` size at two sampling points if the output is buffered;
-`remote: Compressing objects:` is server-side work with zero client bytes expected). Do not raise the cap
-by patching the updater — an update replaces the tree and reintroduces it.
 
 ## Wrong context window / compression firing early
 
@@ -195,6 +153,18 @@ and report any *other* changed key you did not write (a config write can carry
 collateral changes from a UI model switch) rather than silently accepting it.
 
 Detail: references/context-length-resolution.md
+
+## Slash commands: session cwd vs process cwd
+
+Repo-scoped slash commands (`/worktree list|prune|new`) resolve the repo from
+the **process** cwd, not the session's workspace: the handler runs in the
+per-session `_SlashWorker` subprocess, spawned with `Popen(..., cwd=os.getcwd())`
+= the backend's cwd, never rebound per command. A session whose workspace is
+`/repo` therefore answers "Not inside a git repository." — and every session on
+that backend gets the same wrong answer. Confirm `sessions.cwd` (state.db)
+against `lsof -a -d cwd -p <pid>` for the backend and its slash worker;
+workaround `hermes worktree list --repo <path>` (the slash form has no `--repo`).
+Fix seam + full evidence: references/session-cwd-vs-process-cwd.md
 
 ## Applied hotfixes (reapply after update if lost)
 

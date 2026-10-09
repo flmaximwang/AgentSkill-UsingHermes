@@ -136,7 +136,7 @@ marker-pdf uses **surya-ocr** models, which are downloaded on first use from `ht
 **Option A — Bulk download via create_model_dict (fragile; one failure kills all):**
 
 ```bash
-SKILL_DIR=~/.hermes/skills/productivity/ocr-and-documents
+SKILL_DIR="${HERMES_HOME:-$HOME/.hermes}/skills/productivity/ocr-and-documents"
 source "$SKILL_DIR/.env/bin/activate"
 MODEL_CACHE_DIR=/Library/Models/Surya python3 -c "
 from marker.models import create_model_dict
@@ -178,7 +178,7 @@ print(f"OCR error loaded: {type(model_err).__name__}")
 
 Run:
 ```bash
-SKILL_DIR=~/.hermes/skills/productivity/ocr-and-documents
+SKILL_DIR="${HERMES_HOME:-$HOME/.hermes}/skills/productivity/ocr-and-documents"
 source "$SKILL_DIR/.env/bin/activate"
 MODEL_CACHE_DIR=/Library/Models/Surya python3 /tmp/download_models.py
 ```

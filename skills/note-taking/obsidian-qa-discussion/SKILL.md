@@ -59,7 +59,6 @@ When the user follows up a first answer with deeper "why" questions (e.g., "热�
 
 When the user continues asking deep "why" questions AFTER the note has already been created (knowledge-reference or Q&A):
 
-- **Answer the question in chat first, then offer the note update.** A follow-up phrased as a question is a request for an answer, not a licence to edit the note — write the full answer, then ask whether to record it, and edit only once the user says so.
 - Assess whether the new material warrants a **note update**: did the follow-up uncover significantly missing content (e.g. a key mechanism not explained), or was it just elaboration on what's already covered?
 - If update warranted → append new sections or enrich existing ones. Use `patch` for targeted insertions.
 - If update not warranted → offer to save separately or note in your reply that the content is covered already.
@@ -157,33 +156,14 @@ What's the practical relevance? Explicitly note if there is **no direct connecti
 - Sections are thematic (Background / Definition / Mechanism / Evidence), not dialog-sequence-based
 - "Related to your field" section is labeled explicitly, including a clear "no connection" statement when warranted
 - Each section is self-contained — the note should be understandable without reading the conversation history
-- **Source-derived notes (a book chapter or paper)**: cite the source page on every claim (e.g. `(Equation 8, p.20)`), and mark anything you *derived* rather than transcribed as explicitly not-in-source (e.g. `（★ 非书中原印）`) — the user audits derived formulas against the source. When the source contradicts itself (a caption that disagrees with its own appendix derivation, stated constants that cannot reproduce the drawn curves), record the discrepancy in a `> [!warning]` callout rather than silently picking one side.
 - **Science Q&A additions (Branch B)**: if the original question was poorly posed, include an explicit "澄清后的核心问题" section (why the original is flawed + the reframed version) as the note's first content section; when evidence strength varies across the table, add a one-line evidence legend (e.g. ★★★ direct causal / ★★ functional / ★ correlative) above the comparison table. Match the vault's existing note conventions (e.g. `RNA.md`-style minimal frontmatter: aliases + dates) when placing a concept note inside an established CLC subtree — don't force the full template.
 
 ### Phase 4: Handle media
 
-**Downloaded images:**
-
 1. Search for a public-domain or freely licensed image (Wikimedia Commons, etc.)
 2. Download it to the **same directory as the note** (use PNG format)
-3. Reference it with `![[filename.png]]` — or, when the note lives in its own folder, put figures in that folder's `assets/` and embed `![[assets/<name>.png]]` (the subtopic-folder convention this vault already uses)
+3. Reference it with `![[filename.png]]`
 4. **Fallback**: Wikimedia CDN may block curl — try the `thumb/...` PNG preview URL or use a browser screenshot
-
-**Figures you generate yourself — the script is part of the record.** The user asks for the generating script explicitly; a figure with no script is not reproducible and cannot be corrected later. Layout:
-
-```
-<Note folder>/
-├── <Note>.md          ← embeds ![[assets/<name>.png]]
-├── assets/*.png       ← the figures
-└── scripts/*.py       ← the scripts that produce them
-```
-
-- **Output path relative to the script, never `/tmp`**: `OUT = Path(__file__).resolve().parent.parent / "assets"`, then `OUT.mkdir(parents=True, exist_ok=True)`. A stored script that writes to `/tmp` cannot re-run in place and silently diverges from the images in the note.
-- **The docstring header carries the exact run command and the interpreter that actually has the dependency** — a future session should not have to rediscover which python has the library.
-- **Run it from inside the note folder after every edit** and confirm the PNG's mtime/size changed before embedding.
-- Chart labels, axis text and table headers in **English** even when the note prose is Chinese (standing user convention).
-- **Look at every figure before embedding it**: render, then read the PNG back with `vision_analyze` using a *directed* question ("do the two bracket labels overlap each other or the curve; is anything clipped at the edges?") — an open "does this look okay?" returns reassurance and misses the defects. One pass usually reveals at least one overlap; two passes is normal.
-- **Figures lifted from a source PDF**: `pdftotext` interleaves and reorders the text *inside* figures, so extract body text normally but render each figure page to an image (`pdftoppm -r 300 -f N -l N`) and read the panel labels with `vision_analyze`. Never infer a curve's axis label, intercept annotation or tick values from the extracted text stream.
 
 ### Phase 5: Update cross-links
 
@@ -192,16 +172,11 @@ What's the practical relevance? Explicitly note if there is **no direct connecti
 3. **Parent/related notes** — add `[[New Note]]` to directly related subtopic notes
 4. Use `patch` for targeted edits
 
-### Phase 6: Verify — programmatically, not by eyeballing
+### Phase 6: Verify
 
-Run `scripts/verify-note-edit.py <vault_root> <note.md> <note.md.bak-YYYYMMDD>`. It performs all four checks below and prints one line per item:
-
-1. **YAML frontmatter parses.**
-2. **Line-set diff against the backup.** Compute the lines present in the backup but absent from the new text and *read the list*. An intentionally rewritten line (a corrected heading, a reworded claim) legitimately disappears, so a bare "all original lines still present" check goes False and cannot distinguish a deliberate edit from silent data loss. The rule is: **every missing line must be one you meant to remove.**
-3. **Every `[[wikilink]]` resolves** to a real `.md` in the vault.
-4. **Every `![[embed]]` resolves on the filesystem** — test both `<note folder>/<embed>` and `<vault>/<embed>`, since Obsidian resolves either. Keep this separate from check 3: a resolver that globs `name + ".md"` reports every `![[assets/x.png]]` as broken, and an asset path is not a note name.
-
-Also `ls` the note directory to confirm `assets/` and `scripts/` actually landed, and re-run the stored script to confirm the figures regenerate.
+- `ls` the note directory → confirm all files
+- `read_file` the folder note → verify links
+- `read_file` related notes → verify links
 
 ## Format conventions (user preferences)
 
@@ -215,7 +190,7 @@ Also `ls` the note directory to confirm `assets/` and `scripts/` actually landed
 | Key insights | Bold or callout blocks |
 | Summary | Final comparison table wrapping up all points |
 | Frontmatter | `aliases:`, `tags:`, `date created:` |
-| Images | `![[filename.png]]` embed, placed in same directory (or `![[assets/filename.png]]` in a folder-based note) |
+| Images | `![[filename.png]]` embed, placed in same directory |
 
 ### Branch B: Knowledge reference note format
 

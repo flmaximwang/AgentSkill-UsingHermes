@@ -178,16 +178,6 @@ figure-CDN route, and the vision-verification pitfall.
 - **Alternative**: Check if the paper has a preprint on bioRxiv/medRxiv/ChemRxiv/arXiv
 - **Figures**: the article HTML is blocked, but figure files are served openly by the `ars.els-cdn.com` CDN — see `references/paper-figure-extraction.md`
 
-### Chinese e-commerce & UGC sites (知乎 / 京东 / 淘宝 / 中关村在线)
-
-- **知乎 (zhuanlan.zhihu.com, zhihu.com/tardis/bd/art/<id>)**: curl returns a ~700-byte stub. `web_extract` DOES work — but call it with **exactly one URL per call**. Passing several Chinese JS-rendered article URLs in one `web_extract` call makes the whole batch fail with `Extract timed out after 120s via parallel`; re-issuing each URL singly succeeds.
-- **京东**: `item.jd.com/<sku>.html` is a JS shell — no price, but it does embed `window._itemInfo` metadata. The mobile page `item.m.jd.com/product/<sku>.html` (iPhone UA) returns the same JSON with SKU/color/vendor plus `width/height/length/weight`, which are **物流箱尺寸 + 含包装毛重, not product dimensions or net weight** — label them as such. Price is injected by JS/login and is not in the HTML: take prices from dated 行情 articles (ZOL) or search snippets instead of burning calls on price endpoints.
-- **淘宝/Tmall 列表页与详情页**: curl returns a ~3 KB anti-bot stub. The rendered page text (title + `¥price`) usually survives inside `web_search` result descriptions — usable, but quote it as "未实时核验".
-- **中关村在线 (dcdv.zol.com.cn, detail.zol.com.cn)**: fetchable, but pages are **GB18030-encoded** — decode with `decode('gb18030')`; utf-8 gives mojibake. ZOL 行情稿 are the best source for dated 京东价/到手价.
-- **品牌官网** (syitren.com and similar) are curl- and `web_extract`-friendly and carry the authoritative spec table + list price — try the manufacturer's own domain before any aggregator.
-
-See `references/china-ecommerce-spec-price-extraction.md` for the per-site table and the JD `_itemInfo` extraction recipe.
-
 ---
 
 ## Pitfalls
@@ -200,12 +190,10 @@ See `references/china-ecommerce-spec-price-extraction.md` for the per-site table
 6. **Paywalled papers may be on preprint servers.** Always search for "title + bioRxiv/arXiv/ChemRxiv" before declaring the paper inaccessible.
 7. **Do NOT hardcode WeChat article IDs or session cookies.** Each article link is unique and cookies expire.
 8. **Verify URLs are live before delivering them to the user.** `web_extract` returning content does NOT prove the URL currently works — it can serve from cache while the live page is a 404 (site revamp). Curl the exact URL for HTTP 200 first; when the user reports a dead link, recover the current URL from the live site's menu and explain the cause (restructure), not just swap in a link. See `references/live-url-verification.md`.
-9. **Never batch Chinese JS-rendered article URLs into one `web_extract` call.** Multi-URL batches return `Extract timed out after 120s via parallel` for every URL in the batch; single-URL calls to the same links succeed. Retry singly before declaring a page unreachable.
-10. **A page that curls fine can still be the wrong source tier.** Chinese AI-generated 横评 (知乎 flags `内容疑似 AI 生成`; 搜狐/网易 reposts carry `本文包含人工智能生成内容`) print spec tables and 频响曲线 numbers that contradict each other for the same model. Cross-check numbers across two such sources and report the conflict — never average it into a single figure.
 
 ## Verification Checklist
 
-- [ ] Tier 1 attempted: `web_extract(url)` — for Chinese article sites (知乎, 公众号) one URL per call, never a batch
+- [ ] Tier 1 attempted: `web_extract(url)`
 - [ ] Tier 2 attempted: `browser_navigate` + `browser_snapshot(full=True)`
 - [ ] Tier 3 attempted: curl HTML extraction (with platform-specific extraction pattern)
 - [ ] Tier 4 attempted when relevant: CrossRef API for academic papers

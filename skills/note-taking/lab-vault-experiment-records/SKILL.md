@@ -7,14 +7,14 @@ description: Search and summarize lab logs in zsqlab lab vaults (zsqlab01/08/10/
 
 Use when the user asks to search, summarize, or write lab logs / experiment records in a
 zsqlab lab vault:
-- `/Users/maxim/Downloads/zsqlab01_hNCAM-Binder_2024.09.06/` (hNCAM-binder project — dated
+- `~/Downloads/zsqlab01_hNCAM-Binder_2024.09.06/` (hNCAM-binder project — dated
   `Records/<range-id>/(YYYY-MM-DD) Title/` folders, plus `QAs/` Q&A summary notes)
 - `/Users/org_zsqlab/Obsidian/zsqlab08_EcBfr-Mirror_2026.04.17/` (README title "zsqlab1 — 实验记录库")
 - `/Users/org_zsqlab/Obsidian/zsqlab10_gammaPFD-Fiber_2026.06.25/` (γPFD heme-nanowire project — same Records/Logs/Projects/Protocols layout as zsqlab08; key logs: TEM-001, Purification-00x, BacterialCulture)
 - `/Users/org_zsqlab/Obsidian/zsqlab11_OmcZ-FollowUp_2026.06.24/` (OmcZ follow-up project — DIFFERENT structure, see `references/zsqlab11-vault.md`)
-- Design repos carry AA sequences for MW computation: `/Users/maxim/Repositories/zsqlab08_EcBfr-Mirror/design_summary.csv`, `/Users/maxim/Repositories/zsqlab10_gammaPFD/design_summary.tsv` (columns ID/Alias/AA Sequence); alias like `8.1.4` = construct name, e.g. sample `08BD01-8.1.4`
+- Design repos carry AA sequences for MW computation: `~/Repositories/zsqlab08_EcBfr-Mirror/design_summary.csv`, `~/Repositories/zsqlab10_gammaPFD/design_summary.tsv` (columns ID/Alias/AA Sequence); alias like `8.1.4` = construct name, e.g. sample `08BD01-8.1.4`
 
-These are DIFFERENT vaults from the personal wangfanlin1 vault — never default to the wrong one.
+These are DIFFERENT vaults from the user's personal vault (`$OBSIDIAN_VAULT_PATH`) — never default to the wrong one.
 
 ## Vault structure (read root README.md first)
 
@@ -125,42 +125,6 @@ Log frontmatter carries `UID:` (used in cross-links as `[[LogName]] (UID)`), `hi
 - `Logs/Bacterial Culture.base` = one row per culture, with per-row formula columns (culture time spans, total volume).
 - Dataview IS installed (Calender.md / Dashboard.md / Bacteria.md use it) — use dataviewjs for cross-note rollups Bases formulas cannot do (see the `obsidian-bases` skill's `references/bases-formulas.md`).
 - Some purifications have empty `culture-pellet-source` (e.g. Purification-001) — treat the relationship as sparse; match on UID, never assume completeness.
-
-## Design repos: the evidence source for "what did this project actually do?"
-
-The lab vaults record *execution*; the sibling design repos record the *method*. When the user
-asks to summarize a project, or when their skill profile needs evidence, read both:
-
-- `/Users/maxim/Repositories/zsqlab08_EcBfr-Mirror/` — `pipelines/pipeline-<x.y.z>/README.md` per
-  design generation (0.0.0 → 5.0.0), plus `design_summary.csv`, `synthesis_summary.csv`, `scripts/`.
-  The version number IS the method evolution (FixBB → parametric geometry → Codesign → symmetry
-  assembly → docking-based splice).
-- `/Users/maxim/Repositories/zsqlab10_gammaPFD/` — `pipelines/pipeline-0.0.0/` with staged subfolders
-  (`0_DiffDock … 7_StructureValidation`), `pipeline-1.0.0/{batch,report}`, `design_summary.tsv`, and
-  `.hermes/plans/*.md` which holds the current TODO plan and the already-verified scientific baseline.
-- **`Projects/Projects.md` is the topic index** (wikilinks to project docs); a vault can have a nearly
-  EMPTY `Records/` while the real work sits in `Logs/YYYY/MM/DD/<LogName>/` and in the design repo.
-  Never conclude "no records" from a sparse `Records/`.
-- The repo `README.md`/pipeline READMEs state the *reasoning* (why MASTER search then energy filter,
-  why a terminal-distance hard constraint instead of a linker) — quote that reasoning when the user
-  needs a method narrative, not just a tool list.
-
-## Pitfall: write_file refuses to overwrite a note not read via read_file in this task
-
-`cp` backups and reading through the `python3 -c` fallback do NOT satisfy write_file's
-read-before-write guard — the write returns `stale_write_blocked` and the file is left untouched.
-Working sequence for editing any vault note: `read_file` the target → `cp <file> <file>.bak` →
-`write_file`. Call `read_file` even for a note that it misdetects as binary (use the python fallback
-only to *see* such a file; the read_file call is what unlocks the overwrite).
-
-Two further gotchas confirmed on a 150+ line note:
-- A **truncated** `read_file` result (`truncated: true`, or a `next_offset` hint) does NOT count as a
-  full read; the overwrite stays blocked until every page has been read (continue with `offset`).
-- **Having created the file yourself earlier in the session does not exempt it** — a later
-  `write_file` on it is refused with "was not read by this agent". Re-read before each overwrite.
-- `patch` (a targeted old_string/new_string edit) is NOT subject to that guard: it applied cleanly to
-  files whose `write_file` had just been refused. So for an existing note, prefer `patch` for edits
-  and reserve `write_file` for notes you just read in full or for brand-new notes.
 
 ## Style rules
 

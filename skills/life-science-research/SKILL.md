@@ -10,10 +10,10 @@ This is a meta-skill bundling 50 specialized life-sciences sub-skills from OpenA
 ## Structure
 
 All sub-skill files are under this skill's directory:
-- `~/.hermes/skills/life-science-research/skills/<skill-name>/SKILL.md` — sub-skill instructions
-- `~/.hermes/skills/life-science-research/skills/<skill-name>/scripts/` — Python lookup scripts
-- `~/.hermes/skills/life-science-research/skills/<skill-name>/agents/openai.yaml` — Codex subagent definitions (informational)
-- `~/.hermes/skills/life-science-research/skills/<skill-name>/references/` — API docs / reference notes
+- `$HERMES_HOME/skills/life-science-research/skills/<skill-name>/SKILL.md` — sub-skill instructions
+- `$HERMES_HOME/skills/life-science-research/skills/<skill-name>/scripts/` — Python lookup scripts
+- `$HERMES_HOME/skills/life-science-research/skills/<skill-name>/agents/openai.yaml` — Codex subagent definitions (informational)
+- `$HERMES_HOME/skills/life-science-research/skills/<skill-name>/references/` — API docs / reference notes
 
 **To load a sub-skill**: use `skill_view(name='life-science-research', file_path='skills/<skill-name>/SKILL.md')` to read its SKILL.md, then follow the instructions there.
 
@@ -60,9 +60,13 @@ The router handles:
 
 ### Reference Notes (Condensed Domain Knowledge)
 - `references/ntbi-zip14-iron-transport.md` — mammalian NTBI/ZIP14/Fe³⁺-citrate iron transport mechanism
+- `references/cross-method-conductivity-analysis.md` — pitfall-aware comparison of IDME, EIS, and c-AFM for thin-film/nanowire conductivity papers; includes cross-method comparison traps and a "how to read" checklist
 - `references/evidence-classification.md` — how to tier evidence (direct / extrapolation / unknown) when synthesising literature answers, and common pitfalls
 - `references/commercial-product-research.md` — workflow for researching commercial biotech/lab products: finding manufacturer product pages, checking patents vs trade secrets, navigating Chinese vendor websites, and known commercial AIM autoinduction medium formulations
+- `references/diffdock-docking-protocol-extraction.md` — how to extract DiffDock docking parameters from a paper (Travaglini 2024 γPFD-heme protocol as case study), common reproduction failures (OOM on large cryo-EM structures, RDKit metal-ligand issues, version mismatches) and their fixes
 - `references/zotero-local-api-write.md` — adding Zotero items when MCP is in local-only mode (no API key) via the desktop connector API at port 23119
+- `references/coiled-coil-heptad-analysis.md` — identifying coiled-coil hydrophobic binding residues (a/d heptad positions) from PDB HELIX/SHEET records + sequence analysis; includes registration optimisation, distal-tip focus, and common pitfalls
+- `references/recombinant-protein-contaminant-analysis.md` — E. coli recombinant protein contaminant detection & removal: LPS/HCP/nucleic acid/lipid kits, Capto Core 700 contaminant fate, OMV removal methods (IEX/heparin/detergent/ultracentrifugation/SEC), Q bead pore accessibility for large particles, and domestic Chinese LAL kit comparison
 
 ### Multi-Omics, Proteomics & Specialized
 - `pride-skill`, `proteomexchange-skill`, `metabolights-skill`, `mgnify-skill`, `efo-ontology-skill`
@@ -73,7 +77,7 @@ For a broad life-sciences question:
 1. Load `skill_view(name='life-science-research', file_path='skills/research-router-skill/SKILL.md')`
 2. Follow the router's instruction: classify → normalize → select skills → gather → synthesize
 3. For each sub-skill you need, load it via its own SKILL.md in this skill's tree
-4. Run scripts directly via `terminal()` using the full path under `~/.hermes/skills/life-science-research/`
+4. Run scripts directly via `terminal()` using the full path under `$HERMES_HOME/skills/life-science-research/`
 
 **For compound-mechanism / metal-binding questions specifically** (e.g. "does compound X bind/transport metal Y?"):
 1. Load `references/evidence-classification.md` **before** answering — it defines the three-tier evidence framework (direct / extrapolation / unknown) and lists common generalization traps.

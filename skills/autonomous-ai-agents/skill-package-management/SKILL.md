@@ -240,6 +240,11 @@ fi
 7. **Conda/mamba environment assumed to be a venv** — `source .../bin/activate` fails silently on conda environments (that file doesn't exist). Always probe with `[ -d "$VENV_PATH/conda-meta" ]` and use direct `"$VENV_PATH/bin/pip"` / `"$VENV_PATH/bin/python3"` paths instead. The probe section above handles this automatically.
 8. **Long model downloads (>100MB) must use cron, not background process** — downloading model files (e.g. surya's 1.35GB layout model) can take minutes. Do NOT use `terminal(background=true)`. Use `cronjob(action='create', schedule='1m', ...)` instead. The cron job runs independently with proper timeout handling and auto-delivers the result.
 
+9. **Python 3.14+ typing incompatibility with old `requests`/`urllib3`** — on Python ≥3.14, older `urllib3` (<2.2) hits `TypeError: unsupported operand type(s) for |: 'type' and 'type'` because Python 3.14 made `X | Y` (union type syntax) a runtime error on non-types. The Hermes agent venv may have an older `urllib3` pinned by `requests`. If you get this error during `import requests`:
+   - **Fix A (known-working):** Write the script using only Python stdlib `urllib.request` + `json` instead of the `requests` library. See `software-development/references/stdlib-http-cli.md` for the technique.
+   - **Fix B (upgrade):** `uv pip install --upgrade urllib3 requests` to get a compatible version.
+   - **Fix C (different Python):** Run with Homebrew Python 3.12 (`/opt/homebrew/bin/python3.12`) instead of the Hermes venv's Python 3.14.
+
 ## When NOT to use this skill
 
 For installing standalone Python CLI apps (not skill dependencies), use the companion `mamba-python-install` skill instead. Mamba environments live under `/Applications/<APP>/.env` or `~/Applications/<APP>/.env` when sudo is not available.

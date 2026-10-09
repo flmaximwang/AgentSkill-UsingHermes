@@ -10,6 +10,27 @@ license: Proprietary. LICENSE.txt has complete terms
 
 This guide covers essential PDF processing operations using Python libraries and command-line tools. For advanced features, JavaScript libraries, and detailed examples, see REFERENCE.md. If you need to fill out a PDF form, read FORMS.md and follow its instructions.
 
+## Setup / Prerequisites
+
+On **macOS with Homebrew Python** (PEP 668 guarded — `pip install` is blocked):
+
+| Tool | Install | Best for |
+|------|---------|----------|
+| `pdftotext` (poppler) | `brew install poppler` | **Extract text** — no Python needed, works instantly |
+| PyMuPDF (fitz) | `brew install pymupdf` | Python-based extraction, layout analysis |
+| `pypdf` | `brew install pypdf` | Python merge/split/rotate (pure Python) |
+
+**Priority order for reading a PDF:**
+1. `brew install poppler` then `pdftotext input.pdf output.txt` — easiest, no pip issues
+2. `brew install pymupdf` then Python `fitz` — when layout matters
+3. Ask user to install manually (if unsure about Homebrew permissions)
+
+> ⚠️ **PEP 668 on macOS**: Homebrew Python blocks `pip install` of system packages. Do NOT attempt `pip install pymupdf/pypdf/pdfplumber` — it will fail. Use the `brew install` equivalents above.
+
+## User Preference: Answer First, Act Second
+
+When the user asks a question about a file or tool, answer their question directly FIRST — don't jump into installing missing packages in the same turn. Say "I can't read it yet because X is missing. Here's what I need." Then offer the solution.
+
 ## Quick Start
 
 ```python

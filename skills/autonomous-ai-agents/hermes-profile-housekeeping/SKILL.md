@@ -1,6 +1,6 @@
 ---
 name: hermes-profile-housekeeping
-description: Use when bulk-editing a profile's skills or config.
+description: Use when removing, disabling, or auditing skills/config.
 version: 1.0.0
 author: hermes-curator
 license: MIT
@@ -12,15 +12,16 @@ metadata:
 
 # Hermes profile housekeeping
 
-Bulk skill / config surgery inside one profile: enable/disable/delete many skills at once,
-prune dead `skills.disabled` entries, edit `config.yaml` safely. Every rule below exists
+Bulk skill / config surgery inside one profile: enable/disable/delete many skills at once (or one),
+reconcile `skills.disabled` against what is on disk (§1/§6 — a disabled name with no directory may be
+a deliberate suppression, not a dead entry), edit `config.yaml` safely. Every rule below exists
 because the naive version silently does the wrong thing or destroys something unrecoverable.
 
 ## When to Use
 
-- The user says to delete, disable, purge, or clean up many skills in a profile.
-- `skills.disabled` in `config.yaml` has grown dead entries, or on-disk skill dirs and the
-  config list disagree.
+- The user says to delete or remove **one** skill, disable, purge, or clean up many in a profile.
+- `skills.disabled` in `config.yaml` and the on-disk skill dirs disagree in either direction, or a
+  disabled name looks stale (§6 — check whether it is a suppression entry before pruning it).
 - A settings change must be written to `~/.hermes/config.yaml` (the file tools refuse it).
 - The user asks to clean up `~/.hermes/skills/.archive/`, or wants the curator to stop
   retiring bundled skills.
@@ -94,6 +95,41 @@ and do not assume partial execution — ask in chat and re-run once the user ans
 Keep every tarball and the pre-edit config copy; list their paths in the final report so
 rollback is one command.
 
+**Removing one hub-installed skill** is `uninstall`, never a hand `rm`:
+`hermes skills uninstall <name> --yes` drops the directory *and* the lock entry, while a hand delete
+leaves the entry behind as the orphan of §9. Back up `config.yaml` + `skills/.hub/lock.json`, then
+verify the removal — not the command's own `Uninstalled '…'` line:
+
+```bash
+TS=$(date +%Y%m%d-%H%M%S); mkdir -p <home>/backups/<name>-removal-$TS
+cp <home>/config.yaml <home>/skills/.hub/lock.json <home>/backups/<name>-removal-$TS/
+HERMES_HOME=<home> hermes skills uninstall <name> --yes
+ls <home>/skills/<category>/                      # install dir gone
+find <home>/skills -iname '*<name>*'              # no leftovers (.locks/, .hub/ included)
+HERMES_HOME=<home> hermes skills list | tail -2   # "… N enabled, M disabled"
+```
+
+The definitive check is the payload the page reads — no identifier may stay keyed to that `name`:
+
+```bash
+cd <hermes source tree> && HERMES_HOME=<home> "$(dirname "$(which hermes)")/python" -c "
+from tools.skills_tool import _find_all_skills
+from hermes_cli.web_server_profiles import _installed_hub_identifiers
+n={s['name'] for s in _find_all_skills(skip_disabled=True)}
+print({k:v['name'] for k,v in _installed_hub_identifiers(None).items() if v['name'] not in n})"  # expect {}
+```
+
+- **Correct the premise before acting on it.** A card's ✓ and a switch that looks wrong mean
+  *installed*; enabled/disabled is a separate axis (`skills.disabled`). When the user says "you have
+  X enabled" about a skill the artifacts call disabled, say which of the three states it is
+  (installed / enabled / linked to a real local row) instead of confirming a state the data
+  contradicts — and lead the report with that correction.
+- **Scope the delete to the home the user is looking at.** Each profile keeps its own copy; list the
+  others (`ls ~/.hermes/profiles/*/skills/*/<name>`) and delete there only on request (§10).
+- A same-named row owned by another publisher is index data, not a file — it cannot be deleted and
+  just renders unchecked afterwards (§9). Reinstall path is the lock entry's `identifier`:
+  `hermes skills install <identifier> --force --yes` (`--force` when the scan verdict is not clean).
+
 ## 5. Verify with two independent methods
 
 A single traversal tool can disagree with the filesystem: `find` / `os.walk` have been
@@ -116,8 +152,12 @@ hermes config set skills.disabled '[]'  # write a value (YAML literal)
 - Copy the file first, then prove the edit with a **whole-config** key-by-key diff of
   `yaml.safe_load` output (flatten nested dicts, compare every leaf). Proving only the target
   key changed is the point — a serializer can reformat or drop unrelated keys.
-- Prune `skills.disabled` entries whose directories no longer exist; otherwise they are dead
-  entries that make the next audit lie to you.
+- **A `skills.disabled` name with no directory is not automatically a dead entry.** The list does
+  double duty: hiding a skill that *is* installed, and suppressing a name the user never wants
+  seeded (bundled / official skills this profile never installed — an `airtable`, `polymarket`,
+  `macos-computer-use` style entry, §9). Pruning those silently re-enables a preference the user set
+  on purpose, so remove an entry only when the user asks, or when this session's own work is what
+  disabled the name; otherwise leave the line and say in the report that it is now inert.
 
 ## 7. Report shape
 
@@ -311,7 +351,10 @@ Layers, provenance classification, the probe recipe, and the index/catalog layou
   section carries no cadence key; the only scheduled checks in Hermes are
   `plugins.auto_update_check_hours` (+ `plugins.auto_apply`, git-class plugins only) and the agent's
   own update cron. Say so plainly instead of implying self-updating, and offer a cron if the user
-  wants one — the command has to name the profile.
+  wants one — the command has to name the profile. Note `check` reads the **update feed**, never
+  install health: a correctly installed `official`-source skill reports `unavailable` (no adapter
+  matches that source) and a name with no hub entry prints `No hub-installed skills to check.` —
+  judge install health from the lock entry plus `install_path` existing on disk.
 - `update` **skips a skill you edited locally** unless `--force` is given. A skill that stays put is
   usually this rule, not a failed update — confirm with `check` afterwards.
 - Scope both commands to a home: `hermes --profile <name> skills check <skill>` (`-p/--profile` is a
@@ -446,8 +489,51 @@ to stdout). The bundled tree is also the recovery source for a pruned skill (§8
 Store-by-store commands, identifier forms, and the bundled-name-miss signature:
 `references/skill-inventory-and-availability.md`.
 
+## 15. Editing a profile's own context files (SOUL.md, README.md)
+
+The files a profile loads by itself — `SOUL.md` (injected into every system prompt),
+`memories/*.md`, `config.yaml` — are also the ones the user hand-edits between turns. Both
+failure modes are silent: the write lands in a home nobody reads, or it erases an edit made two
+turns earlier.
+
+- **Resolve the live profile directory from `$HERMES_HOME` before writing anything into a
+  profile.** The active-profile path quoted in the system prompt can lag a rename, and the
+  superseded directory usually still exists as a shell. A near-miss sibling (e.g.
+  `profiles/<name>-assistant` sitting next to the live `profiles/<name>-assistance`) accepts the
+  write happily and the deliverable is invisible to the profile that loads it. Confirm the target
+  holds `SOUL.md`, `memories/`, `skills/` and `state.db` before writing.
+- **Cross-check that your memory writes land in that same home**: after a `memory` call,
+  `<live home>/memories/MEMORY.md` mtime is now. An older mtime means two different homes are in
+  play and one of them is not the live one.
+- **Re-read the target immediately before rewriting it.** Compare size/mtime against what you last
+  wrote — a changed file means the user edited it. Read it, keep their text verbatim (they may have
+  retitled your section, corrected a fact, or rewritten the intro), and splice your content around
+  it instead of overwriting.
+- **Back up per edit with a suffix naming the change** (`SOUL.md.bak-<YYYYMMDD>-<what-changed>`),
+  keep the pre-change copy of the original persona as its own file, and prove the backup matches the
+  untouched source with `md5` — that is what makes "I only appended" checkable afterwards.
+- **Splice rather than hand-retype**: keep the first N lines with `head -N`, append the new tail
+  from a scratch file, and prove the kept prefix is byte-identical with
+  `cmp <(head -N <old>) <(head -N <new>)` before moving it into place. Recipe and verification
+  commands: `references/profile-context-file-edits.md`.
+  - **Each revision of the tail goes to its own scratch filename.** `write_file` refuses to
+    overwrite a file this session has not fully read, and a tail the user has just asked you to
+    rewrite is normally one you wrote earlier — so the second rewrite silently bounces. Write
+    `<tail>-v2.md`, `-v3.md`, …, and keep the previous revision as the backup instead of
+    re-reading scratch output just to overwrite it.
+- **Budget the prompt cost, and say the delta.** `SOUL.md` rides in every system prompt, so measure
+  `wc -l -c` before and after. Keep the always-on file to rules plus a one-line pointer and push
+  frequency tables, evidence and long instances into a `README.md` **in the same home** — a pointer
+  to a file that does not exist in the live home is worse than no pointer.
+- **Report which file changed, in which home, with before/after byte counts and the backup path.**
+  When the file you edited is a user-authored persona, also state that their text survives as a
+  byte-identical prefix, so the edit is reviewable rather than alarming.
+
 ## Support files
 
+- `references/profile-context-file-edits.md` — recipe for editing a profile's own context files:
+  resolving the live `$HERMES_HOME`, spotting a stale sibling home, detecting a user edit made
+  between turns, backup/splice/verify commands, and the prompt-budget check.
 - `references/external-skill-pack-adoption.md` — installing a third-party skill/plugin pack
   (Codex/Claude/Agent Plugins v1) into a profile: manifest shim, loader probe, scan verdicts seen on
   real packs, index-size measurement, subsetting.

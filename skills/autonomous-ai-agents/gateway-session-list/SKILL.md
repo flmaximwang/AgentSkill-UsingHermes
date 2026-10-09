@@ -172,6 +172,96 @@ hermes --profile <name> gateway setup
 
 ---
 
+## Troubleshooting Gateway Failures
+
+### Stale `.pyc` Cache After Source Updates
+
+**Symptom:** Gateway starts but replies with `ImportError: cannot import name 'X' from 'utils'` — even though the function clearly exists in the source file.
+
+**Root cause:** Python loads cached bytecode (`.pyc`) from `__pycache__/` instead of recompiling the `.py` source. If code was updated (e.g., via `git pull`, Hermes Desktop install, or manual edit) while a gateway was still running, the cache can become stale.
+
+**Fix:**
+
+```bash
+# 1. Clear ALL __pycache__ directories — not just the root one
+find /Users/maxim/.hermes/hermes-agent -name __pycache__ -type d -exec rm -rf {} +
+
+# 2. Kill the stuck gateway process
+kill -TERM <PID>
+# If it doesn't die (common with SIGTERM-resistant gateways):
+kill -KILL <PID>
+
+# 3. Restart the gateway
+# Default profile:
+python -m hermes_cli.main gateway run --replace
+# Named profile:
+python -m hermes_cli.main --profile <name> gateway run --replace
+```
+
+**Verification:** Check the new gateway's logs for import errors:
+
+```bash
+grep -E "cannot import|ImportError|WARNING.*Could not import tool" \
+  /Users/maxim/.hermes/profiles/<name>/logs/gateway.log | tail -10
+```
+
+Zero matches = fixed.
+
+**How to tell if a stale cache is the problem:**
+1. `/Users/maxim/.hermes/hermes-agent/utils.py` has the function (e.g. `env_float`)
+2. But the traceback says `cannot import name 'env_float' from 'utils' (...utils.py)` — pointing to the SAME file
+3. The `.pyc` mtime predates the code change
+
+**Import chain pattern to recognize:**
+
+```
+gateway/run.py → run_agent.py → tools/browser_tool.py → agent/auxiliary_client.py → utils
+```
+
+See `references/troubleshooting-pyc-cache.md` for the full error transcript and reproduction recipe.
+
+### Stuck Gateway Process Resists Termination
+
+**Symptom:** `hermes --profile <name> gateway stop` or direct `kill -TERM <PID>` does not kill the process.
+
+**Procedure:**
+
+```bash
+# 1. Find the process
+ps aux | grep "gateway run" | grep -v grep
+# Look for --profile <name> to identify the right one
+
+# 2. Escalate
+kill -TERM <PID>          # gentle shutdown (may be ignored)
+sleep 3
+kill -KILL <PID>          # SIGKILL — always works
+sleep 2
+
+# 3. Verify dead
+ps aux | grep "<PID>" | grep -v grep   # should return nothing
+
+# 4. Restart fresh
+hermes --profile <name> gateway run --replace
+```
+
+**Note:** `--replace` flag signals the *old* gateway to quit, but a long-running gateway with stale imports may not respond. Use direct `kill -KILL` in that case.
+
+### Log-Based Health Check
+
+```bash
+# Gateway log (connection, startup, errors)
+tail -50 /Users/maxim/.hermes/profiles/<name>/logs/gateway.log
+
+# Agent log (tool loading, import errors, conversation errors)
+tail -50 /Users/maxim/.hermes/profiles/<name>/logs/agent.log
+
+# Search for import errors across all log levels
+grep -E "WARNING.*tool|ImportError|cannot import" \
+  /Users/maxim/.hermes/profiles/<name>/logs/*.log
+```
+
+---
+
 ## Feishu Setup Reference
 
 See `references/feishu-setup.md` for the full env-var table, connection-mode details (WebSocket vs Webhook), per-group access control rules, interactive card configuration, document-comment intelligent reply setup, and troubleshooting steps.

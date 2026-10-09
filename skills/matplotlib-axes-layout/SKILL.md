@@ -111,55 +111,16 @@ ax.plot(x, y)
   output is unchanged.  Negative values raise ValueError.  Layout code
   reads them from `plot_args` and converts to inches internally
   (`/ 2.54`).
-- **User API style: property assignment, not setter methods** (Maxim):
+- **User API style: property assignment, not setter methods** (the user):
   when exposing configurable values prefer `.attr = value` properties
   (incl. one per individual field) over `set_*(...)` methods — the
   `set_margins()` method was explicitly rejected in favour of
   `plot_args.margin = ...` / `plot_args.margin_left = ...`.
 
-### Annotating curves without collisions
+### Verifying a layout without a vision model
 
-Interval brackets, arrow spans and formula labels that describe a curve
-are the main source of ugly figures. Two failure modes, both avoidable
-by construction rather than by nudging coordinates:
-
-- **A label parked on the curve.** Nudging the text off the curve and
-  giving it a white `bbox` masks the curve instead of fixing the
-  overlap — the figure now hides data.
-- **Two spans stacked at the same `y`.** Nested interval brackets drawn
-  at one height force their labels to collide with each other and with
-  whatever curve crosses that band.
-
-Fix: give the annotations their own **gutter**. Extend `ylim` below the
-data range (e.g. `set_ylim(-0.55, 1.06)` for data in `[0, 1]`), draw a
-solid line at the data floor, and lay the spans out as a short row of
-bars in the negative space with each label directly beneath its bar.
-Collision becomes geometrically impossible, and the reader compares the
-intervals side by side at one fixed scale — usually the whole point of
-the figure. Keep the y-ticks explicit
-(`set_yticks(np.arange(0, 1.01, 0.2))`) so the gutter does not acquire
-meaningless negative tick labels.
-
-For a **schematic** panel with no data (a number line, a concept
-drawing), draw exactly ONE axis: `spines["left"].set_visible(False)`
-plus `set_yticks([])`. Otherwise a hand-drawn baseline floats above a
-second real axis complete with its own ticks — two axes for one
-variable.
-
-### Verifying a layout
-
-**With a vision model available, look at the PNG.** Render a throwaway
-first version, load it with `vision_analyze`, and ask a *directed*
-question that names the elements and asks about collisions, clipping and
-overlaps ("do the two bracket labels overlap each other or the curve; is
-anything clipped at the edges?"). An open "does this look okay?"
-returns reassurance and misses the defects. Patch, re-render, look again
-— two passes is normal. The defects this catches (label-over-curve,
-ambiguous label ownership, a duplicate axis) are exactly the ones a
-numeric audit cannot see.
-
-**Without a vision model**, when a figure "looks wrong" (blank strips,
-cut-off labels), verify numerically instead of guessing:
+When a figure "looks wrong" (blank strips, cut-off labels) and no
+vision model is available, verify numerically instead of guessing:
 
 - Introspect the live Figure: `fig.get_size_inches()`,
   `ax.get_position()` (fractional bbox), `legend.get_window_extent()`

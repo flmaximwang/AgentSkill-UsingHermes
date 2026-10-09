@@ -121,45 +121,6 @@ OR contains(parents, this.file.link)
 5. **references 用 `[[...]]` 格式**：链接到 `📚 Literatures/` 下的文献笔记，不是裸 URL
 6. **abstract 不宜过长**：控制在 50-80 字，因为 Dataview 表格列宽有限
 
-## MEMOS Main Note Granularity
-
-When Snippets accompany a MEMOS main note, follow this split:
-
-### What belongs in the MEMOS (concise, ~50–80 lines)
-- Frontmatter, abstract, overview, key functions table (3–6 rows)
-- The single essential structural/mechanistic insight
-- **Snippet Index Table** linking all related Snippets
-- Key References, Related Notes
-
-### What goes to separate Snippets (one per topic)
-Each detailed topic gets its own timestamped Snippet:
-- Expression & Purification protocols
-- Assembly parameter tables (critical concentration, Tm, dimensions)
-- Solution behavior data (DLS, SEC, CD tables)
-- High-resolution structure details (helical parameters, architecture)
-- Engineering/application protocols (conjugation, loading, metrics)
-- Comparison tables (with homologs / canonical forms)
-- Residue-level binding data (heptad analysis, mutagenesis)
-- Mechanistic discussions (stability, evolution)
-
-### Snippet Index Table Pattern
-The MEMOS main note should have a table referencing all Snippets:
-
-```markdown
-## Snippets (Extended Details)
-
-| Topic | Snippet |
-|-------|---------|
-| Expression & Purification | [[timestamped link]] |
-| Assembly Parameters | [[timestamped link]] |
-| ... | ... |
-```
-
-Each Snippet's `parents` field must point to the MEMOS main note (e.g. `- "[[Prefolding subunit alpha 2 from M. jannaschii]]"`).
-
-### Why
-This keeps the MEMOS navigable and linkable in graph view while preserving all detail in searchable Snippets.
-
 ## 与 MEMOS 的交互
 
 Snippet 通过 `parents` 链接回 MEMOS 笔记。MEMOS 端的 `% Memos @ Proteins.base`（或其他 MEMOS 的 .base 文件）中通常包含 Dataview 查询：

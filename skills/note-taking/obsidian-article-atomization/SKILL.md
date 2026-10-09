@@ -16,7 +16,7 @@ platforms: [macos, linux, windows]
 ## When to Use
 
 - User shares an external article (WeChat 公众号 post, web long-read) and asks to 整理/原子化 it into the Obsidian vault, linked to existing notes ("把这个 post 整理到知识库中，注意原子化并与原有的知识库联系到一起").
-- User's vault is `wangfanlin1` (rules in its root `README.md`, read it first).
+- The user's vault root is `$OBSIDIAN_VAULT_PATH` (rules in its root `README.md`, read it first).
 
 The user's definition of success: the article becomes **multiple small atomic notes** (one concept per note) that **link into the existing note graph** — NOT one mega-note dump, and NOT orphan notes.
 
@@ -57,7 +57,7 @@ The user's definition of success: the article becomes **multiple small atomic no
 5. **Skip `![[Pasted image...]]` in link checks** — image embeds are not broken links.
 6. **Don't overwrite from memory** — re-read files immediately before patching; the user edits notes between sessions.
 
-## User conventions (wangfanlin1 vault)
+## User conventions (the user's vault)
 
 - Hub/source note for the article (title, 公众号, URL, reading date) + atomic concept notes + link updates to existing hubs (`Interactions in terms of proteins`, `🧩 p53`, etc.).
 - Existing notes carry YAML frontmatter with `aliases`, `parents:` (wikilinks), `tags`; MEMOS notes use dataview blocks that must be preserved verbatim.
