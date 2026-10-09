@@ -448,11 +448,14 @@ def cmd_dedupe(args) -> int:
     def has_old_refs(text: str) -> bool:
         return any(f"profiles/{n}" in text for n in OLD_NAMES)
 
-    stats = dict(total=0, identical=0, path_fixed=0, newer_pack=0, not_in_pack=0)
+    stats = dict(total=0, identical=0, path_fixed=0, newer_pack=0, not_in_pack=0, hub_installed=0)
     deleted_dirs = []
 
-    profiles = [HERMES_HOME] if args.profile != "all" else sorted(profiles_dir.glob("*/"))
-    if args.profile != "all" and args.profile != "default":
+    if args.profile == "all":
+        profiles = [HERMES_HOME] + sorted(profiles_dir.glob("*/"))
+    elif args.profile == "default":
+        profiles = [HERMES_HOME]
+    else:
         profiles = [HERMES_HOME / "profiles" / args.profile]
 
     for prof_root in profiles:
@@ -460,10 +463,16 @@ def cmd_dedupe(args) -> int:
         if not skills_dir.is_dir():
             continue
         prof_name = prof_root.name if prof_root != HERMES_HOME else "default"
+        lock = read_lock(prof_root)
+        bundled = read_bundled(prof_root)
 
         for md in walk_skill_dirs(skills_dir):
             name = md.parent.name
             stats["total"] += 1
+            # hub-installed or bundled skills have a lifecycle (lock entry / manifest) — never dedupe them
+            if name in lock or name in bundled:
+                stats["hub_installed"] += 1
+                continue
             if name not in pack_index:
                 stats["not_in_pack"] += 1
                 continue
@@ -517,7 +526,7 @@ def cmd_dedupe(args) -> int:
 
     print(f"[dedupe] total={stats['total']} identical={stats['identical']} "
           f"path_fixed={stats['path_fixed']} newer_pack={stats['newer_pack']} "
-          f"not_in_pack={stats['not_in_pack']}")
+          f"not_in_pack={stats['not_in_pack']} hub_installed={stats['hub_installed']}")
     if deleted_dirs:
         print(f"[dedupe] deleted {len(deleted_dirs)} local copies")
         for prof, name, reason in deleted_dirs[:10]:
