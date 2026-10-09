@@ -130,7 +130,38 @@ random token inside the recalled text).
   read) — with this version it is whole-bank sharing or nothing.
 - The built-in MEMORY.md / USER.md stay per profile regardless; hindsight does not change that.
 
-## 6. Two things not to do as part of the install
+## 6. What it costs (measured from the daemon's own accounting)
+
+Ask the daemon instead of guessing — it records every call per bank:
+
+```bash
+curl -s --noproxy '*' "http://127.0.0.1:9177/v1/default/banks/<bank>/llm-requests/stats"   # per-day input/cached/output
+curl -s --noproxy '*' "http://127.0.0.1:9177/v1/default/banks/<bank>/llm-requests?limit=20" # per call: operation, model, tokens
+```
+
+Measured on this machine (Hindsight 1.2.1, `deepseek-flash`, one fact at a time):
+
+| operation | input | cached | output | when it runs |
+|---|---|---|---|---|
+| `retain` | ~3.2 K | up to ~2.9 K | ~140 | once per retained turn (`auto_retain`) |
+| `consolidation` | ~3.9–4.2 K | ~2.8 K | ~140–170 | after a retain batch, and on a maintenance tick |
+| `recall` / `prefetch` | **0 LLM calls** | — | — | embedding + BM25 + local cross-encoder only (12–18 ms) |
+
+- The big input numbers are mostly a **fixed prompt prefix** the provider's context cache hits; the
+  cache-hit rate is what decides the bill.
+- At DeepSeek Flash off-peak rates, one retained turn lands at **≈¥0.003 (cache-heavy) to ¥0.009
+  (no cache)**; peak doubles it. Reading memory is free.
+- Consolidation is the larger half and it **batches**: the ~4 K prompt is per *call*, not per memory,
+  so its cost per retained turn falls as turns pile up before a consolidation run.
+- Cheapest levers, in order: point extraction at a local endpoint (`llm_provider: ollama` +
+  `llm_base_url`) ⇒ marginal cost 0; raise `retain_every_n_turns`; set
+  `HINDSIGHT_API_ENABLE_AUTO_CONSOLIDATION=false` to drop the consolidation half.
+- Model names move: `deepseek-chat` still answers but is off the published price list — use
+  `deepseek-flash`. Changing `llm_model` does **not** rewrite `~/.hindsight/profiles/<profile>.env`
+  while the daemon runs; stop the daemon once (`hindsight-embed -p <profile> daemon stop`) so the
+  next start re-materializes the env, then confirm the model in `/llm-requests`.
+
+## 7. Two things not to do as part of the install
 
 - The vendor docs suggest turning the built-in stores off when Hindsight is active
   (`memory.user_profile_enabled false`). That is a separate decision about where the user's durable
