@@ -197,7 +197,7 @@ maintain-hermes-memory/
 ├── SKILL.md  (213 lines)
 ├── references/
 │   ├── choose-a-memory-provider.md  (112 lines)
-│   ├── hindsight-local-embedded.md  (171 lines)
+│   ├── hindsight-local-embedded.md  (199 lines)
 │   ├── inspect-hermes-skill-usage.md  (264 lines)
 │   ├── maintain-hermes-curator-archive-lifecycle.md  (67 lines)
 │   ├── maintain-hermes-memory-local-model-providers.md  (133 lines)

@@ -161,7 +161,35 @@ Measured on this machine (Hindsight 1.2.1, `deepseek-flash`, one fact at a time)
   while the daemon runs; stop the daemon once (`hindsight-embed -p <profile> daemon stop`) so the
   next start re-materializes the env, then confirm the model in `/llm-requests`.
 
-## 7. Two things not to do as part of the install
+## 7. Retiring the built-in store: migrate first, switch off second
+
+The built-in `MEMORY.md` / `USER.md` are not migrated by installing a provider — hindsight only
+*mirrors future* built-in writes. Push the existing content in before switching the built-in off:
+
+```python
+# one process, so the daemon it starts survives the whole batch
+entries = [e.strip() for e in path.read_text().split("\n§\n") if e.strip()]   # both stores
+for e in entries:
+    provider.handle_tool_call("hindsight_retain", {"content": e})
+```
+
+Then verify retrieval (a recall per store, plus count units in the bank — the extractor splits, so
+24 entries became ~94 units), and only then:
+
+```bash
+hermes config set memory.memory_enabled false        # MEMORY.md side + the agent's memory tool
+hermes config set memory.user_profile_enabled false  # USER.md side
+```
+
+- **Read at agent init** ⇒ nothing changes until a new session / gateway restart.
+- Leave the two files on disk: they are the fallback if the provider has to be pulled, and they cost
+  nothing when unused.
+- After this the external provider is the **only** cross-session memory — a daemon that is down means
+  no recall at all, so say that out loud when the user asks for the switch.
+- Cost of the migration itself: one retain per entry (~3.2 K prompt each) plus consolidation — ~24
+  entries is ~¥0.1 on Flash.
+
+## 8. Two things not to do as part of the install
 
 - The vendor docs suggest turning the built-in stores off when Hindsight is active
   (`memory.user_profile_enabled false`). That is a separate decision about where the user's durable
