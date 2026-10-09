@@ -129,5 +129,10 @@ sites that actually receive the platform, so check the provider's **per-turn** e
 `remember` / `sync_turn` / `prefetch` all route through) passes it; otherwise the bucket stays the
 raw platform id no matter how right `users.yaml` is. Symptom that tells them apart: the prefetch
 header shows the canonical display name (session-init resolved it) while the store's `user_id` is
-still the snowflake. Diagnosis + fix + the old-rows migration: `use-limbic` §3
-(`scripts/probe-identity-attribution.py`).
+still the snowflake. **Diagnose it by calling the provider's own resolver twice in one process** —
+once with the platform, once without (`_resolve_identity(raw, {"platform": …})` vs
+`_resolve_identity(raw, {})`): the first returns the canonical name, the second falls through to the
+raw id, which is exactly what the per-turn path does — and a resolver that never returns falsy makes
+any "if it resolved, use it, else fall back to the session map" guard dead code. Fix = pass the
+platform the host put in the session context into that call; then migrate the rows already written
+under the raw id (they are invisible to the fixed path).
