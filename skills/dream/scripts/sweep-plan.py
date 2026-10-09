@@ -411,6 +411,122 @@ def self_test() -> int:
     return 0
 
 
+def cmd_dedupe(args) -> int:
+    """S9: remove profile-local skills that already exist in packs.
+
+    For each profile, find local skills whose name matches a skill in any AgentSkill pack.
+    - SKILL.md identical  → delete local (pack is source of truth)
+    - SKILL.md different  → check if local has path fixes (old profile names) that pack lacks;
+                           if so, restore local SKILL.md to pack first, then delete local
+    - SKILL.md different, no path fixes → delete local (pack is newer)
+
+    Reports: total local, identical deleted, path-fixed restored+deleted, not-in-pack stayed.
+    """
+    import filecmp
+    import shutil
+
+    packs_root = pathlib.Path(args.packs_root).expanduser()
+    profiles_dir = HERMES_HOME / "profiles"
+
+    # Build pack skill index: name -> [(pack_name, abs_path_to_skill_dir)]
+    pack_index: dict = {}
+    for pack_dir in sorted(packs_root.glob("AgentSkill-*")):
+        skills_dir = pack_dir / "skills"
+        if not skills_dir.is_dir():
+            continue
+        for md in skills_dir.rglob("SKILL.md"):
+            pack_index.setdefault(md.parent.name, []).append((pack_dir.name, md.parent))
+
+    if not pack_index:
+        die(2, f"no AgentSkill-* packs found under {packs_root}")
+
+    # Old profile names that indicate a path fix
+    OLD_NAMES = {"artist","game-research","job-hunter","obsidian-maintenance","personal-accountant",
+                 "plan-weave","plasmid-engineer","profile-development","protein-design","quant-investor",
+                 "rdm-assistance","secretary","software-development","travel-guider","value-investor"}
+
+    def has_old_refs(text: str) -> bool:
+        return any(f"profiles/{n}" in text for n in OLD_NAMES)
+
+    stats = dict(total=0, identical=0, path_fixed=0, newer_pack=0, not_in_pack=0)
+    deleted_dirs = []
+
+    profiles = [HERMES_HOME] if args.profile != "all" else sorted(profiles_dir.glob("*/"))
+    if args.profile != "all" and args.profile != "default":
+        profiles = [HERMES_HOME / "profiles" / args.profile]
+
+    for prof_root in profiles:
+        skills_dir = prof_root / "skills"
+        if not skills_dir.is_dir():
+            continue
+        prof_name = prof_root.name if prof_root != HERMES_HOME else "default"
+
+        for md in walk_skill_dirs(skills_dir):
+            name = md.parent.name
+            stats["total"] += 1
+            if name not in pack_index:
+                stats["not_in_pack"] += 1
+                continue
+
+            # Find the pack that has this skill
+            pack_name, pack_skill_dir = pack_index[name][0]
+            pack_md = pack_skill_dir / "SKILL.md"
+            if not pack_md.is_file():
+                stats["not_in_pack"] += 1
+                continue
+
+            local_text = md.read_text(encoding="utf-8", errors="replace")
+            pack_text = pack_md.read_text(encoding="utf-8", errors="replace")
+
+            if filecmp.cmp(str(md), str(pack_md), shallow=False):
+                stats["identical"] += 1
+                # Backup then delete
+                bak = pathlib.Path(args.backup) / prof_name / md.parent.parent.name / name
+                if args.backup and not bak.exists():
+                    bak.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copytree(str(md.parent), str(bak))
+                if not args.dry_run:
+                    shutil.rmtree(str(md.parent))
+                deleted_dirs.append((prof_name, name, "identical"))
+            elif has_old_refs(local_text) and not has_old_refs(pack_text):
+                # Local has path fixes the pack lacks → restore to pack, then delete
+                stats["path_fixed"] += 1
+                if not args.dry_run:
+                    # Backup pack's old version
+                    if args.backup:
+                        bak = pathlib.Path(args.backup) / "pack-backup" / f"{pack_name}-{name}-SKILL.md"
+                        bak.parent.mkdir(parents=True, exist_ok=True)
+                        if not bak.exists():
+                            shutil.copy2(str(pack_md), str(bak))
+                    # Restore local to pack
+                    shutil.copy2(str(md), str(pack_md))
+                    # Delete local
+                    shutil.rmtree(str(md.parent))
+                deleted_dirs.append((prof_name, name, f"path-fixed → {pack_name}"))
+            else:
+                # Pack is newer → delete local
+                stats["newer_pack"] += 1
+                if args.backup:
+                    bak = pathlib.Path(args.backup) / prof_name / md.parent.parent.name / name
+                    if not bak.exists():
+                        bak.parent.mkdir(parents=True, exist_ok=True)
+                        shutil.copytree(str(md.parent), str(bak))
+                if not args.dry_run:
+                    shutil.rmtree(str(md.parent))
+                deleted_dirs.append((prof_name, name, "pack-newer"))
+
+    print(f"[dedupe] total={stats['total']} identical={stats['identical']} "
+          f"path_fixed={stats['path_fixed']} newer_pack={stats['newer_pack']} "
+          f"not_in_pack={stats['not_in_pack']}")
+    if deleted_dirs:
+        print(f"[dedupe] deleted {len(deleted_dirs)} local copies")
+        for prof, name, reason in deleted_dirs[:10]:
+            print(f"  {prof:24s} {name:30s} {reason}")
+        if len(deleted_dirs) > 10:
+            print(f"  ... 还有 {len(deleted_dirs)-10} 个")
+    return 0
+
+
 def main() -> int:
     if "--self-test" in sys.argv[1:]:
         return self_test()
@@ -429,6 +545,12 @@ def main() -> int:
     m.add_argument("--verdicts", action="append", default=[],
                    help="verdict JSONL file (repeatable); default = <dir>/verdicts*.jsonl")
     m.set_defaults(func=cmd_merge)
+    d = sub.add_parser("dedupe", help="S9: remove profile-local skills that already exist in packs")
+    d.add_argument("--profile", default="all", help="default = all profiles; 'default' = only default")
+    d.add_argument("--packs-root", default="~/Documents/AgentSkill")
+    d.add_argument("--backup", default="~/.hermes/backups/dream-dedupe", help="backup dir before deletion")
+    d.add_argument("--dry-run", action="store_true", help="report only, no deletion")
+    d.set_defaults(func=cmd_dedupe)
     args = ap.parse_args()
     return args.func(args)
 

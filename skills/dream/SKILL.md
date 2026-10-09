@@ -26,6 +26,7 @@ description: "一键把某个 profile 里没有仓库归属的本地 skill 批�
 | S6 验证 | **一条与所有 writer 不同的验证子代理** | 「自己写自己验」有乐观偏差；回读要有人复核 plan 的每一行 | 只读：`diff -rq` / `check` / lock / 脚本实跑 |
 | S7 整包重装 | **主 agent 跑脚本生成的命令** | 命令由 lock 证据生成、条数与代价要在眼前 | 不装本批没改动的包 |
 | S8 退役与汇报 | **主 agent** | 删除是最后一步，且必须等回读 | 回读没通过不许删 |
+| S9 全库去重 | **主 agent 跑 `scripts/sweep-plan.py dedupe`** | 804 个副本手工比对必错；去重判据是脚本产物（filecmp + 旧名检测） | 不先 `--dry-run`、不备份就删 |
 
 并发上限 10：>10 个包时按包分波（每波 ≤10 个 writer），别一次全派。所有子代理**前台跑完即结束**——子代理起
 后台进程会把完成通知的会话路由 pin 到子代理身上，人面会话被顶掉（本机上游未修的坑）。子代理不能提问，所以
@@ -152,6 +153,25 @@ sh <scratch>/sweep-<date>/install-cmds.sh     # 先给用户看条数：一包 2
 退役**只在回读通过之后**：先 `tar czf` 备份并说明备份在哪，lockless 的直接删目录，hub 装的走
 `hermes skills uninstall <裸名>`。最后汇报四段：枚举数（local/hub/bundled）· 判定表 · **每行对应的证据**（sha /
 verdict / diff / check 原文）· ≤3 条决策点（每条：要你定什么 / 为什么只能你定 / 我的建议与代价）。
+
+## S9 · 全库去重（主 agent，一条命令）
+
+S7 整包重装后，profile 里可能还残留大量与包同名的 local 副本（实测 2026-10-09：583 个相同 + 84 个有路径修复）。
+这一步把它们清掉，让 profile 里只剩「包没有的」和「hub 装的」。
+
+```bash
+~/.hermes/hermes-agent/venv/bin/python3 -B \
+  skills/dream/scripts/sweep-plan.py dedupe \
+  --profile all --packs-root ~/Documents/AgentSkill \
+  --backup ~/.hermes/backups/dream-dedupe-$(date +%Y-%m-%d)
+```
+
+三种情况：
+- **SKILL.md 相同** → 直接删 local（包是 source of truth）
+- **SKILL.md 不同，local 有旧 profile 路径引用** → 先回移植到包，再删 local
+- **SKILL.md 不同，无路径修复** → 包更新，直接删 local
+
+🔴 **先 `--dry-run` 看一遍**，确认数字合理再真跑。备份在 `--backup` 指定的目录。
 
 ## 检查点
 
