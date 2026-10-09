@@ -27,6 +27,24 @@ import re
 import sys
 
 DESC = re.compile(r"^description:[ \t]*(.+?)[ \t]*$", re.M)
+
+
+def load_cases(path: pathlib.Path) -> list:
+    """两种 test-prompts 形状都吃：
+    [{"id":1,"prompt":…,"expected":…}]（UsingHermes）与
+    {"skill":…,"test_cases":[{"id":"should-trigger-01","type":"should_trigger","prompt":…,"expected_behavior":…}]}
+    （各工具包）。归一化成 {id, prompt, expected, kind}，kind ∈ should_trigger|should_not_trigger。"""
+    data = json.loads(path.read_text(encoding="utf-8"))
+    raw = data if isinstance(data, list) else data.get("test_cases", [])
+    out = []
+    for i, e in enumerate(raw, start=1):
+        if not isinstance(e, dict) or "prompt" not in e:
+            continue
+        kind = str(e.get("type") or e.get("kind") or "should_trigger")
+        out.append({"id": e.get("id", i), "prompt": e["prompt"],
+                    "expected": str(e.get("expected") or e.get("expected_behavior") or ""),
+                    "kind": "should_not_trigger" if kind == "should_not_trigger" else "should_trigger"})
+    return out
 WINDOW = 57
 
 
@@ -46,7 +64,9 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--round", required=True, help="轮次名，进文件名（r1 / r2 …）")
     ap.add_argument("--skills-root", default="skills")
-    ap.add_argument("--new-skill", required=True, help="本轮新增的 skill 名")
+    ap.add_argument("--new-skill", required=True, help="本轮新增的 skill 名（多个用逗号分隔）")
+    ap.add_argument("--decoy-pick-map", default="",
+                    help="多新技能时每个技能各自的诱饵答案：skill=answer,skill=answer")
     ap.add_argument("--decoy-ids", default="", help="新技能 test-prompts 里属于诱饵的 id（逗号分隔）")
     ap.add_argument("--decoy-pick", default="", help="诱饵题的正确答案（某个既有 skill 名）")
     ap.add_argument("--out-dir", default="docs/routing-blind-tests")
@@ -56,11 +76,19 @@ def main() -> int:
     root = pathlib.Path(args.skills_root).resolve()
     out = pathlib.Path(args.out_dir).resolve()
     decoy_ids = {int(x) for x in args.decoy_ids.split(",") if x.strip()}
+    new_skills = [s.strip() for s in args.new_skill.split(",") if s.strip()]
+    decoy_map = dict(kv.split("=", 1) for kv in args.decoy_pick_map.split(",") if "=" in kv)
+    if decoy_ids and not decoy_map:
+        decoy_map = {new_skills[0]: args.decoy_pick}
 
     all_skills = sorted(d.name for d in root.iterdir() if d.is_dir() and (d / "SKILL.md").is_file())
     problems: list[str] = []
-    if args.new_skill not in all_skills:
-        problems.append("新技能 %s 不在 skills 根下" % args.new_skill)
+    for ns in new_skills:
+        if ns not in all_skills:
+            problems.append("新技能 %s 不在 skills 根下" % ns)
+    for ns in new_skills:
+        if decoy_ids and ns not in decoy_map:
+            problems.append("新技能 %s 没给诱饵答案（--decoy-pick-map）" % ns)
     descs = {name: read_desc(root / name) for name in all_skills}
     for name, desc in descs.items():
         if not desc:
@@ -68,59 +96,60 @@ def main() -> int:
 
     # 题面：旧题（每个既有 skill 的 test-prompts.json）+ 本轮新题（新技能自己的），按题面文本去重
     prompts: list[dict] = []
+    dropped: list[str] = []
     seen: dict[str, str] = {}
     for name in all_skills:
-        if name == args.new_skill:
+        if name in new_skills:
             continue
         path = root / name / "test-prompts.json"
         if not path.is_file():
             continue
-        for pos, entry in enumerate(json.loads(path.read_text(encoding="utf-8")), start=1):
+        for pos, entry in enumerate(load_cases(path), start=1):
             text = " ".join(str(entry["prompt"]).split())
-            if text in seen:
-                problems.append("题面重复（%s 与 %s）：%s" % (seen[text], name, text[:40]))
+            if text in seen:                      # 重复只影响统计口径（同一题两次落同一答案），不拦生成
+                dropped.append("旧题重复：%s 与 %s" % (seen[text], name))
                 continue
             seen[text] = name
             prompts.append({"prompt": text, "owner": name, "kind": "should_trigger",
                             "origin": "%s#%s" % (name, entry.get("id", pos))})
 
-    new_path = root / args.new_skill / "test-prompts.json"
     new_prompts: list[dict] = []
-    for entry in json.loads(new_path.read_text(encoding="utf-8")):
-        text = " ".join(str(entry["prompt"]).split())
-        if text in seen:
-            problems.append("新题与既有题重复：%s" % text[:40])
-            continue
-        seen[text] = args.new_skill
-        if entry["id"] in decoy_ids:
-            item = {"prompt": text, "owner": args.new_skill, "kind": "should_not_trigger",
-                    "expect_pick": args.decoy_pick, "origin": "%s#%s" % (args.new_skill, entry["id"])}
-        else:
-            item = {"prompt": text, "owner": args.new_skill, "kind": "should_trigger",
-                    "origin": "%s#%s" % (args.new_skill, entry["id"])}
-        new_prompts.append(item)
-        prompts.append(item)
+    for ns in new_skills:
+        for entry in load_cases(root / ns / "test-prompts.json"):
+            text = " ".join(str(entry["prompt"]).split())
+            if text in seen:
+                dropped.append("新题与既有题重复（保留先出现的那个）：%s" % text[:36])
+                continue
+            seen[text] = ns
+            if entry["kind"] == "should_not_trigger" or entry["id"] in decoy_ids:
+                item = {"prompt": text, "owner": ns, "kind": "should_not_trigger",
+                        "expect_pick": decoy_map.get(ns, ""), "origin": "%s#%s" % (ns, entry["id"])}
+            else:
+                item = {"prompt": text, "owner": ns, "kind": "should_trigger",
+                        "origin": "%s#%s" % (ns, entry["id"])}
+            new_prompts.append(item)
+            prompts.append(item)
 
-    if len(new_prompts) != 5:
-        problems.append("新题应为 4 正例 + 1 诱饵（拿到 %d 条）" % len(new_prompts))
+    if not new_prompts:
+        problems.append("新技能一条 test case 都没读到")
 
     random.Random(args.seed).shuffle(prompts)
     for i, item in enumerate(prompts, start=1):
         item["id"] = "P%d" % i
 
     def candidates(with_new: bool) -> list[str]:
-        names = [n for n in all_skills if with_new or n != args.new_skill]
-        if with_new and args.new_skill not in names:
-            names.append(args.new_skill)
+        names = [n for n in all_skills if with_new or n not in new_skills]
+        if with_new:
+            names += [n for n in new_skills if n not in names]
         return names
 
     # 自检 1：候选表覆盖全集
     for arm, with_new in (("A", False), ("B", True)):
-        wanted = set(all_skills) - set() if with_new else set(all_skills) - {args.new_skill}
+        wanted = set(all_skills) if with_new else set(all_skills) - set(new_skills)
         got = set(candidates(with_new))
         if wanted - got:
             problems.append("臂 %s 候选表缺：%s" % (arm, sorted(wanted - got)))
-        if not with_new and args.new_skill in got:
+        if not with_new and (set(new_skills) & got):
             problems.append("臂 A 不该含新技能")
 
     if problems:
@@ -182,7 +211,7 @@ def main() -> int:
             print("  -", p)
         return 1
 
-    old = sum(1 for i in prompts if i["origin"].split("#")[0] != args.new_skill)
+    old = sum(1 for i in prompts if i["origin"].split("#")[0] not in new_skills)
     (out / ("blind-prompts-%s.json" % args.round)).write_text(
         json.dumps({"round": args.round, "seed": args.seed, "skills": all_skills,
                     "prompts": prompts}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -192,7 +221,9 @@ def main() -> int:
     print("金标：%s" % (out / ("blind-key-%s.json" % args.round)))
     print("判官输入：%s / %s" % (out / ("judge-input-%s-A.txt" % args.round),
                                  out / ("judge-input-%s-B.txt" % args.round)))
-    print("三道自检：候选覆盖 ✓ · 截断口径 ✓ · 旧题逐字命中且一句一次 ✓")
+    for d in dropped:
+        print("  ·", d)
+    print("三道自检：候选覆盖 ✓ · 截断口径 ✓ · 旧题逐字命中且一句一次 ✓（去重 %d 条，见上）" % len(dropped))
     return 0
 
 
