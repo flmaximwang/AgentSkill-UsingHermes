@@ -139,9 +139,11 @@ def cmd_scan(args) -> int:
         fm = parse_fm(mod, md)
         name = str(fm.get("name") or rel.parts[-2]).strip()
         kind = "hub" if name in lock else ("bundled" if name in bundled else "local")
-        rows.append(dict(kind=kind, category=rel.parts[0] if len(rel.parts) > 1 else "general", name=name,
-                         dir=str(rel.parent), desc=" ".join(str(fm.get("description") or "").split()),
-                         bytes=md.stat().st_size))
+        # 形状缺口：<名字>/SKILL.md 直接躺在 skills/ 下 = 没有类目层（用户要求不存在这种 local skill）
+        no_cat = len(rel.parts) == 2
+        rows.append(dict(kind=kind, category=("(无类目)" if no_cat else rel.parts[0]), name=name,
+                         no_category=no_cat, dir=str(rel.parent),
+                         desc=" ".join(str(fm.get("description") or "").split()), bytes=md.stat().st_size))
     rows.sort(key=lambda r: (r["kind"] != "local", r["category"], r["name"]))
     local = [r for r in rows if r["kind"] == "local"]
     if not local:
@@ -173,13 +175,14 @@ def cmd_scan(args) -> int:
     out = pathlib.Path(args.out).expanduser()
     out.mkdir(parents=True, exist_ok=True)
     (out / "inventory.tsv").write_text(
-        "kind\tcategory\tname\tdir\tdesc\n" + "".join(
-            f"{r['kind']}\t{r['category']}\t{r['name']}\t{r['dir']}\t{r['desc'][:200]}\n" for r in rows),
-        encoding="utf-8")
+        "kind\tcategory\tname\tno_category\tdir\tdesc\n" + "".join(
+            f"{r['kind']}\t{r['category']}\t{r['name']}\t{str(r['no_category']).lower()}\t{r['dir']}\t{r['desc'][:200]}\n"
+            for r in rows), encoding="utf-8")
     # Frozen judge input: one P<k> per candidate, name + description only, script-generated so that no
     # hand transcription can drift from what the judges were actually asked (the pack's own judge lesson).
     judge_input = [dict(id=f"P{i}", skill=r["name"], category=r["category"], dir=r["dir"],
-                        description=r["desc"]) for i, r in enumerate(local, 1)]
+                        no_category=r["no_category"], description=r["desc"])
+                   for i, r in enumerate(local, 1)]
     (out / "judge-input.json").write_text(json.dumps(judge_input, ensure_ascii=False, indent=2) + "\n",
                                          encoding="utf-8")
 
@@ -201,6 +204,8 @@ def cmd_scan(args) -> int:
           f"hub={counts['hub']} bundled={counts['bundled']}")
     print(f"[sweep-plan] packs={len(packs)} routable={len(routable)} placeholder={len(packs) - len(routable)} "
           f"pack_skills={sum(len(p['skills']) for p in routable)} pack_index_est_tokens~{idx_chars // 2}")
+    n_nocat = sum(1 for r in local if r["no_category"])
+    print(f"[sweep-plan] no_category={n_nocat}（local skill 直接躺在 skills/ 下，没有类目层——本批必须一并补齐）")
     print(f"[sweep-plan] candidates={len(local)} judge_input={out / 'judge-input.json'} "
           f"({(out / 'judge-input.json').stat().st_size} B) parser={parser_path}")
     print(f"[sweep-plan] next: judge every P<k> (JEV, else classifier children) -> {out}/verdicts*.jsonl, then "
@@ -312,7 +317,7 @@ def self_test() -> int:
     tmp = pathlib.Path(tempfile.mkdtemp(prefix="sweep-selftest-"))
     sk = tmp / "skills"
     for cat, name in (("cat", "hubskill"), ("cat", "bundledskill"), ("cat", "localskill"),
-                      ("cat/sub", "localskill2"), (".archive", "oldskill")):
+                      ("cat/sub", "localskill2"), (".archive", "oldskill"), ("", "rootskill")):
         d = sk / cat / name
         d.mkdir(parents=True)
         (d / "SKILL.md").write_text(f"---\nname: {name}\ndescription: d-{name}\n---\n# body\n", encoding="utf-8")
@@ -340,9 +345,15 @@ def self_test() -> int:
         rows = [ln.split("\t") for ln in (tmp / "out" / "inventory.tsv").read_text().splitlines()[1:]]
         kinds = {r[2]: r[0] for r in rows}
         assert kinds == {"hubskill": "hub", "bundledskill": "bundled", "localskill": "local",
-                         "localskill2": "local"}, kinds
+                         "localskill2": "local", "rootskill": "local"}, kinds
+        # 没有类目层的 local skill 必须被标出来（用户要求这种形状不许存在）
+        assert {r[2]: r[3] for r in rows} == {"hubskill": "false", "bundledskill": "false",
+                                             "localskill": "false", "localskill2": "false",
+                                             "rootskill": "true"}
         ji = json.loads((tmp / "out" / "judge-input.json").read_text())
-        assert [r["id"] for r in ji] == ["P1", "P2"] and {r["skill"] for r in ji} == {"localskill", "localskill2"}
+        assert [r["id"] for r in ji] == ["P1", "P2", "P3"], ji
+        assert next(r for r in ji if r["skill"] == "rootskill")["no_category"] is True
+        assert {r["skill"] for r in ji} == {"rootskill", "localskill", "localskill2"}
         pk = [p for p in json.loads((tmp / "out" / "packs.json").read_text()) if p["repo"] == "AgentSkill-Fake"][0]
         assert pk["installed"] == {"hubskill": "cat/hubskill"} and pk["categories"] == ["cat"], pk
         assert [p["empty"] for p in json.loads((tmp / "out" / "packs.json").read_text())
@@ -385,12 +396,15 @@ def self_test() -> int:
             assert e.code == 4, e.code
         (tmp / "out" / "verdicts-task-4.jsonl").write_text(json.dumps(
             {"id": "P2", "dest_pack": STAY_LOCAL, "action": "stay"}) + "\n")
+        (tmp / "out" / "verdicts-task-5.jsonl").write_text(json.dumps(
+            {"id": "P3", "dest_pack": STAY_LOCAL, "action": "stay"}) + "\n")
         assert cmd_merge(argparse.Namespace(dir=str(tmp / "out"), profile="default",
                                             verdicts=[str(tmp / "out" / "verdicts-task-1.jsonl"),
-                                                      str(tmp / "out" / "verdicts-task-4.jsonl")])) == 0
+                                                      str(tmp / "out" / "verdicts-task-4.jsonl"),
+                                                      str(tmp / "out" / "verdicts-task-5.jsonl")])) == 0
         assert "留本地" in (tmp / "out" / "plan.md").read_text()
         cmds = (tmp / "out" / "install-cmds.sh").read_text()
-        assert "skills install \"flmaximwang/AgentSkill-Fake/skills/localskill\" --category cat -y" in cmds, cmds
+        assert "skills install \"flmaximwang/AgentSkill-Fake/skills/rootskill\" --category cat -y" in cmds, cmds
     finally:
         HERMES_HOME = real
     print("[sweep-plan] self-test OK")
