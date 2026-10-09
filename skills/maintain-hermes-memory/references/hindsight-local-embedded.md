@@ -107,7 +107,30 @@ Note `_mode` after initialize: a mode of `disabled` means the local runtime was 
 (`_check_local_runtime`), which is an install/environment problem, not a config typo — and a tool call
 that raises `AttributeError` on a `self._*` setting is the same cause (initialize returned early).
 
-## 5. Two things not to do as part of the install
+## 5. Cross-profile memory: shared by default — so make it a decision
+
+The daemon's **hindsight profile name is the plugin's own `profile` config key, and its default is the
+constant `hermes`, not the Hermes profile name** (`profile = cfg.get("profile", "hermes")`). So every
+Hermes profile that leaves that key unset talks to *one* daemon, one embedded PostgreSQL
+(`~/.pg0/instances/hindsight-embed-hermes`) and one `~/.hindsight/profiles/hermes.env` — and every one
+of them defaults to `bank_id: hermes`. Measured: a second Hermes home, with its own
+`hindsight/config.json`, recalled a fact written by the first profile in the same bank (asserted on a
+random token inside the recalled text).
+
+- **Sharing user preferences across profiles is the default, not a feature to build.** Decide it on
+  purpose: keep the shared `bank_id` for "one person, many agents", split with
+  `bank_id_template: "{profile}-…"`, or give each Hermes profile a distinct `profile` key to get a
+  physically separate daemon + database.
+- The flip side: `~/.hindsight/profiles/<profile>.env` (LLM provider / key / model / base URL) is a
+  **single shared file** whenever the daemon is shared, so profiles overwrite one another's LLM config.
+  Sharing memory means sharing the extraction LLM; a per-profile LLM means a per-profile `profile`
+  name, and that ends the sharing.
+- `additional_banks` / `recall_additional_banks` / `mirror_to_own_bank` appear in the vendor's Hermes
+  doc but **not in the pinned plugin build** (v1.2.1: only `bank_id` and `banks.<name>.bankId` are
+  read) — with this version it is whole-bank sharing or nothing.
+- The built-in MEMORY.md / USER.md stay per profile regardless; hindsight does not change that.
+
+## 6. Two things not to do as part of the install
 
 - The vendor docs suggest turning the built-in stores off when Hindsight is active
   (`memory.user_profile_enabled false`). That is a separate decision about where the user's durable
