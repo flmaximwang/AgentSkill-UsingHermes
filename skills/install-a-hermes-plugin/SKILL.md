@@ -184,7 +184,7 @@ ls -la <environments>/<gen>/.leases/                                     # 有�
 插件目录里的模块，必然 `ModuleNotFoundError: No module named '<插件依赖>'`——这不是依赖没装，是你问错了进程。
 
 ```bash
-VENV=$(ls -dt <hermes root>/installs/*/environments/*/venv | head -1)   # 最新的 generation
+VENV=<hermes root>/installs/<install id>/environments/<generation>/venv   # 最新的 generation（按 mtime 挑）
 PYTHONPATH=<hermes root>:$VENV/lib/python*/site-packages $VENV/bin/python your_probe.py
 ```
 
@@ -233,7 +233,7 @@ lsof -p <gateway pid> | grep environments  # 看是哪个 generation ⇒ 判断�
 
 ```
 install-a-hermes-plugin/
-├── SKILL.md  (171 lines)
+├── SKILL.md  (244 lines)
 ├── test-prompts.json  (27 lines)
 ├── references/
 │   └── install-a-hermes-plugin-dependency-resolution.md  (191 lines)

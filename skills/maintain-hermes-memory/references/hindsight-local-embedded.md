@@ -65,6 +65,18 @@ RuntimeError: Failed to start the Hindsight daemon for profile '<profile>'
 - Watching the log, `Downloading torch (…)` re-printing is normal, not a download loop.
 - The daemon stops after a few minutes idle and restarts on next use; a cold turn therefore pays the
   start again. If a first turn feels slow, check `daemon status` before blaming the provider.
+- **A foreground `daemon start` hands the daemon its SIGTERM when that CLI exits.** As a pre-warm it
+  prints `✓ Daemon started successfully!` and then the daemon logs `Received signal 15` +
+  `Application shutdown complete`; a probe seconds later hits a dead port (`http=000`). So the
+  write→read probe must run in the process that owns the daemon: let the provider start it (that is
+  what the gateway does), or start the CLI detached — do not "pre-warm" it from a tool call that ends.
+- **A proxy in the process environment captures the loopback call too.** With `HTTPS_PROXY` /
+  `HTTP_PROXY` set, `recall` against the daemon URL comes back `502 Bad Gateway` from the proxy while
+  `retain` a second earlier succeeded — same process, same base URL, so the provider looks
+  half-broken. Add `NO_PROXY=127.0.0.1,localhost,::1` (plus the lowercase twin) to the profile's
+  dotenv file. Measured: before, `retain` OK / `recall` `(502) Reason: Bad Gateway`; after,
+  `retain` 21.2 s (cold daemon) and `recall` returns the stored fact verbatim — assert on the content
+  coming back, not on the absence of an error.
 
 ## 3. Do not set a per-user `bank_id_template` on a single-human gateway
 
@@ -82,7 +94,8 @@ does not start the daemon and does not prove a write path works. Probe the provi
 does — in-process, and under the plugin's **own generation venv**, never the core venv:
 
 ```bash
-VENV=$(ls -dt ~/.hermes/installs/*/environments/*/venv | head -1)
+# 最新 generation 的那套（按 mtime 挑最新的；`hermes pm status` / installs 树里能看到它的 id）
+VENV=<hermes root>/installs/<install id>/environments/<generation>/venv
 PYTHONPATH=<hermes root>:$VENV/lib/python*/site-packages $VENV/bin/python probe.py
 # probe.py: provider.post_setup(hermes_home, config) → initialize(session_id, platform=…, hermes_home=…)
 #           → handle_tool_call('hindsight_retain', {...}) → handle_tool_call('hindsight_recall', {...})

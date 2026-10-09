@@ -194,10 +194,13 @@ nudge intervals, which stops automatic forks but leaves manual refine working (i
 
 ```
 maintain-hermes-memory/
-├── SKILL.md  (185 lines)
+├── SKILL.md  (213 lines)
 ├── references/
+│   ├── choose-a-memory-provider.md  (112 lines)
+│   ├── hindsight-local-embedded.md  (117 lines)
 │   ├── inspect-hermes-skill-usage.md  (264 lines)
 │   ├── maintain-hermes-curator-archive-lifecycle.md  (67 lines)
+│   ├── maintain-hermes-memory-local-model-providers.md  (133 lines)
 │   ├── maintain-hermes-memory-md.md  (94 lines)
 │   ├── maintain-hermes-self-improvement-controls.md  (95 lines)
 │   ├── maintain-hermes-session-store-forensics.md  (102 lines)
