@@ -65,10 +65,52 @@ per-role data from `GET /guilds/<id>/roles`.
 | `flags` broken → fixed | `0` → `8945664` |
 | Failure chain | intents off → 4014 → parked; then the allowlist held the wrong user id; then a proxy outage swallowed the mention |
 
+## 0b. Wiring an app that already exists into a profile
+
+When the app/bot already exists and you are handed `app id` + `token` (a token file), the Portal
+steps are done — verify them by read, then write only the profile side:
+
+1. Token/id sanity + identity: `GET /users/@me` (discord.com API needs the local proxy on this
+   machine — without it curl exits 000; never `--noproxy`), then `GET /applications/@me` for
+   `name`/`flags`.
+2. Intents already on? `flags & 557056` = both limited bits (32768 members + 524288 message
+   content). `557056` exactly is the clean case.
+3. Already in the guild? `GET /guilds/<guild>/members/<bot_user_id>` — **not**
+   `/users/@me/guilds/<guild>/member`, which answers `Bots cannot use this endpoint` (20001) for
+   the bot itself. Use another bot's token in the guild. Look for a `managed: true` role named
+   after the app: that role's creation is the second proof of membership.
+4. Permission decode: the managed role usually lacks `VIEW_CHANNEL` / `SEND_MESSAGES_IN_THREADS`
+   and the @everyone union supplies them (observed artist bot role `343597500480` + @everyone
+   `2248473465835073` → effective set includes both). Judge the union, not the role integer.
+5. Profile side: `profiles/<name>/.env` gets `DISCORD_BOT_TOKEN`, `DISCORD_APPLICATION_ID`,
+   `DISCORD_ALLOWED_USERS` (the human's user id), `DISCORD_HOME_CHANNEL` (+ `_NAME`);
+   `profiles/<name>/config.yaml` gets `discord: {require_mention: true, thread_require_mention:
+   true, auto_thread: true, allow_bots: mentions}`. No `platforms.discord.enabled: true` needed —
+   the token alone auto-enables (§4c).
+6. **Do not `gateway restart`.** The multiplex watcher re-scans on the .env/config mtime and
+   connects the new adapter, so a full restart only blinks every other bot for a minute. Expect
+   `Re-scanned profile '<name>' after config/.env change (1 adapter(s) connected)` →
+   `✓ discord connected (profile: <name>)` in `~/.hermes/logs/gateway.log` within ~60 s
+   (watcher cadence observed 5 s poll).
+7. Self-test gates 2–4 without the user: from another profile's bot, POST to a low-traffic
+   channel with an inline `<@bot_id>` mention (`allow_bots: mentions` + `bots_require_inline_mention`
+   admit it). Clean up afterwards: the auto-created thread is **not deletable** with either bot's
+   token when the channel overwrites withhold MANAGE_THREADS (403 / 50013) — the starter message
+   deletes fine (204) and the thread's owner may `PATCH {"archived":true,"locked":true}` (owner =
+   the adapter that created it). Discord's own `type: 4` rename system message inside it cannot be
+   deleted by anyone, so say so instead of claiming a clean sweep.
+
 ## 1. Read the log first; it already has the answer
 
 `~/.hermes/logs/gateway.log` (same lines mirror into `errors.log` and
 `gateway.error.log`). Search for the platform name and for `parked`.
+
+**Grep it, don't shell-walk it.** Once the log passes a megabyte, a shell command whose text
+references that path is refused by the lifecycle guard (`could not scan this command ... larger
+than the scan cap (1048576 bytes)`), even for a harmless `wc -l`/`tail`. Read it with the
+`search_files`/`read_file` tools instead, or `cp` the last N lines into a scratch file first.
+Per-profile logs (`profiles/<name>/logs/gateway.log`) stay small and stay greppable — and they
+are the right log anyway when the bot under test is a multiplexed profile.
 
 A platform that failed to start is **parked**:
 
@@ -110,6 +152,39 @@ between. **Events sent during the gap are never replayed**, so an "offline for a
 window costs those messages permanently. Check timestamps against when the user says they
 acted before concluding a message should have arrived — both the socket drop and the DNS
 failure hit every WS-based platform on the machine at once, not just the one being debugged.
+
+### Every reconnect dies at the local proxy (the node/flap case)
+
+Log signature: `WebSocket unhealthy (socket_closed)` → `Fatal discord adapter error (discord_websocket_health_stale)` → `discord queued for background reconnection`, then every attempt
+carries `[Discord] Using proxy for Discord: http://127.0.0.1:<mixed-port>` followed by
+`Failed to connect to Discord: Cannot connect to host <platform host>:443 ssl:default [None]`, with
+the retry backoff climbing 30 → 60 → 120 → 240 → 300 s. The same window shows REST sends failing
+(`Failed to send Discord message: Cannot connect to host …`), and in a multiplex setup
+`gateway_state.json` flips per-profile bots between `connected` and `fatal` — **`fatal` is not
+terminal**, the watcher re-serves those adapters, so a bot that went fatal a minute ago may be
+connected again now. Nothing in Hermes is broken: the local proxy's outbound is.
+
+Do **not** start by picking another node — attribute the fault first, then fix the proxy, then
+restart the gateway once:
+
+1. Read the proxy core's own view over its unix socket: the group selection and the per-host
+   chain that the platform's traffic actually takes (e.g. `discord.com … <node> > ✈️ 手动切换 >
+   🚀 节点选择`), plus the node's live `delay` probe.
+2. Compare an ordinary user process's TCP/TLS connect to the node's host:port against the core's
+   own dial, read from its `/logs` stream. Raw connects all-succeed + core dials timing out ⇒ the
+   fault is the proxy **core**, not the network or the node — restart the core, do not chase nodes.
+3. Only after the proxy is confirmed with repeated success (`curl -x http://127.0.0.1:<mixed-port>
+   https://…/api/v10/gateway` → 200 several times — a single 200 proves nothing in a flap window),
+   run `hermes gateway restart` to clear the 300 s backoff in one shot instead of waiting out each
+   bot's timer.
+
+The topology rule that makes this class of outage total: a top-level rule group pointed at a
+manually pinned node (`Selector → Selector(pinned) → one node`) means one node's death takes down
+every bot, and a subscription whose nodes all live on **one upstream host** (per-port entries)
+flaps all of them together — so "try another node" is not a fix, putting the top-level Selector on
+the URLTest auto group is.
+
+Full recipe, API calls and the `lsof`/`timeout(1)` traps: `references/local-proxy-outbound-triage.md`.
 
 ### A bot that admits messages but never answers: the model-API path
 
@@ -241,6 +316,61 @@ which reads to the user as "no reply".
 interactively but never on a schedule; read the real channel ids from
 `GET /guilds/<guild_id>/channels`.
 
+## 4b. Multiplex: a config edit does NOT reach an already-live adapter
+
+A rescan after a profile `config.yaml`/`.env` change **skips any platform already connected**, so
+`Re-scanned profile 'X' (0 adapter(s) connected)` means your edit did not apply and the live adapter
+still holds the old settings. Apply it with `hermes -p <name> gateway restart` (unserve + hot
+re-serve — only that profile's bots blip), then confirm `disconnected (profile: X)` →
+`unserved` → `Connected as <bot>` in the profile's own log. Multi-bot Discord threads need
+`thread_require_mention: true` or the bot answers unmentioned messages in every thread it has
+joined. Full recipe, precedence rules and the DM exemption: `references/multiplex-config-apply.md`.
+
+## 4c. Turning a platform OFF everywhere (the inverse task)
+
+A platform is enabled by **either** `platforms.<name>.enabled: true` in a profile's
+`config.yaml` **or** its credential env vars in that profile's `.env`
+(`plugins/platforms/<name>/plugin.yaml` `requires_env`; e.g. `FEISHU_APP_ID` + `FEISHU_APP_SECRET`
+auto-enable feishu on a profile that has no `platforms:` section at all). So two sources per
+profile — enumerate **both**, or a profile with only env creds silently stays up.
+
+Read-only inventory (finds every profile without touching the gateway):
+
+```bash
+cd ~/.hermes
+grep -n -i "feishu" config.yaml profiles/*/config.yaml          # yaml-enabled
+for f in .env profiles/*/.env; do grep -q -i FEISHU "$f" && echo "$f"; done   # env-enabled
+hermes -p <name> config get platforms.feishu.enabled            # omit -p for the default profile
+```
+
+Turn off with the explicit flag — it is the one form that **survives `_apply_env_overrides`**
+(regression test `tests/gateway/test_env_override_explicit_disable.py`; twelve
+credential-presence branches, feishu among them, otherwise force `enabled = True`):
+
+```bash
+hermes    config set platforms.feishu.enabled false
+hermes -p <name> config set platforms.feishu.enabled false
+```
+
+`hermes -p <profile> <cmd>` is the per-profile form (`HERMES_PROFILE` env does **not** work; only
+`-p/--profile` and `HERMES_HOME=<profile dir>` do). It writes a real YAML bool, so no `--force`.
+
+Then `hermes gateway restart` — §4b applies: without it the live adapter keeps serving. Confirm
+two ways, not one: the shutdown block lists one `✓ feishu disconnected … (profile: X)` per live
+adapter, and the new startup logs **no** `Connecting to feishu...` plus this line per profile:
+
+```
+WARNING gateway.config: Platform 'feishu' is explicitly disabled by platforms.feishu.enabled: false
+  in config.yaml, so the credentials found in the environment (FEISHU_APP_ID, FEISHU_APP_SECRET) will NOT start it
+```
+
+That warning is the proof the disable beat the env credentials — quote it instead of inferring
+from `Gateway running with N platform(s)`, which is also moved by unrelated transient failures.
+Expect Discord bots on every profile to blip for ~1 min during the restart (it is a full-gateway
+restart, not per-platform); a profile whose Discord sits behind a flaky local proxy can take one
+extra `Secondary discord reconnect retry` round. Leave the `.env` credentials in place unless the
+user asks — an explicit `false` already wins, and deleting secrets is a separate decision.
+
 ## 5. Which list to send the user to
 
 The Developer Portal (`discord.com/developers/applications`) lists apps you **own** and is
@@ -317,9 +447,12 @@ it read as the install having failed.
    a prediction, verify it with a read, and correct it plainly when reality differs.
 5. **Diagnose read-only; hand over mutations.** Log greps, API reads and status commands are
    yours to run. Anything that changes his app/account/server state — `PATCH` flags, posting a
-   test message, editing `.env` — goes to him as a command with expected output, or runs only
-   after an explicit yes. Read secrets from `.env` inside the shell and filter what you echo; a
-   token value must never reach the reply.
+   test message, editing `.env`, switching a proxy group/node — goes to him as a command with
+   expected output, or runs only after an explicit yes. Hand it over **in the reply as prose**
+   (click path + the one-liner + what you will verify afterwards): a pick-one modal for a
+   machine-state mutation gets left unanswered while he keeps replying in chat, which costs a
+   round-trip. Read secrets from `.env` inside the shell and filter what you echo; a token value
+   must never reach the reply.
 6. **When he says stay on one path, stop probing** — kill the running check rather than letting
    it finish "for completeness".
 7. Close with the question-format summary — 1 What I ask / 2 What you did / 3 Keypoints you
