@@ -74,9 +74,14 @@ python3 -B scripts/verify-profile-models.py [--profiles …] [--home ~/.hermes]
    **重复顶层键**；PyYAML 的 `safe_load` 对它**静默通过**，而 Hermes 的严格加载器（ruamel）拒收整份文件并
    回落到 last-good —— 症状只有 `hermes profile list` 的 `--` 和一句 warning。判据是**顶层键计数**，不是
    「能不能解析」。脚本已把这条做成写前拒绝。
-2. **profile 不继承主 home 的 `providers:` 段。** provider 是本机自定义名字时，该 profile 必须自己有
+2. **profile 不继承主 home 的 `providers:` 段。** provider 是**本机自定义名字**时，该 profile 必须自己有
    `providers.<名字>:`（凭证就地取）；缺了就是「provider 无法解析凭证」。脚本会自动把主 home 那一整块复制进
    缺它的 profile（实测：artist、game-research 在切换时被补上）。
+   **内置 provider（`deepseek` / `openai` / `anthropic` / `gemini` …）是例外**：主 home 里本来就没有
+   `providers.<名字>:`，凭证走各 profile **自己**的 `<home>/.env` 的 `<NAME>_API_KEY`，不需要也**不该**注入
+   `providers:` 块。脚本遇到主 home 没这一段时返回空表、只改 `model:` 块，并打一行 `note:` 说明
+   （2026-10-09 全库切回内置 `deepseek`：主 home 无 `providers.deepseek`，16 份 `.env` 的 key 同值，
+   切完 travel-guider 的首条真实调用即计到 `https://api.deepseek.com/v1`）。
 3. **不需要重启网关。** 网关每轮从磁盘解析模型（`_resolve_gateway_model(_load_gateway_config())`，mtime 失效
    缓存），且解析出的 model/provider/base_url/凭证哈希是缓存 agent 签名的一部分 ⇒ 该 profile 的下一条消息就是
    新模型。主机上的网关是**一个多路复用进程**，为「换模型」重启它会打断**其它** bot 正在跑的轮次。
@@ -116,13 +121,13 @@ for d in <home>/backups/model-switch-<ts>/*/; do l=$(basename "$d"); \
 
 ```
 maintain-hermes-models/
-├── SKILL.md  (129 lines)
+├── SKILL.md  (134 lines)
 ├── test-prompts.json  (27 lines)
 ├── test-results.md  (46 lines)
 ├── references/
 │   └── maintain-hermes-models-fleet-mechanism.md  (119 lines)
 └── scripts/
-    ├── switch-profile-models.py  (188 lines)
+    ├── switch-profile-models.py  (197 lines)
     └── verify-profile-models.py  (163 lines)
 ```
 

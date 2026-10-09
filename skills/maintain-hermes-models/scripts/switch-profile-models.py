@@ -3,7 +3,8 @@
 
 改的是每份 config.yaml **顶层 `model:` 块的块体**：`model:` 头行原地保留，只换它下面的
 default / provider / base_url / api_mode 四行。profile 不继承主 home 的 `providers:` 段，所以
-该 profile 没有 `providers.<provider>:` 时，把主 home 里那一整块原样复制进去。
+该 profile 没有 `providers.<provider>:` 时，把主 home 里那一整块原样复制进去；主 home 自己也没有
+这一段（内置 provider，凭证走 `.env`）时就不注入，只改 `model:` 块。
 
 写之前跑三道自检（任一不过即非零退出、不留半成品）：
   1. 顶层键不得重复 —— 重复的 `model:` 会让严格加载器拒收整份文件，并**静默**回落到 last-good
@@ -62,14 +63,19 @@ def parse_flat(lines: list[str]) -> dict[str, str]:
 
 
 def provider_block(main_lines: list[str], provider: str) -> list[str]:
-    """从主 home 的 config.yaml 取 `providers.<provider>:` 子树，还原成一段可插入的 `providers:` 块。"""
+    """从主 home 的 config.yaml 取 `providers.<provider>:` 子树，还原成一段可插入的 `providers:` 块。
+
+    主 home 里没有这一段时**返回空表**，不报错：那是**内置 provider**（deepseek / openai / anthropic /
+    gemini …，凭证走 `<home>/.env` 的 `<NAME>_API_KEY`，profile 自己有 .env 就能解析），本来就不需要
+    `providers:` 块；只有本机自定义名字的 provider（如快照里的 `volcengine-agent-plan`）才必须复制。
+    """
     start = next((i for i, l in enumerate(main_lines) if l.rstrip() == "providers:"), None)
     if start is None:
-        raise SystemExit("主 home 的 config.yaml 里没有顶层 `providers:` 段，无法复制 provider")
+        return []
     sub = next((i for i in range(start + 1, len(main_lines))
                 if main_lines[i].rstrip() == "  %s:" % provider), None)
     if sub is None:
-        raise SystemExit("主 home 的 config.yaml 里没有 providers.%s 这一段，先把它定义好" % provider)
+        return []
     end = len(main_lines)
     for i in range(sub + 1, len(main_lines)):
         line = main_lines[i]
@@ -145,7 +151,7 @@ def main() -> int:
             already.append(label)
             continue
 
-        adds_provider = ("%s:" % args.provider) not in raw
+        adds_provider = bool(provider_lines) and ("%s:" % args.provider) not in raw
         new_lines = lines[:1] + body + (provider_lines if adds_provider else []) + lines[end:]
         text = "".join(new_lines)
 
@@ -169,6 +175,9 @@ def main() -> int:
         path.write_text(text, encoding="utf-8")
 
     print("home      : %s" % home)
+    if not provider_lines:
+        print("note      : 主 home 没定义 providers.%s —— 按内置 provider 处理（凭证走 <home>/.env 的"
+              " <NAME>_API_KEY），不注入 `providers:` 块" % args.provider)
     print("backup    : %s%s" % (backup, "  [--dry-run：一个字节都没写]" if args.dry_run else ""))
     print("changed   : %d  %s" % (len(changed),
                                   ", ".join(l + (" +providers" if p else "") for l, p in changed) or "-"))
