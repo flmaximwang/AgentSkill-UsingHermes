@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1260" height="740" viewBox="0 0 1260 740"
+     font-family="PingFang SC, Heiti SC, Hiragino Sans GB, sans-serif">
+  <!--
+    Known-good scaffold for a labeled explanatory figure.
+    Conventions encoded here (see SKILL.md § Layout discipline):
+      - title baseline y=40, subtitle y=68  (>= 20px band, no labels inside it)
+      - panel headings y=106
+      - panel bodies start at y>=124
+      - stacked text: >= 15px between baselines
+      - every panel has an explicit rect background
+      - one legend caption line under the panels, numbered markers in-figure
+      - source footer is the last line, font-size 12
+      - emphasis via <tspan font-weight="700">…</tspan>; <b>/<i>/<br> inside <text>
+        are inert in SVG and render literally or vanish, silently
+    Set width/height to the real canvas, then render at the same size with
+    deviceScaleFactor=2 and OCR the result before delivering.
+  -->
+  <rect width="1260" height="740" fill="#fbfaf7"/>
+
+  <text x="630" y="40" text-anchor="middle" font-size="25" font-weight="700" fill="#16181d">Figure title</text>
+  <text x="630" y="68" text-anchor="middle" font-size="14" fill="#6b6b6b">One-line subtitle stating the takeaway</text>
+
+  <!-- ================= PANEL A (left) ================= -->
+  <text x="315" y="106" text-anchor="middle" font-size="15" font-weight="700" fill="#2f5d8a">① Panel heading</text>
+  <rect x="40" y="124" width="550" height="276" fill="#f4f2ec" stroke="#8f8878" stroke-width="1.5"/>
+  <rect x="40" y="214" width="550" height="186" fill="#d3cdbe"/>
+  <line x1="40" y1="214" x2="590" y2="214" stroke="#6f6858" stroke-width="2"/>
+  <!-- artwork goes here; keep the band y=124..200 free for any in-panel label -->
+  <text x="60" y="180" font-size="13" fill="#2b3a4a">In-panel label (clear of the artwork)</text>
+
+  <!-- ================= PANEL B (right) ================= -->
+  <text x="930" y="106" text-anchor="middle" font-size="15" font-weight="700" fill="#2f5d8a">② Panel heading</text>
+  <rect x="640" y="124" width="580" height="276" fill="#f4f2ec" stroke="#8f8878" stroke-width="1.5"/>
+  <circle cx="760" cy="272" r="106" fill="#7a5630" stroke="#4f3618" stroke-width="2"/>
+  <circle cx="760" cy="272" r="79" fill="#ecdfbe"/>
+  <circle cx="760" cy="272" r="44" fill="#faf6ea"/>
+  <text x="926" y="245" font-size="12.5" font-weight="700" fill="#7a6428">Callout line 1</text>
+  <text x="926" y="264" font-size="11.5" fill="#7a6428">Callout line 2 (+19px)</text>
+  <text x="926" y="305" font-size="12.5" font-weight="700" fill="#4a4436">Callout line 3</text>
+  <text x="926" y="324" font-size="11.5" fill="#4a4436">Callout line 4 (+19px)</text>
+
+  <!-- legend caption: ONE line under the panels, no collision with headings -->
+  <text x="40" y="418" font-size="12.5" fill="#2b3a4a">● marker one　　○ marker two　　grey = base material</text>
+
+  <!-- ================= COMPARISON TABLE ================= -->
+  <rect x="40" y="446" width="1180" height="34" fill="#e8edf3" stroke="#c3cfdb"/>
+  <text x="60" y="469" font-size="13.5" font-weight="700" fill="#2b3a4a">Column A</text>
+  <text x="400" y="469" font-size="13.5" font-weight="700" fill="#2b3a4a">Column B</text>
+  <text x="700" y="469" font-size="13.5" font-weight="700" fill="#2b3a4a">Column C</text>
+
+  <rect x="40" y="480" width="1180" height="62" fill="#f4f0e4" stroke="#c3cfdb"/>
+  <text x="60" y="505" font-size="13" font-weight="700" fill="#6b4a24">Row 1 label</text>
+  <text x="400" y="505" font-size="13" fill="#3a3a3a">value with <tspan font-weight="700">emphasis</tspan></text>
+  <text x="700" y="505" font-size="12.5" fill="#3a3a3a">detail</text>
+  <text x="60" y="530" font-size="11.5" fill="#7a6428">secondary note for row 1</text>
+
+  <text x="60" y="694" font-size="13" font-weight="700" fill="#16181d">结论：</text>
+  <text x="118" y="694" font-size="13" fill="#16181d">the one sentence the reader should leave with</text>
+  <text x="60" y="720" font-size="12" fill="#6b6b6b">来源：author, year, journal volume(issue) | author, year, journal</text>
+</svg>
