@@ -1,0 +1,181 @@
+=== 臂 A（blind-judgeA-r5-recruit-batch.txt, blind-judgeC-r5-recruit-batch.txt） ===
+题    kind               owner / 正确 pick                判官 picks                       结
+P1   should_trigger     install-hermes-skills          none,none                      ✗
+     题面：三句话回答。你用什么命令安装的？
+P2   should_trigger     dispatch-work-to-another-profile dispatch-work-to-another-profile,dispatch-work-to-another-profile ✓
+P3   should_trigger     remove-a-hermes-plugin         remove-a-hermes-plugin,remove-a-hermes-plugin ✓
+P4   should_trigger     remove-a-hermes-plugin         remove-a-hermes-plugin,remove-a-hermes-plugin ✓
+P5   should_trigger     use-limbic                     install-a-hermes-plugin,install-a-hermes-plugin ✗
+     题面：我 hermes plugins install limbic，装到最后报 Could not prepare limbic's dependencies: venv: uv lo
+P6   should_trigger     maintain-hermes-skills         recruit-learning-in-session,recruit-learning-in-session ✗
+     题面：本次会话修补了：skill-library-consolidation。我觉得这个功能应该在 maintain-hermes-skills 技能中。调用 recruit-learn
+P7   should_trigger     diagnose-a-failed-hermes-update diagnose-a-failed-hermes-update,diagnose-a-failed-hermes-update ✓
+P8   should_trigger     recruit-profile-skills-in-batch recruit-learning-in-profile,recruit-learning-in-profile ✗
+     题面：这个 profile 里攒了一大堆没有仓库归属的本地 skill，你帮我一次性扫一遍，看每条该进哪个包，别一条条问我
+P9   should_trigger     remove-hermes-skills           remove-hermes-skills,remove-hermes-skills ✓
+P10  should_trigger     use-limbic                     use-limbic,use-limbic          ✓
+P11  should_trigger     maintain-hermes-skills         maintain-hermes-skills,recruit-learning-in-profile ✗  (两判官不一致)
+     题面：profile 里有个本地技能跟我仓库里交付的技能内容重叠，我是删掉它还是并进去？先说怎么判断。
+P12  should_trigger     recruit-learning-in-session    maintain-hermes-skills,maintain-hermes-memory ✗  (两判官不一致)
+     题面：evolve了几个skill？合并了几个skill？
+P13  should_trigger     recruit-learning-in-profile    recruit-learning-in-profile,recruit-learning-in-profile ✓
+P14  should_trigger     load-external-skill-index      load-external-skill-index,load-external-skill-index ✓
+P15  should_trigger     remove-hermes-skills           install-hermes-skills,remove-hermes-skills ✗  (两判官不一致)
+     题面：删除 paper2agent 并重新安装到 agent-evolution category. /skill remove-hermes-skills. /skill instal
+P16  should_trigger     remove-a-hermes-plugin         maintain-hermes-gateway,maintain-hermes-gateway ✗
+     题面：我把插件 disable 掉之后 hermes gateway restart 起不来了，hermes gateway status 说服务定义与当前安装不匹配，是这个插件把它弄坏
+P17  should_trigger     diagnose-a-failed-hermes-update diagnose-a-failed-hermes-update,diagnose-a-failed-hermes-update ✓
+P18  should_trigger     leave-and-rejoin-a-discord-thread leave-and-rejoin-a-discord-thread,leave-and-rejoin-a-discord-thread ✓
+P19  should_trigger     leave-and-rejoin-a-discord-thread leave-and-rejoin-a-discord-thread,leave-and-rejoin-a-discord-thread ✓
+P20  should_trigger     install-a-hermes-plugin        use-limbic,use-limbic          ✗
+     题面：limbic 装好之后我发现抽实体名不灵了，日志里有 spaCy model not installed —— 我怎么给它补上？以后 hermes update 会不会又没了？
+P21  should_trigger     maintain-hermes-models         maintain-hermes-gateway,maintain-hermes-models ✗  (两判官不一致)
+     题面：我把模型的 provider 换成了 volcengine-agent-plan，结果 hermes gateway status 说服务定义与当前安装不匹配、网关起不来，怎么修？
+P22  should_trigger     dispatch-work-to-another-profile dispatch-work-to-another-profile,dispatch-work-to-another-profile ✓
+P23  should_trigger     leave-and-rejoin-a-discord-thread leave-and-rejoin-a-discord-thread,leave-and-rejoin-a-discord-thread ✓
+P24  should_trigger     recruit-learning-in-profile    recruit-learning-in-profile,recruit-learning-in-profile ✓
+P25  should_trigger     recruit-profile-skills-in-batch recruit-learning-in-profile,recruit-learning-in-profile ✗
+     题面：sweep this profile's un-homed skills into their pack repos, then reinstall the affected pa
+P26  should_trigger     hermes-session-routing-forensics hermes-session-routing-forensics,hermes-session-routing-forensics ✓
+P27  should_trigger     maintain-hermes-models         maintain-hermes-models,maintain-hermes-models ✓
+P28  should_trigger     author-a-skill-in-a-pack-repo  author-a-skill-in-a-pack-repo,author-a-skill-in-a-pack-repo ✓
+P29  should_trigger     update-hermes-skills           update-hermes-skills,update-hermes-skills ✓
+P30  should_trigger     maintain-hermes-models         maintain-hermes-models,maintain-hermes-models ✓
+P31  should_trigger     recruit-learning-in-session    recruit-learning-in-session,recruit-learning-in-session ✓
+P32  should_trigger     maintain-hermes-models         maintain-hermes-models,maintain-hermes-models ✓
+P33  should_trigger     recruit-learning-in-session    recruit-learning-in-session,recruit-learning-in-session ✓
+P34  should_trigger     recruit-learning-in-profile    update-hermes-skills,recruit-learning-in-profile ✗  (两判官不一致)
+     题面：这个 skill 我之前手拷进 profile 的，没有 lock 条目，怎么让它以后能 update？
+P35  should_trigger     use-limbic                     use-limbic,use-limbic          ✓
+P36  should_trigger     hermes-session-routing-forensics hermes-session-routing-forensics,hermes-session-routing-forensics ✓
+P37  should_trigger     diagnose-a-failed-hermes-update diagnose-a-failed-hermes-update,diagnose-a-failed-hermes-update ✓
+P38  should_trigger     recruit-profile-skills-in-batch recruit-learning-in-profile,recruit-learning-in-profile ✗
+     题面：有一百多条本地技能要归位，每条先判断归哪个包、跟包里哪条技能哪儿交叉，然后迁过去再装回来
+P39  should_not_trigger recruit-profile-skills-in-batch（不该）→ recruit-learning-in-profile recruit-learning-in-profile,recruit-learning-in-profile ✓  [落在正确答案上的判官：2/2]
+P40  should_trigger     recruit-profile-skills-in-batch recruit-learning-in-profile,recruit-learning-in-profile ✗
+     题面：我想一键把 default 里的 local 技能批量收编进包仓库，收完再把那个包装回 profile
+P41  should_trigger     install-a-hermes-plugin        install-a-hermes-plugin,install-a-hermes-plugin ✓
+P42  should_trigger     leave-and-rejoin-a-discord-thread leave-and-rejoin-a-discord-thread,leave-and-rejoin-a-discord-thread ✓
+P43  should_trigger     leave-and-rejoin-a-discord-thread maintain-hermes-gateway,maintain-hermes-gateway ✗
+     题面：我的 Discord bot 完全没反应，日志里连 inbound message 都没有，是不是因为它没被加进那个 thread？
+P44  should_trigger     author-a-skill-in-a-pack-repo  author-a-skill-in-a-pack-repo,author-a-skill-in-a-pack-repo ✓
+P45  should_trigger     maintain-hermes-models         maintain-hermes-models,maintain-hermes-models ✓
+P46  should_trigger     maintain-hermes-skills         maintain-hermes-skills,recruit-learning-in-profile ✗  (两判官不一致)
+     题面：并进去以后，原来那个本地技能呢？我还能 update 它吗？
+P47  should_trigger     diagnose-a-failed-hermes-update maintain-hermes-desktop-app,maintain-hermes-desktop-app ✗
+     题面：Hermes Desktop 刚更新完，我之前装的那个插件面板就打不开了，页面上报 Plugin not found（404），是不是这次更新把它弄坏了？
+P48  should_trigger     load-external-skill-index      load-external-skill-index,load-external-skill-index ✓
+P49  should_trigger     use-limbic                     use-limbic,use-limbic          ✓
+P50  should_trigger     use-limbic                     use-limbic,use-limbic          ✓
+P51  should_trigger     remove-a-hermes-plugin         remove-a-hermes-plugin,remove-a-hermes-plugin ✓
+P52  should_trigger     update-hermes-skills           update-hermes-skills,update-hermes-skills ✓
+P53  should_trigger     install-hermes-skills          install-hermes-skills,install-hermes-skills ✓
+P54  should_trigger     hermes-session-routing-forensics maintain-hermes-profiles,maintain-hermes-profiles ✗
+     题面：两个 profile 的 bot 抢同一个频道会怎样
+P55  should_trigger     remove-a-hermes-plugin         remove-a-hermes-plugin,remove-a-hermes-plugin ✓
+P56  should_trigger     diagnose-a-failed-hermes-update diagnose-a-failed-hermes-update,diagnose-a-failed-hermes-update ✓
+P57  should_trigger     install-a-hermes-plugin        remove-a-hermes-plugin,remove-a-hermes-plugin ✗
+     题面：limbic 装是装上了，但我不想用了 —— 怎么把它从所有 profile 里连 config.yaml 里的残留一起清干净？
+P58  should_trigger     dispatch-work-to-another-profile dispatch-work-to-another-profile,dispatch-work-to-another-profile ✓
+P59  should_trigger     install-a-hermes-plugin        use-limbic,use-limbic          ✗
+     题面：limbic 依赖装好了、memory.provider 也写了 limbic，可它好像还没在工作，我还差哪一步？
+P60  should_trigger     load-external-skill-index      load-external-skill-index,load-external-skill-index ✓
+P61  should_trigger     author-a-skill-in-a-pack-repo  author-a-skill-in-a-pack-repo,author-a-skill-in-a-pack-repo ✓
+P62  should_trigger     install-a-hermes-plugin        install-hermes-skills,install-hermes-skills ✗
+     题面：帮我把 AgentSkill-UsingHermes 里那个 install-a-hermes-plugin 装到 default profile，类目 hermes
+分组：旧题 40/57 · 新能力 0/4 · 兄弟干扰项 1/1
+
+=== 臂 B（blind-judgeB-r5-recruit-batch.txt, blind-judgeD-r5-recruit-batch.txt） ===
+题    kind               owner / 正确 pick                判官 picks                       结
+P1   should_trigger     install-hermes-skills          none,none                      ✗
+     题面：三句话回答。你用什么命令安装的？
+P2   should_trigger     dispatch-work-to-another-profile dispatch-work-to-another-profile,dispatch-work-to-another-profile ✓
+P3   should_trigger     remove-a-hermes-plugin         remove-a-hermes-plugin,remove-a-hermes-plugin ✓
+P4   should_trigger     remove-a-hermes-plugin         remove-a-hermes-plugin,remove-a-hermes-plugin ✓
+P5   should_trigger     use-limbic                     install-a-hermes-plugin,install-a-hermes-plugin ✗
+     题面：我 hermes plugins install limbic，装到最后报 Could not prepare limbic's dependencies: venv: uv lo
+P6   should_trigger     maintain-hermes-skills         recruit-learning-in-session,recruit-learning-in-session ✗
+     题面：本次会话修补了：skill-library-consolidation。我觉得这个功能应该在 maintain-hermes-skills 技能中。调用 recruit-learn
+P7   should_trigger     diagnose-a-failed-hermes-update diagnose-a-failed-hermes-update,diagnose-a-failed-hermes-update ✓
+P8   should_trigger     recruit-profile-skills-in-batch recruit-profile-skills-in-batch,recruit-profile-skills-in-batch ✓
+P9   should_trigger     remove-hermes-skills           remove-hermes-skills,remove-hermes-skills ✓
+P10  should_trigger     use-limbic                     use-limbic,use-limbic          ✓
+P11  should_trigger     maintain-hermes-skills         recruit-learning-in-profile,maintain-hermes-skills ✗  (两判官不一致)
+     题面：profile 里有个本地技能跟我仓库里交付的技能内容重叠，我是删掉它还是并进去？先说怎么判断。
+P12  should_trigger     recruit-learning-in-session    none,none                      ✗
+     题面：evolve了几个skill？合并了几个skill？
+P13  should_trigger     recruit-learning-in-profile    recruit-learning-in-profile,recruit-learning-in-profile ✓
+P14  should_trigger     load-external-skill-index      load-external-skill-index,load-external-skill-index ✓
+P15  should_trigger     remove-hermes-skills           install-hermes-skills,install-hermes-skills ✗
+     题面：删除 paper2agent 并重新安装到 agent-evolution category. /skill remove-hermes-skills. /skill instal
+P16  should_trigger     remove-a-hermes-plugin         maintain-hermes-gateway,maintain-hermes-gateway ✗
+     题面：我把插件 disable 掉之后 hermes gateway restart 起不来了，hermes gateway status 说服务定义与当前安装不匹配，是这个插件把它弄坏
+P17  should_trigger     diagnose-a-failed-hermes-update diagnose-a-failed-hermes-update,diagnose-a-failed-hermes-update ✓
+P18  should_trigger     leave-and-rejoin-a-discord-thread leave-and-rejoin-a-discord-thread,leave-and-rejoin-a-discord-thread ✓
+P19  should_trigger     leave-and-rejoin-a-discord-thread leave-and-rejoin-a-discord-thread,leave-and-rejoin-a-discord-thread ✓
+P20  should_trigger     install-a-hermes-plugin        use-limbic,use-limbic          ✗
+     题面：limbic 装好之后我发现抽实体名不灵了，日志里有 spaCy model not installed —— 我怎么给它补上？以后 hermes update 会不会又没了？
+P21  should_trigger     maintain-hermes-models         maintain-hermes-models,maintain-hermes-gateway ✗  (两判官不一致)
+     题面：我把模型的 provider 换成了 volcengine-agent-plan，结果 hermes gateway status 说服务定义与当前安装不匹配、网关起不来，怎么修？
+P22  should_trigger     dispatch-work-to-another-profile dispatch-work-to-another-profile,dispatch-work-to-another-profile ✓
+P23  should_trigger     leave-and-rejoin-a-discord-thread leave-and-rejoin-a-discord-thread,leave-and-rejoin-a-discord-thread ✓
+P24  should_trigger     recruit-learning-in-profile    recruit-learning-in-profile,recruit-learning-in-profile ✓
+P25  should_trigger     recruit-profile-skills-in-batch recruit-profile-skills-in-batch,recruit-profile-skills-in-batch ✓
+P26  should_trigger     hermes-session-routing-forensics hermes-session-routing-forensics,hermes-session-routing-forensics ✓
+P27  should_trigger     maintain-hermes-models         maintain-hermes-models,maintain-hermes-models ✓
+P28  should_trigger     author-a-skill-in-a-pack-repo  author-a-skill-in-a-pack-repo,author-a-skill-in-a-pack-repo ✓
+P29  should_trigger     update-hermes-skills           update-hermes-skills,update-hermes-skills ✓
+P30  should_trigger     maintain-hermes-models         maintain-hermes-models,maintain-hermes-models ✓
+P31  should_trigger     recruit-learning-in-session    recruit-learning-in-session,recruit-learning-in-session ✓
+P32  should_trigger     maintain-hermes-models         maintain-hermes-models,maintain-hermes-models ✓
+P33  should_trigger     recruit-learning-in-session    recruit-learning-in-session,recruit-learning-in-session ✓
+P34  should_trigger     recruit-learning-in-profile    recruit-learning-in-profile,recruit-learning-in-profile ✓
+P35  should_trigger     use-limbic                     use-limbic,use-limbic          ✓
+P36  should_trigger     hermes-session-routing-forensics hermes-session-routing-forensics,hermes-session-routing-forensics ✓
+P37  should_trigger     diagnose-a-failed-hermes-update diagnose-a-failed-hermes-update,diagnose-a-failed-hermes-update ✓
+P38  should_trigger     recruit-profile-skills-in-batch recruit-profile-skills-in-batch,recruit-profile-skills-in-batch ✓
+P39  should_not_trigger recruit-profile-skills-in-batch（不该）→ recruit-learning-in-profile recruit-learning-in-profile,recruit-learning-in-profile ✓  [落在正确答案上的判官：2/2]
+P40  should_trigger     recruit-profile-skills-in-batch recruit-profile-skills-in-batch,recruit-profile-skills-in-batch ✓
+P41  should_trigger     install-a-hermes-plugin        install-a-hermes-plugin,install-a-hermes-plugin ✓
+P42  should_trigger     leave-and-rejoin-a-discord-thread leave-and-rejoin-a-discord-thread,leave-and-rejoin-a-discord-thread ✓
+P43  should_trigger     leave-and-rejoin-a-discord-thread maintain-hermes-gateway,leave-and-rejoin-a-discord-thread ✗  (两判官不一致)
+     题面：我的 Discord bot 完全没反应，日志里连 inbound message 都没有，是不是因为它没被加进那个 thread？
+P44  should_trigger     author-a-skill-in-a-pack-repo  author-a-skill-in-a-pack-repo,author-a-skill-in-a-pack-repo ✓
+P45  should_trigger     maintain-hermes-models         maintain-hermes-models,maintain-hermes-models ✓
+P46  should_trigger     maintain-hermes-skills         recruit-learning-in-profile,recruit-learning-in-profile ✗
+     题面：并进去以后，原来那个本地技能呢？我还能 update 它吗？
+P47  should_trigger     diagnose-a-failed-hermes-update maintain-hermes-desktop-app,maintain-hermes-desktop-app ✗
+     题面：Hermes Desktop 刚更新完，我之前装的那个插件面板就打不开了，页面上报 Plugin not found（404），是不是这次更新把它弄坏了？
+P48  should_trigger     load-external-skill-index      load-external-skill-index,load-external-skill-index ✓
+P49  should_trigger     use-limbic                     use-limbic,use-limbic          ✓
+P50  should_trigger     use-limbic                     use-limbic,use-limbic          ✓
+P51  should_trigger     remove-a-hermes-plugin         remove-a-hermes-plugin,remove-a-hermes-plugin ✓
+P52  should_trigger     update-hermes-skills           update-hermes-skills,update-hermes-skills ✓
+P53  should_trigger     install-hermes-skills          install-hermes-skills,install-hermes-skills ✓
+P54  should_trigger     hermes-session-routing-forensics maintain-hermes-profiles,maintain-hermes-gateway ✗  (两判官不一致)
+     题面：两个 profile 的 bot 抢同一个频道会怎样
+P55  should_trigger     remove-a-hermes-plugin         remove-a-hermes-plugin,remove-a-hermes-plugin ✓
+P56  should_trigger     diagnose-a-failed-hermes-update diagnose-a-failed-hermes-update,diagnose-a-failed-hermes-update ✓
+P57  should_trigger     install-a-hermes-plugin        remove-a-hermes-plugin,remove-a-hermes-plugin ✗
+     题面：limbic 装是装上了，但我不想用了 —— 怎么把它从所有 profile 里连 config.yaml 里的残留一起清干净？
+P58  should_trigger     dispatch-work-to-another-profile dispatch-work-to-another-profile,dispatch-work-to-another-profile ✓
+P59  should_trigger     install-a-hermes-plugin        use-limbic,use-limbic          ✗
+     题面：limbic 依赖装好了、memory.provider 也写了 limbic，可它好像还没在工作，我还差哪一步？
+P60  should_trigger     load-external-skill-index      load-external-skill-index,load-external-skill-index ✓
+P61  should_trigger     author-a-skill-in-a-pack-repo  author-a-skill-in-a-pack-repo,author-a-skill-in-a-pack-repo ✓
+P62  should_trigger     install-a-hermes-plugin        install-hermes-skills,install-hermes-skills ✗
+     题面：帮我把 AgentSkill-UsingHermes 里那个 install-a-hermes-plugin 装到 default profile，类目 hermes
+分组：旧题 41/57 · 新能力 4/4 · 兄弟干扰项 1/1
+
+=== 臂间对照（各取第一份判官） ===
+旧题被新技能抢走：0 条 
+A→B 落点变化的题：9 条 ['P8', 'P11', 'P12', 'P21', 'P25', 'P34', 'P38', 'P40', 'P46']（应全部落在既有兄弟之间 = 判官噪声）
+  P8  recruit-learning-in-profile → recruit-profile-skills-in-batch   题面：这个 profile 里攒了一大堆没有仓库归属的本地 skill，你帮我一次性扫一遍，看每条该进哪个包，别一条条问我
+  P11  maintain-hermes-skills → recruit-learning-in-profile   题面：profile 里有个本地技能跟我仓库里交付的技能内容重叠，我是删掉它还是并进去？先说怎么判断。
+  P12  maintain-hermes-skills → none   题面：evolve了几个skill？合并了几个skill？
+  P21  maintain-hermes-gateway → maintain-hermes-models   题面：我把模型的 provider 换成了 volcengine-agent-plan，结果 hermes gateway s
+  P25  recruit-learning-in-profile → recruit-profile-skills-in-batch   题面：sweep this profile's un-homed skills into their pack repos, 
+  P34  update-hermes-skills → recruit-learning-in-profile   题面：这个 skill 我之前手拷进 profile 的，没有 lock 条目，怎么让它以后能 update？
+  P38  recruit-learning-in-profile → recruit-profile-skills-in-batch   题面：有一百多条本地技能要归位，每条先判断归哪个包、跟包里哪条技能哪儿交叉，然后迁过去再装回来
+  P40  recruit-learning-in-profile → recruit-profile-skills-in-batch   题面：我想一键把 default 里的 local 技能批量收编进包仓库，收完再把那个包装回 profile
+  P46  maintain-hermes-skills → recruit-learning-in-profile   题面：并进去以后，原来那个本地技能呢？我还能 update 它吗？

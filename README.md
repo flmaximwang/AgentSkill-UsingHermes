@@ -8,6 +8,7 @@ Verb keywords: install, remove, maintain
 - Update: Contact with remote and modify existed content.
 - Recruit: 把一份学习成果收编进它该在的地方（分析现状 → 改已有内容或新增）。学到的那份在会话里 → `recruit-learning-in-session`；只存在于某个 profile 里、无仓库无 lock 条目 → `recruit-learning-in-profile`。
 - Evolve: Recruit 的旧叫法。`evolve-hermes-skills` 已改名为 `recruit-learning-in-session`、`install-hermes-skill-from-a-profile` 已改名为 `recruit-learning-in-profile`，两者的 description 里都保留旧触发词，所以「evolve 这轮会话」「把 profile 里这个 skill 收进仓库」仍会路由到它们。
+- Recruit（批量）: 一次把某个 profile 里**所有没有仓库归属**的本地 skill 收编进包仓库——枚举 → 判断归位（JEV 优先，否则分类子代理）→ 一次批准 → 每包一个 writer 并行写入 → 独立子代理回读 → 整包重装回 profile。→ `recruit-profile-skills-in-batch`。它与单条 Recruit 的判别信号是**「一批 vs 一条」**。
 - Load: Read something that exists elsewhere into context — no profile directory, no lock entry.
 
 ## Load vs install
@@ -36,6 +37,7 @@ hermes skills install flmaximwang/AgentSkill-UsingHermes/skills/load-external-sk
 | r2 | 2026-10-08 | `remove-a-hermes-plugin` | 3/4 | 29/37 | 1/1 | 0 条 | 头改 v2 再测（未过的是 P23「桌面 app 的 Remove 按钮」） |
 | r3 | 2026-10-08 | `remove-a-hermes-plugin`（头 v2） | 3/4 | 28/37 | 1/1 | 0 条 | 定版；P23 两轮四判官一致投兄弟 → 记为接受的代价（语义双关） |
 | r4-diagnose-update | 2026-10-08 | `diagnose-a-failed-hermes-update` | 4/4 | 32/47 | 1/1 | 0 条 | 定版 |
+| r5 | 2026-10-09 | `recruit-profile-skills-in-batch` | 4/4 | 41/57 | 1/1 | 0 条 | 定版；4 条正例在臂 A 被判给兄弟 `recruit-learning-in-profile`（相邻，靠「一批 vs 一条」分开） |
 
 ## 流程图
 
