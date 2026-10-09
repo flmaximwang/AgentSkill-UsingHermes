@@ -1,6 +1,6 @@
 ---
 name: maintain-hermes-memory
-description: Control Hermes' automatic memory and skill writing — the post-turn background review fork and every config knob that gates it. Use when self-improvement writes memory or skills the user did not ask for (a skill appearing after a turn, MEMORY.md changing on its own), or when they want to stop it, slow it down, or require approval first. Covers `auxiliary.background_review.enabled`, `skills.creation_nudge_interval`, `memory.nudge_interval`, `skills.write_approval`, `memory.write_approval`, `display.memory_notifications`, `curator.enabled`, `memory.memory_enabled`, plus `/refine`, `/skills pending` and `/memory pending`. Routes by which write path is involved — full-fork shutdown, skill-only, or approval — then to the memory side or the skill/curator side.
+description: Control Hermes' automatic memory and skill writing — the post-turn background review fork and every config knob that gates it. Use when self-improvement writes memory or skills the user did not ask for (a skill appearing after a turn, MEMORY.md changing on its own), or when they want to stop it, slow it down, or require approval first. Covers `auxiliary.background_review.enabled`, `skills.creation_nudge_interval`, `memory.nudge_interval`, `skills.write_approval`, `memory.write_approval`, `display.memory_notifications`, `curator.enabled`, `memory.memory_enabled`, plus `/refine`, `/skills pending` and `/memory pending`. Routes by which write path is involved — full-fork shutdown, skill-only, or approval — then to the memory side or the skill/curator side. Also covers the external memory-provider slot — installing a provider per profile, provisioning and verifying the model files it ships with, and reading its local store back from the CLI.
 ---
 
 # Control Hermes Memory and Skill Generation
@@ -147,6 +147,28 @@ in Discord / a gateway use `/reset`, or `/restart` the gateway; on the CLI quit 
 fork's own cost is ~30K tokens per event (`agent/turn_finalizer.py:750-751`), and cron sessions
 default to `skip_background_review=True` and skip it.
 
+## Making a memory write land (budget arithmetic, timeouts)
+
+The built-in stores are **hard char budgets** (`memory.user_char_limit`, `memory.char_limit`) and a
+batch is **all-or-nothing**: if the projected total overflows, nothing is applied and the error
+reports the projected total, so guessing wastes the call. When the store is near full, project first —
+the guard's number is exactly `len("\n§\n".join(entries))` over the store file:
+
+```bash
+python3 - <<'PY'
+import pathlib
+t = (pathlib.Path.home()/'.hermes/memories/USER.md').read_text()
+E = t.split('\n§\n'); print(len('\n§\n'.join(E)), 'chars,', len(E), 'entries')
+# then: swap entries by prefix, append the new one, re-join, and check the total before sending
+PY
+```
+
+Consolidating stale entries inside the same batch is the intended way to make room — do not skip the
+save, and paraphrase rather than dropping meaning.
+
+**Timeout ≠ not applied.** A `memory` batch that returns `timed out` may already have been written.
+Read the target store file before retrying — a blind retry double-applies the entry.
+
 ## Route by what was asked
 
 | The question is | Read |
@@ -157,6 +179,9 @@ default to `skip_background_review=True` and skip it.
 | the curator's `.archive/` — `curator.*` thresholds, the `restore` / `pin` / `purge` recipes, what an archive record holds, and the `.archive` vs `skills.disabled` two-list mixup | `references/maintain-hermes-curator-archive-lifecycle.md` |
 | every mechanism that mutates a profile with no user command (bundled seeding, Skill Sync, curator, hub updates) — each one's lever, default and off switch | `references/maintain-hermes-self-improvement-controls.md` |
 | reading a home's `state.db` directly — which skills were loaded and how often, which prompt text was active per session, dating the install that should have carried a rule | `references/maintain-hermes-session-store-forensics.md` + `scripts/skill-usage-counts.py` |
+| a provider that ships **its own local model files** — install per profile, provision every pinned file (not just the big ones), verify with the pin's own hash algorithm, fetch GB-scale files over a flaky link, restart before judging it broken, and read the store back | `references/maintain-hermes-memory-local-model-providers.md` |
+| the chosen provider is **hindsight in `local_embedded`** — the config surface, wiring the extraction LLM without a secret ever entering chat, the daemon's one-time runtime provisioning and the readiness-timeout knob, why a `{platform}-{user}` bank template splits one person into two stores, and the in-process probe that actually counts | `references/hindsight-local-embedded.md` |
+| **which** provider to run at all, or 「它好像没什么人在用，换一个/退役它」 — the candidate pool *is* the plugin catalog's `memory` category (a framework with no `MemoryProvider` adapter is not a candidate and must be named as such), how to rank the pool objectively, and what each big name actually does about forgetting (ranking decay vs noise cleaning vs real deletion vs graph invalidation) | `references/choose-a-memory-provider.md` |
 
 Two facts to keep straight when answering: **level ① does not stop the main agent from writing
 skills** (that is level ③), and **`/refine` bypasses the nudge and `enabled` gate** — the source

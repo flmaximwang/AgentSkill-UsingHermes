@@ -18,6 +18,8 @@ metadata:
   `✗ Resolving Python dependencies failed`，随后一句 `memory.provider is unchanged`。
 - uv 的报错里出现 `has no publish time`、`No solution found when resolving dependencies for split`、
   `was filtered by exclude-newer`。
+- 安装报 `Plugin '<name>' is unavailable: plugin.json declares an unsupported or missing Agent Plugins
+  schema`（原生插件带了一份别的平台的 `plugin.json`；`--force` 也越不过，走 §1.5）。
 - 插件「装上了但没反应」——要分清 install / enable / 选为 memory provider / 重启四件事。
 - 给已装插件补装**运行时数据**（spaCy 模型、词典这类索引里没有的东西），或升级后发现某个功能
   静默变弱（实体抽取没了之类）。
@@ -50,6 +52,41 @@ hermes plugins install <name>              # catalog 名 / owner/repo / git URL
 hermes plugins install <name> --yes-deps   # 非交互场景替自己回答依赖同意
 hermes plugins show <name>                 # 装完先读 Status / 版本 / 来源
 ```
+
+### 1.5 · 装不上：`Plugin 'X' is unavailable: plugin.json declares an unsupported or missing Agent Plugins schema`
+
+实测（2026-10-08 · v0.21.5+9287 · ponytail）。一个**原生**插件（有 `plugin.yaml`）同时带着给别的
+agent 平台用的 `plugin.json`，而那份 json 没有 `$schema` 时，install 会硬拒——**加 `--force` 也不放行**。
+原因在 `hermes_cli/plugins_cmd_install.py:_refuse_unavailable_portable_plugin()`：只要插件根目录存在
+`plugin.json` 就无条件走便携包校验（`agent_plugins._validate_manifest` 要求
+`$schema == https://agent-plugins.org/schemas/1.0.0/plugin.schema.json`），与「原生 manifest 已读成功」无关。
+
+判据：报错里出现 `is unavailable:` + `plugin.json`，而 `hermes plugins doctor <name>`（若手边有同版本的
+副本）一切正常 ⇒ 别去查依赖、别查索引，是这道门。
+
+绕法（官方支持、留 provenance）：
+
+```bash
+TMP=<scratch>/<name>-clone
+GIT_TERMINAL_PROMPT=0 git clone https://github.com/<owner>/<repo>.git "$TMP"
+git -C "$TMP" checkout <40-char-SHA>      # 想钉版本就钉；不钉=默认分支 HEAD
+mv "$TMP" "$HERMES_HOME/plugins/<name>"   # 同一分区，mv=原子改名，别让半成品被扫描到
+hermes plugins adopt <name>                # 读 git origin，写 provenance，变成受跟踪的 git 安装
+hermes plugins enable <name>
+```
+
+`adopt` 的产出行：`.install-metadata.json` 里 `{"pinned": false, "revision": <sha>, "source": <url>.git}`，
+之后 `hermes plugins check-updates` 认它（`git e3ba2aa… → b088b2d… update available`）。
+`enable` 会**热重载**正在跑的网关，不用重启：终端回 `Gateway reloaded plugins — active in the running
+gateway now: gateway_commands, gateway_transforms, hooks.`，`logs/gateway.log` 里对应
+`gateway.run_plugin_rewire: Re-wired plugin handlers on N adapter(s)`。
+
+端到端验证（在网关会话里就能做，不用等重启）：`skill_view('<name>:<skill>')` 能取到
+`<HERMES_HOME>/plugins/<name>/skills/<skill>/SKILL.md` ⇒ 插件的 skill/hook 真的挂上了。
+
+⚠ 插件扫描（`plugins.scan_on_install`）对社区源默认给出 `Verdict: CAUTION` 并**阻断**，要 `--force` 越过。
+先看严重度分布再决定：实测 120 条里 2 HIGH 是 `SKIP_DIR` 排除目录的正则（误报），90 MEDIUM 基本落在
+`benchmarks/`、`.github/workflows/`，与运行时无关。`--force` 只越过扫描闸，越不过上面那道 portable 门。
 
 ### 2 · 依赖解析失败：先读那句话，再查索引
 
@@ -119,6 +156,42 @@ python3 skills/install-a-hermes-plugin/scripts/install-runtime-model.py --model 
 - 终端里：`hermes gateway restart`。
 - **不要在网关会话里执行重启命令**：它会被 harness 拦下（`SIGTERM` 会先把命令杀掉），
   而且这一轮回复也由那个进程投递。
+
+### 5.1 · 运行中的进程还绑在旧 generation ⇒ 「No module named '<插件依赖>'」
+
+症状不在安装期：**正在跑的** gateway/CLI 反复打
+`Failed to load bundled provider plugin <x>: No module named '<dep>'`、
+`Memory provider '<p>' initialize failed: No module named '<dep>'`，而那个依赖在磁盘上的当前环境里明明存在。
+
+进程只在**启动那一刻**选依赖环境（`pm.environments.activate_dependencies`），之后不再跟随切换；
+而插件/补装的数据跟着 generation 走。所以「装了、更新了、没重启」时，它一直在旧 generation 里找新依赖。
+
+先核它绑在哪套（别先去看文件在不在，数组里最像证据的是这两个）：
+
+```bash
+lsof -p <pid> | grep -o 'environments/[0-9a-f]\{32\}' | sort | uniq -c   # 它打开的文件来自哪套 venv
+ls -la <environments>/<gen>/.leases/                                     # 有没有它持有的租约（flock 活着才算）
+```
+
+再与 `pm.environments.committed_venv(<checkout>)` 返回的当前世代比对——不一致就是这个病。
+`hermes gateway restart` / `/restart` 后进程按当前世代重新选环境即恢复（重启前先 drain，别在网关会话里执行重启命令）。
+
+### 5.2 · 想在进程里验证插件 → 用它自己那套 generation 的 python，不是主 venv
+
+`<hermes root>/venv` 是 **core 的**环境；插件的依赖装在各 generation 的 venv 里
+（`installs/<id>/environments/<gen>/venv`），而**那套的解释器可能是另一个 Python 小版本**
+（实测 core 3.11 / 插件 generation 3.14）。拿 `hermes-agent/venv/bin/python` 去 import 插件、或直接跑
+插件目录里的模块，必然 `ModuleNotFoundError: No module named '<插件依赖>'`——这不是依赖没装，是你问错了进程。
+
+```bash
+VENV=$(ls -dt <hermes root>/installs/*/environments/*/venv | head -1)   # 最新的 generation
+PYTHONPATH=<hermes root>:$VENV/lib/python*/site-packages $VENV/bin/python your_probe.py
+```
+
+与 §5.1 分清：**§5.1 是「它往旧 generation 里找依赖」，这条是「你在错的解释器里」**。
+写探针脚本时把 `PYTHONPATH` 里的 `<hermes root>` 也带上——插件会 import `agent.memory_provider`、
+`tools.registry` 这些 core 模块，它们不在 generation 的 site-packages 里。
+插件自己用的 CLI 二进制（如 `hindsight-embed`）也在这套 venv 的 `bin/` 下。
 
 ## Verification（三件 + 一件）
 
