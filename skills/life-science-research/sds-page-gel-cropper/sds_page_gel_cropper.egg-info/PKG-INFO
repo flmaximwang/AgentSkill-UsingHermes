@@ -1,0 +1,6 @@
+Metadata-Version: 2.4
+Name: sds-page-gel-cropper
+Version: 0.1.0
+Summary: Crop specific lanes from SDS-PAGE gel images using vision model + Pillow
+Requires-Python: >=3.10
+Requires-Dist: Pillow>=10.0.0

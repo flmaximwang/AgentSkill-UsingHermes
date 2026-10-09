@@ -1,0 +1,9 @@
+[project]
+name = "sds-page-gel-cropper"
+version = "0.1.0"
+description = "Crop specific lanes from SDS-PAGE gel images using vision model + Pillow"
+requires-python = ">=3.10"
+dependencies = [
+    "Pillow>=10.0.0",
+    "numpy>=1.24.0",
+]
