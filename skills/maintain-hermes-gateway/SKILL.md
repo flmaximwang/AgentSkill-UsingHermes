@@ -186,6 +186,38 @@ the URLTest auto group is.
 
 Full recipe, API calls and the `lsof`/`timeout(1)` traps: `references/local-proxy-outbound-triage.md`.
 
+### A bot offline while the gateway process is up: read the per-platform state, not the pid
+
+`gateway_state.json` holds one entry per platform under `platforms` (`<profile>:<platform>` in a
+multiplexed setup), and *that entry* — not the process, not `gateway status` — says which bot is down.
+`"state":"retrying"` with `error_message: Discord startup failed: Cannot connect to host
+discord.com:443 ssl:default [None]` means the adapter is alive and inside its own retry loop, whose
+backoff climbs 30 → 60 → 120 → 240 → 300 s; the last thing you see before a long wait is that 300 s
+timer, and a retry pending at that moment is the whole story.
+
+Measured on the DS220+ (2026-10-09): sockets dropped 16:45:40, attempts 1–5 failed 16:45:51 → 16:53:57,
+attempt 6 at 16:58:57 reconnected (`[Discord] Connected as DS220p2022#0029`) and the multiplexed
+`light` profile 4 s earlier — **13 m 25 s dark, no operator action, no restart**. The proxy path was
+already healthy 2 minutes before the next tick (3× `curl -x http://127.0.0.1:<mixed-port>
+https://discord.com/api/v10/gateway` → `http=200`).
+
+- **Do not restart while a retry is pending** — a restart only skips the rest of the backoff. Confirm
+  the proxy path, then either wait for the tick or restart once if the bot must be back this minute.
+- **Attribute through the proxy's per-domain dial, not through "is the proxy running".** The core's
+  own log holds `dial 🚀 节点选择 (match DomainSuffix/discord.com) … error: failed to create session:
+  context deadline exceeded` for exactly the failing minutes, while the proxy watchdog's probe on a
+  *different* domain answered healthy in the same hour: the group pinned for that domain was dead,
+  the proxy was not.
+- **A `<profile>:<platform>` entry reading `fatal` is not proof the adapter gave up.** Measured: the
+  `light` entry was written `fatal` (`… [Connection reset by peer]`) at 16:53:53, and that profile's
+  adapter was connected at 16:59:01 with no operator action. Read the profile's own
+  `logs/gateway.log` (`Secondary discord reconnect retry in <n>s (profile: <p>)`) and its retry
+  cadence before concluding that only a whole-gateway restart brings it back.
+- **No pid-level watchdog can see this state.** The gateway held an ESTABLISHED socket (another
+  platform, feishu) for the whole 13 minutes, so a "pid alive + any ESTABLISHED socket" predicate
+  reads healthy while Discord is dark. Give the predicate the platform's own signal —
+  `platforms.discord.state == "connected"`, or ESTABLISHED sockets to that platform's hosts.
+
 ### A bot that admits messages but never answers: the model-API path
 
 The admission line exists (§1) yet `response ready:` never shows up, and `agent.log` carries
@@ -484,7 +516,10 @@ Hermes-side reference: `https://hermes-agent.nousresearch.com/docs/user-guide/me
 
 ```
 maintain-hermes-gateway/
-├── SKILL.md  (359 lines)
+├── SKILL.md  (527 lines)
+├── references/
+│   ├── local-proxy-outbound-triage.md  (113 lines)
+│   └── multiplex-config-apply.md  (89 lines)
 └── scripts/
     └── discord_check.sh  (93 lines)
 ```
