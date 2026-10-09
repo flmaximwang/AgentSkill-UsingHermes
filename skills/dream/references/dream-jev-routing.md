@@ -38,7 +38,9 @@ curl -sS -o /dev/null -w '%{http_code}\n' -X POST https://api.typesafe.ai/v1/sys
 }
 ```
 
-- **一层一条题**：每题一个 `choice`，选项 = 27 个落点包 + `__stay_local__`；判到某个包之后，第二层再问
+- **一层一条题**：每题一个 `choice`，选项 = 27 个落点包 + `__stay_local__` + **`__new_pack__`**（值得复用但
+  没有包覆盖它 —— 两条判据都满足才准选它：正文认的是工具名/学科主题而不是某个 profile 的私事，且 S3 审计的
+  already there 为空或近乎为空）；判到某个包之后，第二层再问
   一条 `choice`：该包已有技能名（从 `pack-index.txt` 抄）+ `__new__`。两层的题**不能放在同一次请求**里
   （不能互为上下文），要发两次。
 - 选项的 `criteria` 用对象写（`what` / `not_for` / `examples`）比一句话准；两个包话题相邻时必须写
