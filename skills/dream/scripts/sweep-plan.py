@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Enumerate a profile's un-homed skills and every local skill pack, then fold judge verdicts into a plan.
 
-The deterministic half of `recruit-profile-skills-in-batch`. Two subcommands:
+The deterministic half of `dream`. Two subcommands:
 
     # 1. scan — what is local-only in this profile, what packs exist, frozen judge input
     python3 -B sweep-plan.py scan --profile default --packs-root ~/Documents/AgentSkill \

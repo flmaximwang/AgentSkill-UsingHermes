@@ -1,4 +1,7 @@
-# 路由盲测账 · recruit-profile-skills-in-batch
+# 路由盲测账 · dream
+
+> **改名说明（2026-10-09）**：本 skill 原名 `recruit-profile-skills-in-batch`，现名 `dream`。下面 r5 那轮的产物与复跑命令
+> 保留旧名 —— 它们记的是当时真跑的东西，按包规「记录不改」。改名后的定版账是 r6。
 
 ## 结论
 
