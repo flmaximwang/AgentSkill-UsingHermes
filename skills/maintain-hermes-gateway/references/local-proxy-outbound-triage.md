@@ -96,7 +96,7 @@ the profile yaml, see below). One host under attack/throttled flaps every "node"
   the machine, looking like that pid owns them. Add `-a` (`lsof -nP -a -p <pid> -iTCP -sTCP:LISTEN`).
 - `nc -vz <host> <port>` is the cheapest TCP probe; `python3 -c` with
   `socket.create_connection` + `ssl` gives the TLS handshake result and the exception name.
-- A root-owned core's FDs/sockets are not inspectable without sudo — read the core API rather than
+- A root-owned core's FDs/sockets are not inspectable without running as root — read the core API rather than
   trying to inspect the process.
 
 ## 6. After the proxy is healthy again (Hermes side)

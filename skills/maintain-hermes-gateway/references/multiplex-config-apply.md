@@ -54,7 +54,7 @@ irrelevant to the `restart_loop_guard` (3 restarts / 60 s window) unless you res
 ## Precedence when the value still will not change
 
 `extra_or_secret()` reads env → YAML `extra` → default. The env rung for a *secondary* profile is
-scope-only: a scoped miss returns `None` and never borrows the launcher's `os.environ`, where the
+scope-only: a scoped miss returns `None` and never borrows the launcher's process environment, where the
 DEFAULT profile's YAML→env bridge has already left `DISCORD_*=false` (first-writer-wins). So the
 profile's own `config.yaml` wins — put the value there, and use that profile's `.env` only to
 override itself. `_apply_yaml_config` seeds YAML keys (incl. `require_mention`,
