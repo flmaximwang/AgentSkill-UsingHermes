@@ -97,8 +97,9 @@ clawhub / url). Exit 0 all identical, 1 drift found, 2 usage or unreadable input
   Loomerto's `skills/plan-weave/<name>` now lives at `skills/loomerto/<name>`) — only a skill that is
   nowhere in the clone reads `repo missing`.
 - `official` (bundled) skills compare against the hermes-agent side, `optional-skills/<cat>/<name>`.
-- Measured 2026-10-10 on the default profile: 153 lock entries → `DRIFT=34 same=97 unmeasurable=22`,
-  exit 1. A snapshot, not a threshold: other sessions edit these trees constantly.
+- Measured 2026-10-10 on the default profile: 153 lock entries → `DRIFT=33 same=98 unmeasurable=22`
+  (34 drifting before this skill's own update landed — its installed copy was the extra one). A
+  snapshot, not a threshold: other sessions edit these trees constantly.
 
 ## Remedy: install per profile, and re-supply the category
 
@@ -180,7 +181,7 @@ Same question, different artifact ("只有 default 装了这个插件吗?") — 
 
 ```
 maintain-hermes-profile-skill-parity/
-├── SKILL.md  (189 lines)
+├── SKILL.md  (190 lines)
 └── scripts/
     ├── where-a-profiles-skills-drift-from-their-repos.py  (305 lines)
     └── where-do-a-profiles-skills-come-from.py  (210 lines)
