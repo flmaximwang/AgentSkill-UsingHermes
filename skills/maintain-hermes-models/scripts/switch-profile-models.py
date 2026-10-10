@@ -65,7 +65,10 @@ def parse_flat(lines: list[str]) -> dict[str, str]:
 def provider_block(main_lines: list[str], provider: str) -> list[str]:
     """从主 home 的 config.yaml 取 `providers.<provider>:` 子树，还原成一段可插入的 `providers:` 块。
 
-    主 home 里没有这一段时**返回空表**，不报错：那是**内置 provider**（deepseek / openai / anthropic /
+    返回 `(带 providers: 头的整块, 只有子块的片段)`：目标文件**没有**顶层 `providers:` 时插前者，
+    **已有**时只把后者插进那个块的块尾 —— 否则会写出第二个顶层 `providers:`（重复顶层键）。
+
+    主 home 里没有这一段时**返回两个空表**，不报错：那是**内置 provider**（deepseek / openai / anthropic /
     gemini …，凭证走 `<home>/.env` 的 `<NAME>_API_KEY`，profile 自己有 .env 就能解析），本来就不需要
     `providers:` 块；只有本机自定义名字的 provider（如快照里的 `volcengine-agent-plan`）才必须复制。
     """
@@ -82,7 +85,7 @@ def provider_block(main_lines: list[str], provider: str) -> list[str]:
         if line.strip() and not line.startswith("    "):
             end = i
             break
-    return ["providers:\n"] + main_lines[sub:end]
+    return ["providers:\n"] + main_lines[sub:end], main_lines[sub:end]
 
 
 def main() -> int:
@@ -105,7 +108,7 @@ def main() -> int:
         print("找不到 %s" % main_cfg, file=sys.stderr)
         return 2
     main_lines = main_cfg.read_text(encoding="utf-8").splitlines(keepends=True)
-    provider_lines = provider_block(main_lines, args.provider)
+    provider_lines, provider_sub = provider_block(main_lines, args.provider)
 
     if args.profiles == "all":
         targets = [main_cfg] + sorted((home / "profiles").glob("*/config.yaml"))
@@ -151,8 +154,16 @@ def main() -> int:
             already.append(label)
             continue
 
-        adds_provider = bool(provider_lines) and ("%s:" % args.provider) not in raw
-        new_lines = lines[:1] + body + (provider_lines if adds_provider else []) + lines[end:]
+        adds_provider = bool(provider_lines) and not re.search(
+            r"^  %s:" % re.escape(args.provider), raw, re.M)
+        new_lines = list(lines)
+        new_lines[1:end] = body
+        if adds_provider:
+            # 已有顶层 `providers:`（profile 普遍带着 volcengine 那一段）⇒ 只往块尾插子块，别再写一个头。
+            prov_at = next((i for i, l in enumerate(new_lines) if l.rstrip() == "providers:"), None)
+            at, chunk = (1 + len(body), provider_lines) if prov_at is None else \
+                (block_end(new_lines, prov_at), provider_sub)
+            new_lines[at:at] = chunk
         text = "".join(new_lines)
 
         after_dups = dup_top_keys(new_lines)

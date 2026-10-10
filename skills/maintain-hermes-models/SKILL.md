@@ -76,7 +76,10 @@ python3 -B scripts/verify-profile-models.py [--profiles …] [--home ~/.hermes]
    「能不能解析」。脚本已把这条做成写前拒绝。
 2. **profile 不继承主 home 的 `providers:` 段。** provider 是**本机自定义名字**时，该 profile 必须自己有
    `providers.<名字>:`（凭证就地取）；缺了就是「provider 无法解析凭证」。脚本会自动把主 home 那一整块复制进
-   缺它的 profile（实测：artist、game-research 在切换时被补上）。
+   脚本会自动把主 home 那一整块复制进缺它的 profile（实测：artist、game-research 在切换时被补上）。
+      **profile 里已经有顶层 `providers:`**（本机几乎每份都带着 volcengine 那一段）时，脚本只把 `  <名字>:`
+      子块插到那个块的块尾、**不**再拼一个 `providers:` 头 —— 旧版整段插入会造出**重复顶层键**，实测 15 份
+      profile 会被写前自检全部拒写（`写后顶层键重复：providers`）。
    **内置 provider（`deepseek` / `openai` / `anthropic` / `gemini` …）是例外**：主 home 里本来就没有
    `providers.<名字>:`，凭证走各 profile **自己**的 `<home>/.env` 的 `<NAME>_API_KEY`，不需要也**不该**注入
    `providers:` 块。脚本遇到主 home 没这一段时返回空表、只改 `model:` 块，并打一行 `note:` 说明
@@ -91,6 +94,11 @@ python3 -B scripts/verify-profile-models.py [--profiles …] [--home ~/.hermes]
 6. **备份与回滚**：每个被写的文件整份备份到 `<home>/backups/model-switch-<ts>/<label>/config.yaml`（回滚见下）。
 7. **一次性探针会留痕**：用 `hermes -p <profile> -z "…"` 造一次会话验证时，那个 home 会多一条
    `source='oneshot'` 的会话记录 —— 报告里点名，别让它变成「谁在我库里建了个会话」。
+8. **内置 provider 的凭证只证明一次，别给每个 profile 各造一条探针会话。** 每个 profile home 有**自己**的
+   `.env`（`profiles/<名>/.env`），内置 provider 的 key 就从那份取。所以先做一次**同值判定**：把
+   `<home>/.env` 与每份 `profiles/*/.env` 里那行 `<NAME>_API_KEY` 取 sha256 逐份比 —— **全同值**时，任一份
+   实测通过（或该 profile 历史会话的 `billing_base_url` 已是目标端点）就等于全库都能解析，**只给 1 份 profile
+   打一次探针**即可；只有异值的那几份才需要各验一次。判据是「同值 + 一份实测」，不是「N 份都发过消息」。
 
 回滚本次切换（只回这一个批次）：
 
