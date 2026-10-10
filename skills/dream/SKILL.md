@@ -173,9 +173,10 @@ S7 整包重装后，profile 里可能还残留大量与包同名的 local 副�
 - **SKILL.md 不同，无路径修复** → 包更新，直接删 local
 
 无类目归位（`--fix-no-category`）：
-- 候选类目**只能是该 profile 自己已有的类目**（用户原话「挪进现有类目，没有合适的就报需要新类目」）
-- 按技能名关键词匹配现有类目；匹配不上就报「需要新类目」，**不硬塞**
-- 实测 2026-10-09：default 15 条无类目，13 条归位，2 条需要新类目（`dedupe-duplicated-folder-trees` → 需 `file-management`；`mcp-server-integration` → 需 `mcp-server-integration`）
+- 候选类目**只能是该 profile 自己已有的类目**
+- 按技能名关键词匹配现有类目；匹配不上就报「需要新类目」，**不自动归入 misc**
+- 主 agent 看到报告后判断：是真需要新类目（如 `mcp-server-integration` → 新建 `mcp-server-integration/` 类目），还是归入 `misc/` 兜底
+- 实测 2026-10-10：default 15 条无类目，13 条进已有类目，2 条报告需要新类目
 
 🔴 **先 `--dry-run` 看一遍**，确认数字合理再真跑。备份在 `--backup` 指定的目录。
 
