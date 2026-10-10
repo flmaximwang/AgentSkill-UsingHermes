@@ -82,6 +82,26 @@ hermes -p <profile> skills install "<owner>/<repo>/skills/<name>" --category <ca
 - After a hub install that replaced a loose copy, delete the loose one — two directories holding the
   same skill name inside one tree is the state to check for, and `hermes skills list` shows both.
 
+## Plugins and memory providers follow the same per-profile rule
+
+Same question, different artifact ("只有 default 装了这个插件吗?") — same answer shape, and the same trap:
+
+- Plugin discovery root is `$HERMES_HOME/plugins/`, i.e. **per profile**, exactly like `skills/`. The docs
+  row `User | ~/.hermes/plugins/ | Personal plugins` reads like a global directory; it is not. Measured
+  2026-10-08: `hermes -p protein-design plugins list` does **not** list `limbic`, `herdr-agent-state` or
+  `rtk-rewrite`, all of which sit in the default profile's `~/.hermes/plugins/`. Judge fleet state only
+  with `hermes -p <profile> plugins list`, never from a directory listing or one profile's output.
+- `memory.provider` lives in each profile's own `config.yaml`, so a provider installed fleet-wide still
+  activates per profile; several profiles legitimately have no `memory:` block at all.
+- A provider's data is per `$HERMES_HOME` too (limbic: `limbic.db` + `limbic_params.json` + `limbic.yaml`).
+  Cross-profile memory sharing is a plugin-architecture property, not a config knob — check the provider's
+  source before promising it (limbic 0.5.1 hardcodes `db_path = $HERMES_HOME/limbic.db` and never reads the
+  `db_path` it advertises in `memory setup`).
+- A second profile's install is cheap only in what the plugin caches **outside** `$HERMES_HOME`
+  (limbic's ONNX models at `~/.cache/limbic/`) — the code and the store are duplicated.
+- Headless inventory: `hermes -p <profile> plugins list`, `hermes -p <profile> memory status`,
+  `hermes -p <profile> plugins install <name>`.
+
 ## Verify before saying "installed"
 
 - Name the profile: `-p <profile>`, or print `$HERMES_HOME` in the same command as the install when the
