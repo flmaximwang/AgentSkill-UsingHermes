@@ -30,6 +30,7 @@ python3 -B docs/routing-blind-tests/score-blind.py --round <轮次> --new-skill 
 |---|---|---|---|---|---|---|---|---|
 | r1 | 2026-10-08 | maintain-hermes-models | 4/4 | 23/31 | 1/1 | 0 条 | 定版 | `skills/maintain-hermes-models/test-results.md` |
 | r4-diagnose-update | 2026-10-08 | diagnose-a-failed-hermes-update | 4/4 | 32/47 | 1/1 | 0 条 | 定版 | `skills/diagnose-a-failed-hermes-update/test-results.md` |
+| r6-scan-heartbeat-sessions | 2026-10-10 | scan-heartbeat-sessions | 4/4 | 40/54 | 1/1 | 0 条 | 定版（臂 A 旧题 35/54；诱饵两臂一致判给 maintain-hermes-gateway） | `skills/scan-heartbeat-sessions/test-results.md` |
 
 ## 本目录实测的口径坑
 

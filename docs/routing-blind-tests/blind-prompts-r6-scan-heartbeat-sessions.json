@@ -1,0 +1,473 @@
+{
+  "round": "r6-scan-heartbeat-sessions",
+  "seed": 20261008,
+  "skills": [
+    "accountancy-workflow",
+    "alipay-statement",
+    "boc-statement",
+    "ccb-statement",
+    "ci-flake-triage",
+    "clean-pytest",
+    "credit-instrument-balances",
+    "darwin-skill",
+    "diagnose-a-failed-hermes-update",
+    "dispatch-work-to-another-profile",
+    "dream",
+    "flaky-test-detective",
+    "hermes-browser-lane-repair",
+    "hermes-desktop-plugins",
+    "hermes-session-routing-forensics",
+    "hermes-themes",
+    "install-a-hermes-plugin",
+    "install-hermes-skills",
+    "jd-statement",
+    "leave-and-rejoin-a-discord-thread",
+    "ledger-reconciliation",
+    "ledger-record-reconciliation",
+    "life-science-research",
+    "llama-vision",
+    "load-external-skill-index",
+    "maintain-hermes-desktop-app",
+    "maintain-hermes-gateway",
+    "maintain-hermes-memory",
+    "maintain-hermes-models",
+    "maintain-hermes-node",
+    "maintain-hermes-profile",
+    "maintain-hermes-profile-skill-parity",
+    "maintain-hermes-profiles",
+    "maintain-hermes-skill-cards",
+    "maintain-hermes-skills",
+    "manual-entries",
+    "matplotlib-axes-layout",
+    "mutation-test-runner",
+    "network-tls-failure-triage",
+    "pytest-patterns",
+    "recruit-learning-in-profile",
+    "recruit-learning-in-session",
+    "remove-a-hermes-plugin",
+    "remove-hermes-skills",
+    "scan-heartbeat-sessions",
+    "skillopt",
+    "software-development",
+    "statement-dedup-reconciliation",
+    "test-patterns",
+    "update-hermes-skills",
+    "wechat-statement"
+  ],
+  "prompts": [
+    {
+      "prompt": "桌面 app 里那个插件的 Remove 按钮老是弹 Could not remove plugin…，是不是界面有 bug？",
+      "owner": "remove-a-hermes-plugin",
+      "kind": "should_trigger",
+      "origin": "remove-a-hermes-plugin#3",
+      "id": "P1"
+    },
+    {
+      "prompt": "这个 profile 里攒了一大堆没有仓库归属的本地 skill，你帮我一次性扫一遍，看每条该进哪个包，别一条条问我",
+      "owner": "dream",
+      "kind": "should_trigger",
+      "origin": "dream#1",
+      "id": "P2"
+    },
+    {
+      "prompt": "recruit 这轮会话：把这轮我踩到的坑收进相关的 skill",
+      "owner": "recruit-learning-in-session",
+      "kind": "should_trigger",
+      "origin": "recruit-learning-in-session#3",
+      "id": "P3"
+    },
+    {
+      "prompt": "把这轮会话的教训存进 skill（本轮会话 = 那个「重新安装 nuwa-skill 跳过 examples」的 Discord 线程）",
+      "owner": "recruit-learning-in-session",
+      "kind": "should_trigger",
+      "origin": "recruit-learning-in-session#1",
+      "id": "P4"
+    },
+    {
+      "prompt": "这个技能库有几百个技能，全读描述进来行不行？",
+      "owner": "load-external-skill-index",
+      "kind": "should_trigger",
+      "origin": "load-external-skill-index#3",
+      "id": "P5"
+    },
+    {
+      "prompt": "hermes-memory-ui 这个插件我不想要了，但它装在好几个 profile 里，怎么一处不留地清掉？",
+      "owner": "remove-a-hermes-plugin",
+      "kind": "should_trigger",
+      "origin": "remove-a-hermes-plugin#2",
+      "id": "P6"
+    },
+    {
+      "prompt": "我在 kanban 上给别的 profile 建了卡，工人起了又死了",
+      "owner": "dispatch-work-to-another-profile",
+      "kind": "should_trigger",
+      "origin": "dispatch-work-to-another-profile#2",
+      "id": "P7"
+    },
+    {
+      "prompt": "我有哪些对话挂着 heartbeat？",
+      "owner": "scan-heartbeat-sessions",
+      "kind": "should_trigger",
+      "origin": "scan-heartbeat-sessions#1",
+      "id": "P8"
+    },
+    {
+      "prompt": "我切完模型以后 hermes profile list 里 Model 那列好几行变成 -- 了，是不是 config 写坏了？",
+      "owner": "maintain-hermes-models",
+      "kind": "should_trigger",
+      "origin": "maintain-hermes-models#4",
+      "id": "P9"
+    },
+    {
+      "prompt": "Hermes Desktop 刚更新完，我之前装的那个插件面板就打不开了，页面上报 Plugin not found（404），是不是这次更新把它弄坏了？",
+      "owner": "diagnose-a-failed-hermes-update",
+      "kind": "should_trigger",
+      "origin": "diagnose-a-failed-hermes-update#5",
+      "id": "P10"
+    },
+    {
+      "prompt": "profile 里又冒出个新 skill（curator 建的，没 lock 条目），先评估它跟已有技能的关系，再迁到仓库里、从远程重装一遍",
+      "owner": "recruit-learning-in-profile",
+      "kind": "should_trigger",
+      "origin": "recruit-learning-in-profile#1",
+      "id": "P11"
+    },
+    {
+      "prompt": "这个 skill 我之前手拷进 profile 的，没有 lock 条目，怎么让它以后能 update？",
+      "owner": "recruit-learning-in-profile",
+      "kind": "should_trigger",
+      "origin": "recruit-learning-in-profile#2",
+      "id": "P12"
+    },
+    {
+      "prompt": "bot 能不能自己退出 Discord 的 thread？需要给它 Manage Threads 之类的权限吗？",
+      "owner": "leave-and-rejoin-a-discord-thread",
+      "kind": "should_trigger",
+      "origin": "leave-and-rejoin-a-discord-thread#2",
+      "id": "P13"
+    },
+    {
+      "prompt": "某个 profile 的默认模型我要从 deepseek 官方换到 volcengine 的 ark-code-latest，别动我别的配置",
+      "owner": "maintain-hermes-models",
+      "kind": "should_trigger",
+      "origin": "maintain-hermes-models#2",
+      "id": "P14"
+    },
+    {
+      "prompt": "一次更新好几个 skill 怎么传参数？",
+      "owner": "update-hermes-skills",
+      "kind": "should_trigger",
+      "origin": "update-hermes-skills#2",
+      "id": "P15"
+    },
+    {
+      "prompt": "我把插件 disable 掉之后 hermes gateway restart 起不来了，hermes gateway status 说服务定义与当前安装不匹配，是这个插件把它弄坏的吗？",
+      "owner": "remove-a-hermes-plugin",
+      "kind": "should_trigger",
+      "origin": "remove-a-hermes-plugin#5",
+      "id": "P16"
+    },
+    {
+      "prompt": "帮我把 AgentSkill-UsingHermes 里那个 install-a-hermes-plugin 装到 default profile，类目 hermes",
+      "owner": "install-a-hermes-plugin",
+      "kind": "should_trigger",
+      "origin": "install-a-hermes-plugin#5",
+      "id": "P17"
+    },
+    {
+      "prompt": "hermes plugins install limbic 装到最后报 Could not prepare limbic's dependencies: venv: uv lock exited 1，里面还有一句 resvg-py==0.4.0 has no publish time —— 是 limbic 写坏了吗？",
+      "owner": "install-a-hermes-plugin",
+      "kind": "should_trigger",
+      "origin": "install-a-hermes-plugin#1",
+      "id": "P18"
+    },
+    {
+      "prompt": "帮我把所有 profile 的默认模型都换成 ark 的 deepseek flash 4.1",
+      "owner": "maintain-hermes-models",
+      "kind": "should_trigger",
+      "origin": "maintain-hermes-models#1",
+      "id": "P19"
+    },
+    {
+      "prompt": "有一百多条本地技能要归位，每条先判断归哪个包、跟包里哪条技能哪儿交叉，然后迁过去再装回来",
+      "owner": "dream",
+      "kind": "should_trigger",
+      "origin": "dream#3",
+      "id": "P20"
+    },
+    {
+      "prompt": "三句话回答。你用什么命令安装的？",
+      "owner": "install-hermes-skills",
+      "kind": "should_trigger",
+      "origin": "install-hermes-skills#2",
+      "id": "P21"
+    },
+    {
+      "prompt": "我把模型的 provider 换成了 volcengine-agent-plan，结果 hermes gateway status 说服务定义与当前安装不匹配、网关起不来，怎么修？",
+      "owner": "maintain-hermes-models",
+      "kind": "should_trigger",
+      "origin": "maintain-hermes-models#5",
+      "id": "P22"
+    },
+    {
+      "prompt": "给我一份 heartbeat 一览表，看看有没有该清掉的",
+      "owner": "scan-heartbeat-sessions",
+      "kind": "should_trigger",
+      "origin": "scan-heartbeat-sessions#4",
+      "id": "P23"
+    },
+    {
+      "prompt": "sweep this profile's un-homed skills into their pack repos, then reinstall the affected packs",
+      "owner": "dream",
+      "kind": "should_trigger",
+      "origin": "dream#4",
+      "id": "P24"
+    },
+    {
+      "prompt": "Hermes Desktop 更新失败了，我点了 Update 之后它就报错，你帮我看看怎么回事",
+      "owner": "diagnose-a-failed-hermes-update",
+      "kind": "should_trigger",
+      "origin": "diagnose-a-failed-hermes-update#1",
+      "id": "P25"
+    },
+    {
+      "prompt": "迁进仓库以后，profile 里原来那份怎么办？要装到别的 profile 又该怎么做？",
+      "owner": "recruit-learning-in-profile",
+      "kind": "should_trigger",
+      "origin": "recruit-learning-in-profile#3",
+      "id": "P26"
+    },
+    {
+      "prompt": "我的 Discord bot 完全没反应，日志里连 inbound message 都没有，是不是因为它没被加进那个 thread？",
+      "owner": "leave-and-rejoin-a-discord-thread",
+      "kind": "should_trigger",
+      "origin": "leave-and-rejoin-a-discord-thread#5",
+      "id": "P27"
+    },
+    {
+      "prompt": "并进去以后，原来那个本地技能呢？我还能 update 它吗？",
+      "owner": "maintain-hermes-skills",
+      "kind": "should_trigger",
+      "origin": "maintain-hermes-skills#3",
+      "id": "P28"
+    },
+    {
+      "prompt": "profile 里有个本地技能跟我仓库里交付的技能内容重叠，我是删掉它还是并进去？先说怎么判断。",
+      "owner": "maintain-hermes-skills",
+      "kind": "should_trigger",
+      "origin": "maintain-hermes-skills#2",
+      "id": "P29"
+    },
+    {
+      "prompt": "这批 profile 现在跑的是 deepseek 官方，我想全切到 volcengine-agent-plan，切完怎么证明真的在用？",
+      "owner": "maintain-hermes-models",
+      "kind": "should_trigger",
+      "origin": "maintain-hermes-models#3",
+      "id": "P30"
+    },
+    {
+      "prompt": "nuwa-skill 安装的时候，把examples中的示例skill也带入了，但是我并不需要它们。请重新安装 nuwa-skill，避免安装 examples",
+      "owner": "install-hermes-skills",
+      "kind": "should_trigger",
+      "origin": "install-hermes-skills#1",
+      "id": "P31"
+    },
+    {
+      "prompt": "插件删完以后 gateway 要不要重启？不重启会不会留着一半？",
+      "owner": "remove-a-hermes-plugin",
+      "kind": "should_trigger",
+      "origin": "remove-a-hermes-plugin#4",
+      "id": "P32"
+    },
+    {
+      "prompt": "我 push 完跑 hermes skills update <name>，输出里既有 Not installed: the security scan found 1 high-risk pattern(s) 又有 Updated 1 skill(s).，到底装上没有？",
+      "owner": "update-hermes-skills",
+      "kind": "should_trigger",
+      "origin": "update-hermes-skills#1",
+      "id": "P33"
+    },
+    {
+      "prompt": "我 profile 里刚学到的一个新技能，想把它收进对应的包仓库，以后好维护",
+      "owner": "dream",
+      "kind": "should_trigger",
+      "origin": "dream#5",
+      "id": "P34"
+    },
+    {
+      "prompt": "更新跑完 gateway 就起不来了，日志里是 Update incomplete — gateway auto-restart failed: cannot import name 'line_input' from hermes_cli.cli_output，怎么办？",
+      "owner": "diagnose-a-failed-hermes-update",
+      "kind": "should_trigger",
+      "origin": "diagnose-a-failed-hermes-update#4",
+      "id": "P35"
+    },
+    {
+      "prompt": "是不是有哪个线程在每 10 分钟自己烧 token？帮我扫一遍",
+      "owner": "scan-heartbeat-sessions",
+      "kind": "should_trigger",
+      "origin": "scan-heartbeat-sessions#3",
+      "id": "P36"
+    },
+    {
+      "prompt": "网关目录里那个 gateway.heartbeat 文件一直在更新，能说明网关进程还活着吗？",
+      "owner": "scan-heartbeat-sessions",
+      "kind": "should_not_trigger",
+      "expect_pick": "maintain-hermes-gateway",
+      "origin": "scan-heartbeat-sessions#5",
+      "id": "P37"
+    },
+    {
+      "prompt": "把所有带 heartbeat 的 session 列出来给我看看",
+      "owner": "scan-heartbeat-sessions",
+      "kind": "should_trigger",
+      "origin": "scan-heartbeat-sessions#2",
+      "id": "P38"
+    },
+    {
+      "prompt": "怎么确认某条消息到底被哪个 session 接走了",
+      "owner": "hermes-session-routing-forensics",
+      "kind": "should_trigger",
+      "origin": "hermes-session-routing-forensics#2",
+      "id": "P39"
+    },
+    {
+      "prompt": "一个 thread 里有好几个 Hermes bot，我想让其中一个自己退出这个 thread、别再参与了，能做到吗？",
+      "owner": "leave-and-rejoin-a-discord-thread",
+      "kind": "should_trigger",
+      "origin": "leave-and-rejoin-a-discord-thread#1",
+      "id": "P40"
+    },
+    {
+      "prompt": "把 bot 从 thread 的成员里移除之后，它是不是就不会再回这个 thread 的消息了？",
+      "owner": "leave-and-rejoin-a-discord-thread",
+      "kind": "should_trigger",
+      "origin": "leave-and-rejoin-a-discord-thread#3",
+      "id": "P41"
+    },
+    {
+      "prompt": "hand-off 日志里写着 Another Hermes update is already running (started 7s ago, process 17798)，可我没有开第二个 Hermes，是卡住了要等它吗？",
+      "owner": "diagnose-a-failed-hermes-update",
+      "kind": "should_trigger",
+      "origin": "diagnose-a-failed-hermes-update#2",
+      "id": "P42"
+    },
+    {
+      "prompt": "load 和 install 有什么区别？",
+      "owner": "load-external-skill-index",
+      "kind": "should_trigger",
+      "origin": "load-external-skill-index#2",
+      "id": "P43"
+    },
+    {
+      "prompt": "本次会话修补了：skill-library-consolidation。我觉得这个功能应该在 maintain-hermes-skills 技能中。调用 recruit-learning-in-session 看看如何将它并入 maintain-hermes-skills",
+      "owner": "maintain-hermes-skills",
+      "kind": "should_trigger",
+      "origin": "maintain-hermes-skills#1",
+      "id": "P44"
+    },
+    {
+      "prompt": "卡建好了就算交出去了吗",
+      "owner": "dispatch-work-to-another-profile",
+      "kind": "should_trigger",
+      "origin": "dispatch-work-to-another-profile#3",
+      "id": "P45"
+    },
+    {
+      "prompt": "给我一条能直接跑的命令，让 bot 用自己 profile 里的 token 退出某个 thread。",
+      "owner": "leave-and-rejoin-a-discord-thread",
+      "kind": "should_trigger",
+      "origin": "leave-and-rejoin-a-discord-thread#4",
+      "id": "P46"
+    },
+    {
+      "prompt": "删除 paper2agent 并重新安装到 agent-evolution category. /skill remove-hermes-skills. /skill install-hermes-skills.",
+      "owner": "remove-hermes-skills",
+      "kind": "should_trigger",
+      "origin": "remove-hermes-skills#1",
+      "id": "P47"
+    },
+    {
+      "prompt": "我删完之后 hermes skills check <name> 说 No hub-installed skills to check.，是不是整个 lock 都没了？",
+      "owner": "remove-hermes-skills",
+      "kind": "should_trigger",
+      "origin": "remove-hermes-skills#2",
+      "id": "P48"
+    },
+    {
+      "prompt": "evolve了几个skill？合并了几个skill？",
+      "owner": "recruit-learning-in-session",
+      "kind": "should_trigger",
+      "origin": "recruit-learning-in-session#2",
+      "id": "P49"
+    },
+    {
+      "prompt": "limbic 装是装上了，但我不想用了 —— 怎么把它从所有 profile 里连 config.yaml 里的残留一起清干净？",
+      "owner": "install-a-hermes-plugin",
+      "kind": "should_trigger",
+      "origin": "install-a-hermes-plugin#4",
+      "id": "P50"
+    },
+    {
+      "prompt": "这个 Discord 线程的消息跑到别的 agent 会话里去了",
+      "owner": "hermes-session-routing-forensics",
+      "kind": "should_trigger",
+      "origin": "hermes-session-routing-forensics#1",
+      "id": "P51"
+    },
+    {
+      "prompt": "我删插件的时候报 Cannot remove plugin files while the messaging gateway is running，说要先 stop gateway 再 start —— 我人在 Discord 上跟你说话，停了网关你不就掉线了吗？",
+      "owner": "remove-a-hermes-plugin",
+      "kind": "should_trigger",
+      "origin": "remove-a-hermes-plugin#1",
+      "id": "P52"
+    },
+    {
+      "prompt": "把这件事交给 rdm-assistance 那个 profile 做",
+      "owner": "dispatch-work-to-another-profile",
+      "kind": "should_trigger",
+      "origin": "dispatch-work-to-another-profile#1",
+      "id": "P53"
+    },
+    {
+      "prompt": "limbic 依赖装好了、memory.provider 也写了 limbic，可它好像还没在工作，我还差哪一步？",
+      "owner": "install-a-hermes-plugin",
+      "kind": "should_trigger",
+      "origin": "install-a-hermes-plugin#2",
+      "id": "P54"
+    },
+    {
+      "prompt": "我想一键把 default 里的 local 技能批量收编进包仓库，收完再把那个包装回 profile",
+      "owner": "dream",
+      "kind": "should_trigger",
+      "origin": "dream#2",
+      "id": "P55"
+    },
+    {
+      "prompt": "两个 profile 的 bot 抢同一个频道会怎样",
+      "owner": "hermes-session-routing-forensics",
+      "kind": "should_trigger",
+      "origin": "hermes-session-routing-forensics#3",
+      "id": "P56"
+    },
+    {
+      "prompt": "我有个 skill 仓库还没装，先看看里面都有什么技能，别装",
+      "owner": "load-external-skill-index",
+      "kind": "should_trigger",
+      "origin": "load-external-skill-index#1",
+      "id": "P57"
+    },
+    {
+      "prompt": "我点完 Update 它说更新完了，可版本号一点没变，是不是根本没装上？",
+      "owner": "diagnose-a-failed-hermes-update",
+      "kind": "should_trigger",
+      "origin": "diagnose-a-failed-hermes-update#3",
+      "id": "P58"
+    },
+    {
+      "prompt": "limbic 装好之后我发现抽实体名不灵了，日志里有 spaCy model not installed —— 我怎么给它补上？以后 hermes update 会不会又没了？",
+      "owner": "install-a-hermes-plugin",
+      "kind": "should_trigger",
+      "origin": "install-a-hermes-plugin#3",
+      "id": "P59"
+    }
+  ]
+}

@@ -1,0 +1,298 @@
+{
+  "P1": {
+    "owner": "remove-a-hermes-plugin",
+    "kind": "should_trigger",
+    "origin": "remove-a-hermes-plugin#3"
+  },
+  "P2": {
+    "owner": "dream",
+    "kind": "should_trigger",
+    "origin": "dream#1"
+  },
+  "P3": {
+    "owner": "recruit-learning-in-session",
+    "kind": "should_trigger",
+    "origin": "recruit-learning-in-session#3"
+  },
+  "P4": {
+    "owner": "recruit-learning-in-session",
+    "kind": "should_trigger",
+    "origin": "recruit-learning-in-session#1"
+  },
+  "P5": {
+    "owner": "load-external-skill-index",
+    "kind": "should_trigger",
+    "origin": "load-external-skill-index#3"
+  },
+  "P6": {
+    "owner": "remove-a-hermes-plugin",
+    "kind": "should_trigger",
+    "origin": "remove-a-hermes-plugin#2"
+  },
+  "P7": {
+    "owner": "dispatch-work-to-another-profile",
+    "kind": "should_trigger",
+    "origin": "dispatch-work-to-another-profile#2"
+  },
+  "P8": {
+    "owner": "scan-heartbeat-sessions",
+    "kind": "should_trigger",
+    "origin": "scan-heartbeat-sessions#1"
+  },
+  "P9": {
+    "owner": "maintain-hermes-models",
+    "kind": "should_trigger",
+    "origin": "maintain-hermes-models#4"
+  },
+  "P10": {
+    "owner": "diagnose-a-failed-hermes-update",
+    "kind": "should_trigger",
+    "origin": "diagnose-a-failed-hermes-update#5"
+  },
+  "P11": {
+    "owner": "recruit-learning-in-profile",
+    "kind": "should_trigger",
+    "origin": "recruit-learning-in-profile#1"
+  },
+  "P12": {
+    "owner": "recruit-learning-in-profile",
+    "kind": "should_trigger",
+    "origin": "recruit-learning-in-profile#2"
+  },
+  "P13": {
+    "owner": "leave-and-rejoin-a-discord-thread",
+    "kind": "should_trigger",
+    "origin": "leave-and-rejoin-a-discord-thread#2"
+  },
+  "P14": {
+    "owner": "maintain-hermes-models",
+    "kind": "should_trigger",
+    "origin": "maintain-hermes-models#2"
+  },
+  "P15": {
+    "owner": "update-hermes-skills",
+    "kind": "should_trigger",
+    "origin": "update-hermes-skills#2"
+  },
+  "P16": {
+    "owner": "remove-a-hermes-plugin",
+    "kind": "should_trigger",
+    "origin": "remove-a-hermes-plugin#5"
+  },
+  "P17": {
+    "owner": "install-a-hermes-plugin",
+    "kind": "should_trigger",
+    "origin": "install-a-hermes-plugin#5"
+  },
+  "P18": {
+    "owner": "install-a-hermes-plugin",
+    "kind": "should_trigger",
+    "origin": "install-a-hermes-plugin#1"
+  },
+  "P19": {
+    "owner": "maintain-hermes-models",
+    "kind": "should_trigger",
+    "origin": "maintain-hermes-models#1"
+  },
+  "P20": {
+    "owner": "dream",
+    "kind": "should_trigger",
+    "origin": "dream#3"
+  },
+  "P21": {
+    "owner": "install-hermes-skills",
+    "kind": "should_trigger",
+    "origin": "install-hermes-skills#2"
+  },
+  "P22": {
+    "owner": "maintain-hermes-models",
+    "kind": "should_trigger",
+    "origin": "maintain-hermes-models#5"
+  },
+  "P23": {
+    "owner": "scan-heartbeat-sessions",
+    "kind": "should_trigger",
+    "origin": "scan-heartbeat-sessions#4"
+  },
+  "P24": {
+    "owner": "dream",
+    "kind": "should_trigger",
+    "origin": "dream#4"
+  },
+  "P25": {
+    "owner": "diagnose-a-failed-hermes-update",
+    "kind": "should_trigger",
+    "origin": "diagnose-a-failed-hermes-update#1"
+  },
+  "P26": {
+    "owner": "recruit-learning-in-profile",
+    "kind": "should_trigger",
+    "origin": "recruit-learning-in-profile#3"
+  },
+  "P27": {
+    "owner": "leave-and-rejoin-a-discord-thread",
+    "kind": "should_trigger",
+    "origin": "leave-and-rejoin-a-discord-thread#5"
+  },
+  "P28": {
+    "owner": "maintain-hermes-skills",
+    "kind": "should_trigger",
+    "origin": "maintain-hermes-skills#3"
+  },
+  "P29": {
+    "owner": "maintain-hermes-skills",
+    "kind": "should_trigger",
+    "origin": "maintain-hermes-skills#2"
+  },
+  "P30": {
+    "owner": "maintain-hermes-models",
+    "kind": "should_trigger",
+    "origin": "maintain-hermes-models#3"
+  },
+  "P31": {
+    "owner": "install-hermes-skills",
+    "kind": "should_trigger",
+    "origin": "install-hermes-skills#1"
+  },
+  "P32": {
+    "owner": "remove-a-hermes-plugin",
+    "kind": "should_trigger",
+    "origin": "remove-a-hermes-plugin#4"
+  },
+  "P33": {
+    "owner": "update-hermes-skills",
+    "kind": "should_trigger",
+    "origin": "update-hermes-skills#1"
+  },
+  "P34": {
+    "owner": "dream",
+    "kind": "should_trigger",
+    "origin": "dream#5"
+  },
+  "P35": {
+    "owner": "diagnose-a-failed-hermes-update",
+    "kind": "should_trigger",
+    "origin": "diagnose-a-failed-hermes-update#4"
+  },
+  "P36": {
+    "owner": "scan-heartbeat-sessions",
+    "kind": "should_trigger",
+    "origin": "scan-heartbeat-sessions#3"
+  },
+  "P37": {
+    "owner": "scan-heartbeat-sessions",
+    "kind": "should_not_trigger",
+    "expect_pick": "maintain-hermes-gateway",
+    "origin": "scan-heartbeat-sessions#5"
+  },
+  "P38": {
+    "owner": "scan-heartbeat-sessions",
+    "kind": "should_trigger",
+    "origin": "scan-heartbeat-sessions#2"
+  },
+  "P39": {
+    "owner": "hermes-session-routing-forensics",
+    "kind": "should_trigger",
+    "origin": "hermes-session-routing-forensics#2"
+  },
+  "P40": {
+    "owner": "leave-and-rejoin-a-discord-thread",
+    "kind": "should_trigger",
+    "origin": "leave-and-rejoin-a-discord-thread#1"
+  },
+  "P41": {
+    "owner": "leave-and-rejoin-a-discord-thread",
+    "kind": "should_trigger",
+    "origin": "leave-and-rejoin-a-discord-thread#3"
+  },
+  "P42": {
+    "owner": "diagnose-a-failed-hermes-update",
+    "kind": "should_trigger",
+    "origin": "diagnose-a-failed-hermes-update#2"
+  },
+  "P43": {
+    "owner": "load-external-skill-index",
+    "kind": "should_trigger",
+    "origin": "load-external-skill-index#2"
+  },
+  "P44": {
+    "owner": "maintain-hermes-skills",
+    "kind": "should_trigger",
+    "origin": "maintain-hermes-skills#1"
+  },
+  "P45": {
+    "owner": "dispatch-work-to-another-profile",
+    "kind": "should_trigger",
+    "origin": "dispatch-work-to-another-profile#3"
+  },
+  "P46": {
+    "owner": "leave-and-rejoin-a-discord-thread",
+    "kind": "should_trigger",
+    "origin": "leave-and-rejoin-a-discord-thread#4"
+  },
+  "P47": {
+    "owner": "remove-hermes-skills",
+    "kind": "should_trigger",
+    "origin": "remove-hermes-skills#1"
+  },
+  "P48": {
+    "owner": "remove-hermes-skills",
+    "kind": "should_trigger",
+    "origin": "remove-hermes-skills#2"
+  },
+  "P49": {
+    "owner": "recruit-learning-in-session",
+    "kind": "should_trigger",
+    "origin": "recruit-learning-in-session#2"
+  },
+  "P50": {
+    "owner": "install-a-hermes-plugin",
+    "kind": "should_trigger",
+    "origin": "install-a-hermes-plugin#4"
+  },
+  "P51": {
+    "owner": "hermes-session-routing-forensics",
+    "kind": "should_trigger",
+    "origin": "hermes-session-routing-forensics#1"
+  },
+  "P52": {
+    "owner": "remove-a-hermes-plugin",
+    "kind": "should_trigger",
+    "origin": "remove-a-hermes-plugin#1"
+  },
+  "P53": {
+    "owner": "dispatch-work-to-another-profile",
+    "kind": "should_trigger",
+    "origin": "dispatch-work-to-another-profile#1"
+  },
+  "P54": {
+    "owner": "install-a-hermes-plugin",
+    "kind": "should_trigger",
+    "origin": "install-a-hermes-plugin#2"
+  },
+  "P55": {
+    "owner": "dream",
+    "kind": "should_trigger",
+    "origin": "dream#2"
+  },
+  "P56": {
+    "owner": "hermes-session-routing-forensics",
+    "kind": "should_trigger",
+    "origin": "hermes-session-routing-forensics#3"
+  },
+  "P57": {
+    "owner": "load-external-skill-index",
+    "kind": "should_trigger",
+    "origin": "load-external-skill-index#1"
+  },
+  "P58": {
+    "owner": "diagnose-a-failed-hermes-update",
+    "kind": "should_trigger",
+    "origin": "diagnose-a-failed-hermes-update#3"
+  },
+  "P59": {
+    "owner": "install-a-hermes-plugin",
+    "kind": "should_trigger",
+    "origin": "install-a-hermes-plugin#3"
+  }
+}
