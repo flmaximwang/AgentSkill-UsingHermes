@@ -94,9 +94,14 @@ and do not assume partial execution — ask in chat and re-run once the user ans
 
 ## 4. Back up, then delete, then verify
 
-1. Back up the exact targets (not the whole tree):
-   `tar -czf ~/.hermes/backups/disabled-skills-$(date +%Y%m%d-%H%M%S).tar.gz -T <list-file>`
-   then prove it with `tar -tzf <tarball> | wc -l` against the expected entry count.
+1. Back up with **one provable command**. For a large prune, a single `tar` of the whole tree beats a
+   hand-rolled per-skill copy:
+   `tar -czf ~/.hermes/backups/<topic>-$(date +%Y%m%d-%H%M%S)/skills-tree.tar.gz -C <home> skills`
+   (a `skills/` tar already carries `.hub/lock.json`; `config.yaml` and `SOUL.md` sit outside it — copy
+   those separately), then prove it with `tar -tzf <tarball> | wc -l` against the expected entry count.
+   A python tree-walk heredoc that copies directory by directory is a bulk file operation and can come
+   back `BLOCKED` on the consent gate (§3) **before writing anything** — the backup never lands and the
+   delete is still unconsented. Take the tar first, report its path, then ask.
 2. Delete.
 3. Sweep category dirs left holding only `DESCRIPTION.md`, and delete those scaffolds too —
    they render as empty categories. **Never** touch the dotted infra dirs: `.curator_backups`,
@@ -315,6 +320,24 @@ answer it with numbers from the same source the surface reads:
   `hermes skills uninstall <name>` clears the entry. Run that check after any hand-deletion of
   hub-installed skills and report the orphans with the command; it is the difference between "the
   page is lying" and a stale lock you created.
+
+  Clear them in one pass — enumerate from the lock, uninstall **by key** (never by the printed name,
+  and never by hand-editing the lock: `uninstall` is what calls `record_uninstall` and appends the
+  audit line):
+
+  ```python
+  import json, os
+  root = os.path.expanduser('~/.hermes/skills')
+  lock = json.load(open(os.path.join(root, '.hub/lock.json')))['installed']
+  print('\n'.join(k for k, v in lock.items()
+                  if not os.path.exists(os.path.join(root, v['install_path'], 'SKILL.md'))))
+  ```
+
+  then `hermes skills uninstall <key> -y` per line (`-p <profile>` when the home is not the default).
+  An orphan's uninstall prints `Uninstalled '<key>' from ` with an **empty** path — that is expected,
+  not a failure; there was no directory to remove. Re-run `hermes skills check` expecting
+  `0 update(s) available` and no `Orphaned:` tail. An orphan whose directory you actually want back is
+  the opposite repair (§16).
 - **An orphan entry is permanent until it is removed or satisfied, because nothing ever prunes the
   lock.** Exactly three code paths write `lock.json`: `HubLockFile.record_install`
   (`tools/skills_hub.py`, called only from `tools/skills_hub_install.py`) on install,
@@ -845,7 +868,7 @@ What stays here:
 
 ```
 maintain-hermes-profile/
-├── SKILL.md  (854 lines)
+├── SKILL.md  (877 lines)
 └── references/
     ├── maintain-hermes-profile-prompt-assembly-and-guidance-gates.md  (81 lines)
     └── maintain-hermes-profile-skills-tree-layout.md  (296 lines)

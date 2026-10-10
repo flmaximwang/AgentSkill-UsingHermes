@@ -1,9 +1,9 @@
 ---
 name: hermes-session-routing-forensics
-description: "Use when a Hermes chat's messages reach the wrong agent."
+description: "Use when auditing Hermes routing, heartbeats, or spend."
 ---
 
-# Hermes conversation-routing forensics
+# Hermes session forensics — routing, heartbeat ownership, outbound requests
 
 ## When to Use
 
@@ -12,6 +12,9 @@ description: "Use when a Hermes chat's messages reach the wrong agent."
 - A channel sprouts a thread whose name is a subagent task string.
 - You must know which session a chat/thread resolves to before /new-ing, archiving, or re-running
   work on that line.
+- "Which conversation started this recurring heartbeat?" / "it is burning quota" — the instruction is
+  session-scoped, so naming the owner means resolving a session id to a chat (Step 6).
+- "What has Hermes been sending?" — requests, tokens and rate-limit rejections over a window (Step 7).
 
 ## Procedure overview
 
@@ -119,6 +122,51 @@ The user's own messages appearing under the *owner* session's id proves routing 
 no need to infer it from his description. For cross-profile recall use `session_search(profile=<name>)`;
 `session_search` finds transcript content, the DB finds routing.
 
+## Step 6 — Which conversation owns a recurring heartbeat
+
+A recurring instruction ("check progress every 10m") is not a cron job: it lives in the session store's
+meta table under key `heartbeat:<session_id>`, value JSON `{prompt, interval_seconds, status,
+created_at, last_fired_at, fire_count}`.
+
+```bash
+sqlite3 -header -column ~/.hermes/state.db "SELECT key, value FROM state_meta WHERE key LIKE 'heartbeat:%';"
+sqlite3 -header -column ~/.hermes/state.db "SELECT id,title,display_name,chat_id,thread_id,message_count,input_tokens FROM sessions WHERE id='<session_id>';"
+```
+
+- **Only `status='active'` fires**, and the rows are never cleaned up: expect `cleared` / `paused`
+  history plus a few unparseable values. Enumerate them all before answering, then name the single
+  active row's conversation (`sessions.title` / `display_name` / `chat_id`) — not the meta key.
+- **The heartbeat follows the session, not the chat.** A gateway restart mints a new session id and the
+  instruction migrates into it carrying `created_at` and a continuous `fire_count`, so a big
+  `fire_count` / old `created_at` dates the *instruction*, never the session. Say that out loud instead
+  of reporting "this session has been firing for days".
+- Stopping or editing it is a command the **user** sends inside that conversation
+  (`/heartbeat pause` | `resume` | `clear` | `every 10m <prompt>`). Same read-only rule as Step 1: hand
+  over the command, do not edit the meta row.
+- Profile-local: another profile's heartbeats are in `~/.hermes/profiles/<name>/state.db`.
+
+## Step 7 — Audit what it sent in a time window
+
+Evidence, cheapest first: `~/.hermes/logs/agent.log` (one line per model call) and
+`profiles/*/logs/agent.log`, `logs/gateway.log` (inbound/outbound messages),
+`logs/errors.log` + `logs/gateway.error.log` (rejections), and
+`~/.hermes/sessions/request_dump_<session>_<ts>.json` (full request body, `reason=max_retries_exhausted`).
+
+Parse by the timestamp prefix (`YYYY-MM-DD HH:MM:SS,mmm`) and aggregate in **Python**, per
+provider/model/session — a regex pass over the file, never a `grep -c`. Ready script and line table in
+the reference file.
+
+- `API call #N: model=… provider=… in=… out=… total=… latency=… cache=X/Y (n%)` — `in=` is the *whole
+  re-sent context*, so the cost driver is turns-per-hour × context size, not message length. Report per
+  target, not one grand total.
+- `cache=X/Y` near 0% means the prefix went out cold — that, not the reply text, is what fills a
+  provider's weighted quota.
+- Rejections read `429 … Sustained usage limit (…) N weighted / M (1h); … (6h). Cooldown until …`:
+  quote **both** windows and the cooldown, plus the `API call failed after 3 retries … msgs=… tokens=~…`
+  line that says what context size was riding on it.
+- Always glob every profile's log — the ask is what *Hermes* sent, not what the profile you are running
+  in sent.
+
 ## Rules and pitfalls
 
 - **A delegate/subagent child must never hold the chat's routing columns** (`session_key`, `chat_id`,
@@ -144,6 +192,15 @@ no need to infer it from his description. For cross-profile recall use `session_
 - **Order of evidence: routing table → owner row lineage → log decision lines → delegation records →
   transcript.** One log line usually names the decision (`Pinned …` / `dropped` / `Invalidated run
   generation`); grep that before opening any source file.
+- **Never recursively text-search all of `~/.hermes`** (one `search_files` call rooted there, or the
+  same thing as `grep -r`). It holds browser profiles, backups, installs and package caches; the search
+  times out before it prints. Aim at `logs/`, `state.db`, `sessions/` and the profile stores, excluding
+  `browser-profile/ backups/ cache/ installs/`.
+- **This shell rewrites its own output** (lines from file-listing and text-search commands come back
+  folded and re-joined): enumerate with Python (`os.walk`, `sqlite3`, `json`) and print only the
+  aggregate. A count read off mangled shell output is wrong more often than it is right.
+- `sessions` has no `session_id` column — it is `id` (`state_meta` heartbeat keys embed it as
+  `heartbeat:<id>`). Guessing the name costs a round trip.
 
 ## Answer shape (this user)
 
@@ -161,6 +218,8 @@ no need to infer it from his description. For cross-profile recall use `session_
   each column.
 - `scripts/routing_owner.py` — one-shot read-only dump: routing key → owner, every row holding the
   key, parent chain, delegations with per-task status.
+- `references/heartbeat-and-request-audit.md` — enumerate heartbeat meta rows and resolve each to its
+  conversation; the Python aggregation for model-call / tool / 429 lines in a time window.
 
 ## Skill Structure
 
@@ -168,9 +227,10 @@ no need to infer it from his description. For cross-profile recall use `session_
 
 ```
 hermes-session-routing-forensics/
-├── SKILL.md  (179 lines)
+├── SKILL.md  (239 lines)
 ├── test-prompts.json  (14 lines)
 ├── references/
+│   ├── heartbeat-and-request-audit.md  (91 lines)
 │   └── hermes-session-routing-forensics-state-db-routing-queries.md  (54 lines)
 └── scripts/
     └── routing_owner.py  (140 lines)

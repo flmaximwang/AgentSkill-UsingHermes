@@ -107,6 +107,22 @@ Note `_mode` after initialize: a mode of `disabled` means the local runtime was 
 (`_check_local_runtime`), which is an install/environment problem, not a config typo — and a tool call
 that raises `AttributeError` on a `self._*` setting is the same cause (initialize returned early).
 
+**A fresh write is not recallable the moment `retain` returns.** The path is `retain` → extract facts
+→ `consolidation task queued` → a worker run seconds later, so an immediate `recall` can legitimately
+miss the content just written and a probe asserting "recall hits the new fact" reads as a failure. Gate
+on the daemon's own runtime log (`~/.hindsight/profiles/<profile>.log`), which prints per operation:
+
+- `RETAIN_BATCH START: <bank>` … `STREAMING RETAIN COMPLETE: N units` + the document uuid — the write
+  landed, and how many units the extractor split it into;
+- `[CONSOLIDATION] bank=… created=N updated=N skipped=N` / `CONSOLIDATION COMPLETE` — those units are now
+  recallable as observations;
+- `[RECALL <bank>-…] Query: '…'` with `semantic=N, bm25=N, graph=N` — which retriever actually found the
+  row. A **BM25** hit is what proves a distinctive token is indexed; semantic returning the whole bank
+  ("truncated to top N" = the bank size) proves nothing about the query;
+- `Prefetch: server retain visibility timed out after N s; dropping N unresolved op(s)` — a dropped
+  prefetch is normal: injection lands on the **next** message, not the current turn. Never report
+  "memory injection is broken" off one turn whose user message carried no memory block.
+
 ## 5. Cross-profile memory: shared by default — so make it a decision
 
 The daemon's **hindsight profile name is the plugin's own `profile` config key, and its default is the
@@ -181,7 +197,11 @@ hermes config set memory.memory_enabled false        # MEMORY.md side + the agen
 hermes config set memory.user_profile_enabled false  # USER.md side
 ```
 
-- **Read at agent init** ⇒ nothing changes until a new session / gateway restart.
+- **Read at agent init** ⇒ nothing changes until a new session: `/reset` in the chat, or a new
+  thread. A gateway restart is **not** enough for a chat that already exists — its system prompt is
+  restored by hash, so the old provider's block survives the restart. Prove the swap at the session
+  level (`maintain-hermes-session-store-forensics.md`, Recipe E) before telling the user it took
+  effect.
 - Leave the two files on disk: they are the fallback if the provider has to be pulled, and they cost
   nothing when unused.
 - After this the external provider is the **only** cross-session memory — a daemon that is down means

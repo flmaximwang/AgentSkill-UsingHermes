@@ -14,6 +14,12 @@ the distinction every question here runs into:
 | **hub-installed** | downloaded from a source adapter (github, skills.sh, clawhub, url …) | the hub: `check` / `update` / `audit` / `uninstall` |
 | **local** | you copied it into `<HERMES_HOME>/skills/` yourself | nothing — you |
 
+**Gate every edit on that classification.** Before changing any skill inside a profile, resolve which
+kind it is; a hub-installed (or pack-repo-backed) skill has its **true copy in an external repo** — the
+profile directory is a build output. Editing it in place is silent work: the next `update` / reinstall
+overwrites it, and nothing in the profile records the change. Do it as: edit in the external repo →
+commit → push → install/update back into the profile. Only a genuinely local skill (`created_by: agent`,
+no `.hub/lock.json` entry) may be edited in the profile tree.
 The sibling skills own the install/update/remove lifecycles (`install-hermes-skills`,
 `update-hermes-skills`, `remove-hermes-skills`); the write path that creates skills by itself is
 `maintain-hermes-memory`. This skill covers the three questions that sit *behind* those: **discovery**
@@ -85,7 +91,7 @@ personal tap. Both halves, with the numbers and the code sites, are in
 
 ```
 maintain-hermes-skills/
-├── SKILL.md  (99 lines)
+├── SKILL.md  (105 lines)
 ├── test-prompts.json  (17 lines)
 └── references/
     ├── FAQs-on-hermes-skills-tap.md  (189 lines)

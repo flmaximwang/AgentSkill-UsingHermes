@@ -108,5 +108,22 @@ That is a report defect, not a search defect. Do **not** re-list the same names 
 3. Give every high-star absentee's **missing hard condition** (cloud / needs server / no adapter) —
    one line each; skipping this guarantees the next round is the same round.
 4. Then offer the relaxations: "如果你愿意放宽 X 这一条，池子里就多了 Y" — one option per condition.
-5. Finish with one executable next step (install which one, what three things to verify with their
+5. Finish with one executable next step (install which one, what three things to verify with their real data).
+
+## 退役旧 provider：残留物有四样，改 `memory.provider` 只换掉前台入口
+
+旧 provider 的东西都在 `config.yaml` 之外、各自独立存在，所以「已退役」必须逐样点过并读回：
+
+| 残留 | 典型位置 | 为什么容易漏 |
+|---|---|---|
+| 插件本体 | `$HERMES_HOME/plugins/<name>/` | 从 `plugins.enabled` 摘掉后**不加载但仍在**，`plugins list` 也还看得见 |
+| 模型缓存 | **`$HERMES_HOME` 之外**（limbic 是 `~/.cache/limbic`，实测 2.6 GB） | 这类缓存故意放在 home 外让多 profile 复用 ⇒ 清 home 时必漏 |
+| 事实库 | `$HERMES_HOME/<name>.db`（limbic.db 实测 5 MB） | 里面仍按**旧身份**分桶：gateway 会话写的是平台雪花号，不是 users.yaml 的 canonical |
+| 参数/身份文件 | `<name>_params.json`、`users.yaml` | 只有旧 provider 读，但删前要确认没有别处引用 |
+
+- **先导出再删**：把内容落到一个文件里，删完读回来复核。只报「文件数/体积」不构成内容已在别处的证据。
+- **点数用 Python（`os.walk`），不要用 `ls -R` / `find`**：本机 shell 输出会经包装层折叠改写，行会错位、
+  计数不可信。
+- 顺序：新 provider 用**用户真实数据**验收通过 → 导出旧库 → 删模型缓存 → 摘插件目录 → 最后才动旧库。
+  同一个会话里连着「装新的 + 删旧的」不算验收，只算拆掉了退路。
    real data).

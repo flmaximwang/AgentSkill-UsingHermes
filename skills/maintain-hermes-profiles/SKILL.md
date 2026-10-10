@@ -147,6 +147,7 @@ are **not** read-only — on a machine whose bots are serving users, a wrong one
 | The request is about | Read |
 |---|---|
 | creating / cloning / describing a profile, the alias, `setup`/`chat`, `list`/`show`, `use` vs `-p`, when a switch takes effect, the empty-shell key layers, per-profile skill installs, and **rename / delete / identity retries** | `references/maintain-hermes-profiles-lifecycle.md` |
+| retiring distribution packages — migrating skills to AgentSkill packs, then emptying the `Agent-*` repos | `references/maintain-hermes-profiles-distribution-retirement.md` |
 | per-profile gateway services, LaunchAgent / systemd paths, the batch `hermes-gateways` script, ports, the dashboard `/chat` exception | `references/maintain-hermes-profiles-gateways.md` |
 | "why did the switch not apply", "why is there no profile switcher", the two GitHub issues, workarounds, use-case matrix, official docs | `references/maintain-hermes-profiles-limitations.md` |
 
@@ -160,10 +161,11 @@ and the two issue links are the honest answer to give.
 
 ```
 maintain-hermes-profiles/
-├── SKILL.md  (171 lines)
+├── SKILL.md  (173 lines)
 └── references/
+    ├── maintain-hermes-profiles-distribution-retirement.md  (94 lines)
     ├── maintain-hermes-profiles-gateways.md  (111 lines)
-    ├── maintain-hermes-profiles-lifecycle.md  (221 lines)
+    ├── maintain-hermes-profiles-lifecycle.md  (236 lines)
     └── maintain-hermes-profiles-limitations.md  (76 lines)
 ```
 

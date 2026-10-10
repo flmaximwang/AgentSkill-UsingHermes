@@ -84,6 +84,34 @@ Compare that timestamp with the first session that no longer carried the old pro
 install came **before** the prompt changed, the install is not what has been driving the behaviour — say so
 instead of attributing the behaviour to the skill.
 
+## Recipe E — did a config change actually reach a running session?
+
+A key read at agent init (memory switches, `memory.provider`, persona text) applies only to a session
+**created** after the change. A live session's prompt is stored and **restored by hash** on a gateway
+restart — restarting is not a rebuild — so one chat can keep running the old prompt through any number
+of restarts and the config looks half-applied. The rebuild is visible as a new row that ends the
+previous one:
+
+```sql
+SELECT id, datetime(started_at,'unixepoch','localtime') AS started, ended_at IS NULL AS live,
+       substr(system_prompt_hash,1,12) AS hash
+FROM sessions WHERE chat_id = '<chat id>' ORDER BY started_at DESC LIMIT 5;
+```
+
+Then diff the two prompt **texts by marker**, not by eye — `system_prompts.prompt` is the deduped copy:
+
+```python
+prompts = {h: db.execute("SELECT prompt FROM system_prompts WHERE hash LIKE ?", (h + "%",)).fetchone()[0]
+           for h in (new_hash, old_hash)}
+for h, p in prompts.items():
+    print(h[:8], {m: m in p for m in ("# Hindsight Memory", "MEMORY (your personal notes)",
+                                      "USER PROFILE", "persistent memory via Limbic")})
+```
+
+Report it per session ("this chat moved to the new prompt at 19:14; the previous generation still carried
+MEMORY/USER blocks"), and note that a config key can be correct in `config.yaml` and still absent from the
+prompt the session is running. `scripts/check-session-prompt-markers.py <chat_id>` does both queries.
+
 ## Pitfalls
 
 - **Install state and use state are different records.** `lock.json` / `hermes skills list` / `check` answer

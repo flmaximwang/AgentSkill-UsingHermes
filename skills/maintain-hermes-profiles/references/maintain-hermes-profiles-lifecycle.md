@@ -188,6 +188,15 @@ Two traps while scanning:
 - **Exclude the record-class files**: `.curator_ledger.jsonl`, `.curator_backups/`, `cron/output/`,
   `cache/`, `sessions/`, `logs/`, `state.db*`, `*.bak-*`. They are history; rewriting them is forging
   history, and leaving them alone changes nothing at runtime.
+- **SOUL.md has two kinds of old-name mentions — only one is a path.** "I am the `job-hunter` agent"
+  is an identity declaration and stays. "My partner is `quant-investor`" is a cross-profile reference
+  and must be updated. Replace `` `<old>` `` (backtick-quoted) and `profiles/<old>` for OTHER
+  profiles' names; keep the self-identity mention.
+- **Check whether the rename target already exists as a profile.** `hermes profile rename <old> <new>`
+  when `<new>` already exists merges the old profile's content into the existing one (the old
+  directory is gone, the target's `previous_names` gains `<old>`). This is silent — `hermes profile
+  list` afterward shows only `<new>`. Before renaming, `ls ~/.hermes/profiles/<new>` to check for a
+  collision. If it exists, decide: merge (rename anyway) or pick a different name.
 
 Verification:
 
@@ -202,6 +211,12 @@ Verification:
 
 ## Delete, and retrying an identity migration
 
+- **Back up before deleting.** `cp -R ~/.hermes/profiles/<name> ~/.hermes/backups/profile-retire-<date>/<name>`
+  before `hermes profile delete`. The delete is permanent — it removes config, .env, memories, sessions,
+  skills, cron jobs, and the CLI alias. A backup is the only way to recover.
+- **Remove cron jobs first.** `hermes cron list --profile <name>` to find jobs, then
+  `hermes cron remove <job_id> --profile <name>` for each. A deleted profile's cron jobs will fail
+  silently (the scheduler can't find the profile directory).
 - Deletion is `hermes profile delete` (it also purges that profile's session/routing identity).
 - If the rename's identity migration did not settle: `hermes profile migrate-identity <old> <new>`
   (idempotent, retryable). If a delete did not settle: `purge-identity`. Both only mean anything for a named

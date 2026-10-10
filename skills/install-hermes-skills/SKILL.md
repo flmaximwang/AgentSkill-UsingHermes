@@ -209,6 +209,13 @@ Then verify the new entry — `hermes skills list` (category + `Source`), the lo
 `install_path` / `content_hash`, and `check <new key>` → `up_to_date` — and name the identifier you
 installed, because a same-name fork would make a failed move look like a successful one.
 
+- **A manual `rm -rf` of an installed skill directory does not clear the lock entry.** The lock lives in
+  `skills/.hub/lock.json`, not in the skill directory. After deleting the directory, `hermes skills
+  install` says "already installed at `<path>`" and refuses — the path no longer exists but the lock
+  entry does. `hermes skills uninstall <name> -y` clears the lock entry; only then does `install`
+  land cleanly. This matters in any migration or re-homing flow where the old directory is deleted
+  before the new one is installed.
+
 ## The commands
 
 ```bash
@@ -242,6 +249,20 @@ Two consequences worth stating plainly: **`--category` is the only lever on wher
 (`skills/<cat>/<name>/`, layered values allowed), and **you cannot pin a source at install time** —
 `do_install(source_id=…)` is used only inside `do_update`.
 
+- **Omit `--category` and the skill lands FLAT at the tree root** (`skills/<name>/`, no category at
+  all) — measured: a loomerto skill installed without it landed at `skills/loomerto-plan/`, and a flat
+  install is exactly the "no-category" shape a later cleanup has to chase. Pass the category on every
+  install, including a re-install.
+- **`--category <cat>` fails outright when `<home>/skills/<cat>` is a *skill*, not a category** —
+  `BLOCKED … invalid_path Refusing to install into '<cat>': it is an existing skill directory, not a
+  category.` This happens whenever a skill is named after the category it belongs in (a
+  `software-development/` skill sitting next to the `software-development/` category). Pick a different
+  category name, or resolve the collision, and say which — the refusal is correct, not a bug.
+- **A surviving lock entry blocks the install that would fix its path, `--force` included only for the
+  name conflict.** With an entry present the install answers `Warning: '<name>' is already installed at
+  <old path>` and stops, so re-homing a skill is always `uninstall <lock key> -y` **then** `install …
+  --category <cat>` (recipe: `references/install-hermes-skills-relocating-a-skill.md`).
+
 ## Scope and when changes take effect
 
 - **Per profile**: `hermes -p <profile> skills install …` writes into
@@ -254,6 +275,13 @@ Two consequences worth stating plainly: **`--category` is the only lever on wher
   `hermes skills trust`.
 
 ## Not in the hub? know the trade
+
+**A local directory is not an installable identifier.** `hermes skills install /path/to/skill` (and the
+same path as a `file://` URL) fails with `Could not download '<path>'` — no adapter claims that shape, so
+it is never the right answer to "install this skill I just wrote". The route for your own package is
+**push, then install by repo path**: `gh repo create <owner>/<repo>` → `git push` →
+`hermes skills install "<owner>/<repo>/skills/<name>" --category <cat> -y`. Only when the package is
+deliberately unmanaged is a hand-copy defensible:
 
 A manual `cp -R` into `<HERMES_HOME>/skills/` is still discovered (discovery is directory-based,
 nothing to register) but has **no lock entry**: `check`, `update`, `audit` and `uninstall` cannot see
@@ -293,7 +321,7 @@ deciding field; the content hash is.
 
 ```
 install-hermes-skills/
-├── SKILL.md  (316 lines)
+├── SKILL.md  (344 lines)
 ├── test-prompts.json  (12 lines)
 ├── references/
 │   ├── install-hermes-skills-diagnosis.md  (220 lines)
@@ -306,9 +334,9 @@ install-hermes-skills/
 │   ├── install-hermes-skills-github-sources.md  (130 lines)
 │   ├── install-hermes-skills-registry-routes.md  (451 lines)
 │   ├── install-hermes-skills-relocating-a-skill.md  (77 lines)
-│   ├── install-hermes-skills-renaming-a-skill-pack.md  (134 lines)
+│   ├── install-hermes-skills-renaming-a-skill-pack.md  (137 lines)
 │   ├── install-hermes-skills-repo-structure-routing.md  (76 lines)
-│   └── install-hermes-skills-scan-gate.md  (104 lines)
+│   └── install-hermes-skills-scan-gate.md  (120 lines)
 └── scripts/
     └── lock-provenance.py  (83 lines)
 ```

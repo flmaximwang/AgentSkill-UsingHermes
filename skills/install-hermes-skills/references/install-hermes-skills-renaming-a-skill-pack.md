@@ -126,9 +126,12 @@ literals in the repo) with its cost, and let the author choose instead of hand-c
 
 ## 8. Renaming the pack's repo
 
-- **Renaming the pack repo is a four-point sync.** `gh repo rename <new>` keeps an automatic redirect,
-  but it does not touch the local remote, the README's install command, or the repo description: also
-  `git remote set-url origin git@github.com:<owner>/<new>.git`, update the install command's repo
-  segment (a stale segment is a wrong install command that fetches nothing, not cosmetics), and
+- **Renaming the pack repo is a three-point sync — and `origin` is usually already done.** Run
+  `gh repo rename <new>` **from inside the clone** and it rewrites `origin` itself, preserving the
+  protocol (an SSH remote stays SSH): measure it with `git remote -v` before touching anything, and
+  only `git remote set-url` if the check shows a stale URL — issuing it blind is a needless write, and
+  on a clone whose remote was already correct it hides whether the rename actually did its job.
+  What the rename never touches: the README's install command and the repo description. A stale repo
+  segment is a wrong install command that fetches nothing, not cosmetics; then
   `gh repo edit --description`. Verify with `gh repo view <owner>/<new> --json name,description`. Note
   that a private repo answers 404 to an unauthenticated `curl` — that check proves nothing, `gh` does.

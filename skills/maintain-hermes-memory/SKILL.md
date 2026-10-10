@@ -143,9 +143,19 @@ $ hermes config get auxiliary.background_review.enabled → true
 ## When a change takes effect
 
 These keys are read at **agent initialization**, so a change applies only to a **new session**:
-in Discord / a gateway use `/reset`, or `/restart` the gateway; on the CLI quit and reopen. The
+in Discord / a gateway use `/reset` (or open a new chat/thread); on the CLI quit and reopen. The
 fork's own cost is ~30K tokens per event (`agent/turn_finalizer.py:750-751`), and cron sessions
 default to `skip_background_review=True` and skip it.
+
+**A gateway restart alone does not switch an existing session.** The prompt a live session runs with
+is stored and **restored by hash** on restart, not rebuilt — so `memory.memory_enabled=false`, a new
+`memory.provider`, or any persona edit stays invisible to that chat however many times the gateway is
+restarted, and the config looks half-applied (you will chase keys that were already correct). Verify at
+the session level before reporting success: the newest `sessions` row for the `chat_id` must have a
+**new id and a new `system_prompt_hash`** with the previous row's `ended_at` set, and the joined
+`system_prompts.prompt` must be the one you expect (the enabled provider's block present, the
+switched-off store's blocks absent). Recipe E + `scripts/check-session-prompt-markers.py` in
+`references/maintain-hermes-session-store-forensics.md`.
 
 ## Making a memory write land (budget arithmetic, timeouts)
 
@@ -178,7 +188,7 @@ Read the target store file before retrying — a blind retry double-applies the 
 | **whether a skill was ever actually loaded** — "did you use X?", why a broad `description` never fires, and how to reword it so it can: `.hub/lock.json` + `audit.log` for provenance, per-skill load counts out of `state.db`, persona-vs-skill provenance, description rewrites, and the two config keys that bypass the model's judgement (`skills.auto_load`, `channel_skill_bindings`) | `references/inspect-hermes-skill-usage.md` |
 | the curator's `.archive/` — `curator.*` thresholds, the `restore` / `pin` / `purge` recipes, what an archive record holds, and the `.archive` vs `skills.disabled` two-list mixup | `references/maintain-hermes-curator-archive-lifecycle.md` |
 | every mechanism that mutates a profile with no user command (bundled seeding, Skill Sync, curator, hub updates) — each one's lever, default and off switch | `references/maintain-hermes-self-improvement-controls.md` |
-| reading a home's `state.db` directly — which skills were loaded and how often, which prompt text was active per session, dating the install that should have carried a rule | `references/maintain-hermes-session-store-forensics.md` + `scripts/skill-usage-counts.py` |
+| reading a home's `state.db` directly — which skills were loaded and how often, which prompt text was active per session, whether a config change ever reached a running chat, dating the install that should have carried a rule | `references/maintain-hermes-session-store-forensics.md` + `scripts/skill-usage-counts.py`, `scripts/check-session-prompt-markers.py` |
 | a provider that ships **its own local model files** — install per profile, provision every pinned file (not just the big ones), verify with the pin's own hash algorithm, fetch GB-scale files over a flaky link, restart before judging it broken, and read the store back | `references/maintain-hermes-memory-local-model-providers.md` |
 | the chosen provider is **hindsight in `local_embedded`** — the config surface, wiring the extraction LLM without a secret ever entering chat, the daemon's one-time runtime provisioning and the readiness-timeout knob, why a `{platform}-{user}` bank template splits one person into two stores, and the in-process probe that actually counts | `references/hindsight-local-embedded.md` |
 | **which** provider to run at all, or 「它好像没什么人在用，换一个/退役它」 — the candidate pool *is* the plugin catalog's `memory` category (a framework with no `MemoryProvider` adapter is not a candidate and must be named as such), how to rank the pool objectively, and what each big name actually does about forgetting (ranking decay vs noise cleaning vs real deletion vs graph invalidation) | `references/choose-a-memory-provider.md` |
@@ -194,18 +204,19 @@ nudge intervals, which stops automatic forks but leaves manual refine working (i
 
 ```
 maintain-hermes-memory/
-├── SKILL.md  (213 lines)
+├── SKILL.md  (224 lines)
 ├── references/
-│   ├── choose-a-memory-provider.md  (112 lines)
-│   ├── hindsight-local-embedded.md  (199 lines)
+│   ├── choose-a-memory-provider.md  (129 lines)
+│   ├── hindsight-local-embedded.md  (219 lines)
 │   ├── inspect-hermes-skill-usage.md  (264 lines)
 │   ├── maintain-hermes-curator-archive-lifecycle.md  (67 lines)
 │   ├── maintain-hermes-memory-local-model-providers.md  (138 lines)
 │   ├── maintain-hermes-memory-md.md  (94 lines)
 │   ├── maintain-hermes-self-improvement-controls.md  (95 lines)
-│   ├── maintain-hermes-session-store-forensics.md  (102 lines)
+│   ├── maintain-hermes-session-store-forensics.md  (130 lines)
 │   └── maintain-hermes-skill-curator.md  (110 lines)
 └── scripts/
+    ├── check-session-prompt-markers.py  (79 lines)
     └── skill-usage-counts.py  (66 lines)
 ```
 

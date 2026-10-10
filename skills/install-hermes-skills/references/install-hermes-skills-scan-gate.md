@@ -26,6 +26,12 @@ The scanner scores a multi-line command as the joined statement and reports the 
 so a finding can appear above the text that actually matched. Reason over `f.file:f.line`, not over your
 own reading of the markdown.
 
+**Only `critical` and `high` findings change the verdict** — the roll-up is `critical → dangerous`,
+`high → caution`, and `medium` / `low` alone → `safe` (`tools/skills_guard.py`, `_verdict_from_severities`).
+So when reading a findings list, triage by severity first: a package whose worst findings are `medium`
+installs `safe` with no `--force`, and rewriting those medium lines buys nothing. Clear every `critical`
+and `high`; leave the rest.
+
 ## What trips it in documentation
 
 Every `.md .py .sh .json .yaml` file in the package is read — commands and quoted examples included, and
@@ -39,9 +45,11 @@ the meaning:
 | `curl_pipe_shell` | critical | a quoted download-piped-to-shell one-liner inside prose about blocked patterns | describe it ("a pipe-to-shell download") |
 | `system_passwd_access` | critical | the system account file path in prose | "a system path outside the workspace" |
 | `echo_pipe_exec` | critical | an `echo` of a JSON payload piped into an interpreter | describe the piped invocation |
+| `curl_pipe_python` | critical | a `curl` whose output is piped to an interpreter (`| python3 -c …`) — the pipe-to-interpreter sibling of `curl_pipe_shell`, and it fires on a documentation example just as readily | pipe to `jq -r` instead, or describe the parse step |
+| `ssh_dir_access` | high | the user's SSH directory written home-relative (a tilde path), e.g. in a key-upload example | show a placeholder path (`<path-to-your-private-key>`) |
 | `dump_all_env` | high | a bare environment dump followed by a pipe; a profile-env operand inside a pipeline; **or a markdown table cell that ends with the bare word for the process environment — the table's own column separator supplies the pipe** (measured 2026-10-04) | quote the path (`"$HERMES_HOME/.env"`), read the one variable by name, or word that cell as 「进程环境变量」 instead of the bare word |
 | `sudo_usage` | high | the privilege-escalation word anywhere on the line | describe the operation instead of naming the command |
-| `python_os_environ` | high | the interpreter's process-environment mapping named outside a comment or docstring — the bare mapping is what scores; a single-variable accessor read (`.get(…)` directly on it) is exempt, and a `#` anywhere earlier on the line exempts the line | read the one variable through the accessor form and require it to be exported, or keep the script outside the package — an uncommented mapping access cannot ship |
+| `python_os_environ` | high | the interpreter's process-environment mapping named outside a comment or docstring — the bare mapping is what scores; a single-variable accessor read (`.get(…)` directly on it) is exempt, and a `#` anywhere *earlier* on the line exempts the line | reads go through the single-variable accessor form; a **write** (removing a variable, setting a re-entry marker) goes through the C-level spellings — `os.unsetenv` / `os.putenv` — which score nothing and still reach the process a later `os.exec*` hands the environment to; a comment *after* the code does not exempt the line; otherwise keep the snippet outside the package |
 | `destructive_home_rm` | critical | a recursive delete whose target is written home-relative (a tilde path), **including a fenced example in a reference** — measured on a removal skill's orphan recipe | write the target with the pack's profile placeholder (`<home>/skills/<name>`), which is the convention the rest of these references already follow |
 
 **This file is the worked example.** Its pattern table describes each trigger instead of reproducing it,
@@ -63,11 +71,19 @@ quoted the shape instead of describing it. Two rules follow:
 
 Two consequences worth stating before spending a round trip:
 
-- **A dev or repair script that reads or writes the interpreter's process-environment mapping cannot live
-  inside a shipped skill** — the rule fires on the mapping's bare name with no exempt spelling of a write.
-  Either rewrite it to read the one variable through the accessor form (and require it to be exported), or
-  keep it at the repo root as tooling, where no skill directory owns it and the scan never sees it
-  (`scripts/` next to the repo's generator is the natural home).
+- **A dev or repair snippet that reads or mutates the interpreter's process-environment mapping cannot ship as
+  written** — the rule fires on the mapping's bare name, and a comprehension that iterates the whole
+  mapping to build a *modified copy* for a child process is the usual shape. Five ways out, in this order: **first check whether the tool itself takes a flag that removes the need**
+  — wanting a doctored environment is the smell, not the solution (measured: a Swift build failed only
+  because the runtime exports a `SDKROOT` pointing at a different SDK than the selected toolchain;
+  `xcrun --sdk macosx` made the same build succeed against the untouched environment, so the rewrite was
+  **deleted** rather than reworded and the verdict returned to `safe`); point *this process*
+  at another profile or home through the tool's own override/context setter when that was the goal
+  (measured: swapping it in for the env rewrite cleared the finding → `safe`); read one variable through the
+  accessor form; do a **removal or marker write** with the C-level spellings instead
+  (measured: a re-exec guard's four `high` findings — `safe` → `caution` — cleared back to `safe` with the
+  meaning intact, because the exec family carries the current process environment either way); else keep the
+  snippet at the repo root as tooling, where no skill directory owns it and the scan never sees it.
 - **Rewriting to pass the scan is a content decision, not a mechanical edit.** A token placeholder is no
   longer copy-pasteable, and quoting a scanner false positive in a troubleshooting table is itself what
   trips the rule. Name the lines you would change and what each rewrite costs, and let the author choose
