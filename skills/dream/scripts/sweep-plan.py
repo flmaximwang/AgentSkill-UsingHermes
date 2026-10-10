@@ -182,6 +182,11 @@ def cmd_scan(args) -> int:
     for pack in sorted(pathlib.Path(args.packs_root).expanduser().glob("AgentSkill-*")):
         if not pack.is_dir():
             continue
+        # A linked worktree of some other clone has `.git` as a FILE, not a directory: its name looks exactly
+        # like a pack but pushing there is not what a destination means (measured 2026-10-11: this session's own
+        # `AgentSkill-UsingHermes.dream-nostay` worktree showed up as a routable destination).
+        if (pack / ".git").is_file():
+            continue
         pk_skills_dir = pack / "skills"
         remote = git(pack, "remote", "get-url", "origin")
         installed = {n: str(v.get("install_path", "")) for n, v in lock.items()
@@ -516,6 +521,12 @@ def self_test() -> int:
                     "git@github.com:flmaximwang/AgentSkill-UsingFake.git"], check=True)
     (packs / "AgentSkill-Empty").mkdir()          # a placeholder dir IS a legal destination in v2
     subprocess.run(["git", "init", "-q", str(packs / "AgentSkill-Empty")], check=True)
+    # a linked worktree of another clone: its name looks like a pack but `.git` is a file, not a directory
+    (packs / "AgentSkill-UsingHermes.wt").mkdir()
+    (packs / "AgentSkill-UsingHermes.wt" / ".git").write_text("gitdir: /tmp/nope/.git/worktrees/wt\n")
+    (packs / "AgentSkill-UsingHermes.wt" / "skills" / "x").mkdir(parents=True)
+    (packs / "AgentSkill-UsingHermes.wt" / "skills" / "x" / "SKILL.md").write_text(
+        "---\nname: x\ndescription: wt\n---\n", encoding="utf-8")
 
     real = HERMES_HOME
     HERMES_HOME = tmp
@@ -545,6 +556,9 @@ def self_test() -> int:
         assert sorted(asp["dirs"]) == ["AgentSkill-Empty", "AgentSkill-UsingFake"], asp
         assert asp["tool_dirs"] == ["AgentSkill-UsingFake"] and asp["topic_dirs"] == ["AgentSkill-Empty"], asp
         assert asp["routable"] == ["AgentSkill-UsingFake"], asp
+        # 别的 clone 的 worktree（`.git` 是文件）名字再像包也不算落点
+        assert "AgentSkill-UsingHermes.wt" not in asp["dirs"], asp["dirs"]
+        assert not any("wt" in d for d in asp["dirs"]), asp["dirs"]
         pk = [p for p in json.loads((tmp / "out" / "packs.json").read_text())
               if p["repo"] == "AgentSkill-UsingFake"][0]
         assert pk["installed"] == {"hubskill": "cat/hubskill"} and pk["categories"] == ["cat"], pk
