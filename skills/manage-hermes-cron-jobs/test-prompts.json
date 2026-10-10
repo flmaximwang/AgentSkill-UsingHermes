@@ -1,0 +1,27 @@
+[
+  {
+    "id": 1,
+    "prompt": "帮我把「小助手」那个 agent 的定时任务结果改到 Discord 的 #团队日志 频道，别再发到飞书那边了",
+    "expected": "先把这个 agent 解析到 profile（profiles/<p>/profile.yaml 的 previous_names、.env 里的平台凭证、gateway.log 的 Connected as 行），再定位 cron 里的 job：改 deliver 用 cronjob_manage action=update job_id=… deliver=discord:<chat_id>（或 bot-chat[:profile]）。关键判据是那个平台必须在 **该 job 所属 profile** 的 config.yaml platforms: 与 .env 里都配好，否则 job 照跑、每次投递都报 platform '<x>' not configured/enabled；origin 不可移植（它钉的是创建它的那条会话）。改完回读 jobs.json 的 deliver 值，并说清还差哪一步才端到端通。"
+  },
+  {
+    "id": 2,
+    "prompt": "那个每天凌晨 3 点跑的收编定时任务太贵了，我想让它用便宜的 monk 模型跑，别动我主会话的模型",
+    "expected": "这是单个 job 的模型 pin，只有 CLI 能做：hermes cron edit <job_id> --model monk --provider monk。cronjob_manage 的 pinned=true 只能锁「当前主模型」，model/provider/base_url 被故意排除在工具转发参数外（无人值守的花费归用户）。优先级是 job 自己的 model/provider > config.yaml 的 cron.model > 主模型；cron edit 没有 --base-url，命名 provider 的端点从该 profile 的 providers.<名字>.base_url 解析。回读三件且不真跑那个 job：jobs.json 的 model/provider（hermes cron list 不显示模型）、hermes cron doctor、以及用 hermes 自己的解释器跑 cron.scheduler._load_cron_job_config + _resolve_job_runtime 看解析出的 base_url 与凭证是否就位。"
+  },
+  {
+    "id": 3,
+    "prompt": "我有个定时任务今早报警说 Script exited with code 2，通知里只有一行，从哪儿看它到底哪一步炸了？",
+    "expected": "no_agent 脚本 job 没有 agent 记录，先读全这次运行：cron/output/<job_id>/<date>.md（stdout+stderr 都在这份里）、jobs.json 的 last_error/failure_streak、cron/executions.db 的历史。接着列出**该 profile 全部** failure_streak 的 job（脚本 job 共用一个解释器环境，一个环境坏掉会同时打断好几个 job，通知只报你订阅的那个）。脚本自己的日志（/tmp/<name>.log）若显示成功而 cron md 全 FAIL，说明那份日志来自别的调用者，差别在环境。用 env -u PYTHONPATH 重跑同一条命令做分叉实验——成功/失败成对出现就是定案（继承来的 PYTHONPATH 会让外来 site-packages 赢过该环境自己的，典型是 ABI/版本对不上的 numpy 报错）。"
+  },
+  {
+    "id": 4,
+    "prompt": "我现在这套 Hermes 里到底有哪些定时任务？各自挂在哪个 profile、投到哪、失败过几次？",
+    "expected": "逐 profile 读 cron/jobs.json（default 在 ~/.hermes/cron/jobs.json，其余在 ~/.hermes/profiles/<名>/cron/jobs.json），每个 job 报 name / schedule / deliver / enabled / last_status / failure_streak / last_delivery_error，deliver 里的 chat_id 用 channel_directory.json 翻成可读名字。channel 名字可能因为改名而失效，以 id→name 映射为准。只读；要改哪条再进 §4。"
+  },
+  {
+    "id": 5,
+    "prompt": "那个 dream 定时任务派出来的子代理好像把会话路由顶掉了，我人面会话被 session_switch 结束了，谁的锅？",
+    "expected": "不是本技能：问的是消息/会话被投给了错误的 agent——路由键、session_switch、完成通知归属那套，走 hermes-session-routing-forensics。本技能只管 job 自身的 schedule/deliver/model 与它自己的执行失败，不做路由归属判断。"
+  }
+]

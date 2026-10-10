@@ -32,6 +32,7 @@ python3 -B docs/routing-blind-tests/score-blind.py --round <轮次> --new-skill 
 | r4-diagnose-update | 2026-10-08 | diagnose-a-failed-hermes-update | 4/4 | 32/47 | 1/1 | 0 条 | 定版 | `skills/diagnose-a-failed-hermes-update/test-results.md` |
 | r6-scan-heartbeat-sessions | 2026-10-10 | scan-heartbeat-sessions（后更名 manage-global-heartbeat） | 4/4 | 40/54 | 1/1 | 0 条 | 定版（臂 A 旧题 35/54；诱饵两臂一致判给 maintain-hermes-gateway） | `skills/manage-global-heartbeat/test-results.md` |
 | r8-manage-global-heartbeat | 2026-10-10 | manage-global-heartbeat | 7/7 | 39/54 | 2/2 | 0 条 | 定版（改名后；arm A 8 条正例判 none） | `skills/manage-global-heartbeat/test-results.md` |
+| r9-manage-hermes-cron-jobs | 2026-10-10 | manage-hermes-cron-jobs | 4/4 | 44/63 | 1/1 | 0 条 | 定版（首版；arm A 4 条正例判 none，臂 B 全接住） | `skills/manage-hermes-cron-jobs/test-results.md` |
 
 > 改名：`scan-heartbeat-sessions` 于 2026-10-10 更名为 `manage-global-heartbeat`（head 内容未变，只加「会话外清/停」的触发词）。
 > r6 / r7 两轮的候选名与账沿用旧名；r8 起用新名。旧名保留在 description 里当触发词。

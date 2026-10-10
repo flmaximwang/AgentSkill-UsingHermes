@@ -41,6 +41,7 @@ hermes skills install flmaximwang/AgentSkill-UsingHermes/skills/load-external-sk
 | r5 | 2026-10-09 | `dream`（r5 时名 `recruit-profile-skills-in-batch`） | 4/4 | 41/57 | 1/1 | 0 条 | 定版；4 条正例在臂 A 被判给兄弟 `recruit-learning-in-profile`（相邻，靠「一批 vs 一条」分开） |
 | r6-scan-heartbeat-sessions | 2026-10-10 | `scan-heartbeat-sessions`（后更名 `manage-global-heartbeat`） | 4/4 | 40/54 | 1/1 | 0 条 | 定版（首版，只读）；4 条正例在臂 A 被判给兄弟 `hermes-session-routing-forensics` |
 | r8-manage-global-heartbeat | 2026-10-10 | `manage-global-heartbeat` | 7/7 | 39/54 | 2/2 | 0 条 | 定版（读+写两侧，含 2 条不同答案的诱饵：网关活体→`maintain-hermes-gateway`、心跳投错线程→`hermes-session-routing-forensics`）；臂 A 里 8 条正例被判 `none`（候选里没有它，就不硬塞兄弟） |
+| r9-manage-hermes-cron-jobs | 2026-10-10 | `manage-hermes-cron-jobs` | 4/4 | 44/63 | 1/1 | 0 条 | 定版；臂 A 里 4 条正例判 `none`（候选里没有它）→ 臂 B 全接住；诱饵（路由类题）2/2 判给 `hermes-session-routing-forensics` |
 
 ## 流程图
 
