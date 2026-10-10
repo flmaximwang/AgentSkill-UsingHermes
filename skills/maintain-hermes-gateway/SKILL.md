@@ -72,35 +72,75 @@ steps are done — verify them by read, then write only the profile side:
 
 1. Token/id sanity + identity: `GET /users/@me` (discord.com API needs the local proxy on this
    machine — without it curl exits 000; never `--noproxy`), then `GET /applications/@me` for
-   `name`/`flags`.
+   `name`/`flags`. Do these reads with `curl`: a Python stdlib client (`urllib`) picks up no proxy
+   here and can answer with a Cloudflare body (`error code: 1010`) that reads like a 403
+   permission error.
 2. Intents already on? `flags & 557056` = both limited bits (32768 members + 524288 message
    content). `557056` exactly is the clean case.
-3. Already in the guild? `GET /guilds/<guild>/members/<bot_user_id>` — **not**
-   `/users/@me/guilds/<guild>/member`, which answers `Bots cannot use this endpoint` (20001) for
-   the bot itself. Use another bot's token in the guild. Look for a `managed: true` role named
-   after the app: that role's creation is the second proof of membership.
+3. Already in the guild? `GET /users/@me/guilds` (bot's own token) lists every guild the bot
+   has joined — the simplest membership check. For a specific guild's member detail (managed
+   role, permissions), use `GET /guilds/<guild>/members/<bot_user_id>` — **not**
+   `/users/@me/guilds/<guild>/member`, which answers `Bots cannot use this endpoint` (20001)
+   for the bot itself. Use another bot's token in the guild. Look for a `managed: true` role
+   named after the app: that role's creation is the second proof of membership.
 4. Permission decode: the managed role usually lacks `VIEW_CHANNEL` / `SEND_MESSAGES_IN_THREADS`
    and the @everyone union supplies them (observed artist bot role `343597500480` + @everyone
    `2248473465835073` → effective set includes both). Judge the union, not the role integer.
-5. Profile side: `profiles/<name>/.env` gets `DISCORD_BOT_TOKEN`, `DISCORD_APPLICATION_ID`,
-   `DISCORD_ALLOWED_USERS` (the human's user id), `DISCORD_HOME_CHANNEL` (+ `_NAME`);
+5. **Channel-visibility gate — run it before the self-test in step 8.** A connected bot can still
+   see nothing: a channel/category override that `deny`s VIEW_CHANNEL (`1024`) for `@everyone`
+   **beats** the bot's own managed role, and access comes from a custom role the new bot does not
+   carry yet. Probe read-only: `GET /guilds/<g>/channels` with the **bot's own** token (only the
+   channels it can see come back — zero visible = gated) and `GET /channels/<id>` with it
+   (`403 Missing Access`, code `50001`). Then diff roles: `GET /guilds/<g>/members/<new_bot_id>`
+   against the same call for a bot that already works in this guild — the set difference of `roles`
+   is exactly the missing grant (`GET /guilds/<g>/roles` names it, and all working bots carry it).
+   Adding a role needs MANAGE_ROLES, which the guild's gateway bots do **not** have
+   (`274878024768` has no `1<<28`) — hand the user one click path (Server → member list → the bot →
+   right-click → Roles → the access role); it applies live, no restart, no adapter rescan.
+   Recipes, decode table and the observed guild layout: `references/discord-channel-access.md`.
+6. Profile side: `profiles/<name>/.env` gets `DISCORD_BOT_TOKEN`, `DISCORD_APPLICATION_ID`,
+   `DISCORD_ALLOWED_USERS` (the human's user id — resolve it with
+   `GET /guilds/<g>/members/search?query=<discord_username>` using a token already in the guild,
+   rather than copying another profile's value), `DISCORD_HOME_CHANNEL` (+ `_NAME`);
    `profiles/<name>/config.yaml` gets `discord: {require_mention: true, thread_require_mention:
    true, auto_thread: true, allow_bots: mentions}`. No `platforms.discord.enabled: true` needed —
    the token alone auto-enables (§4c).
-6. **Do not `gateway restart`.** The multiplex watcher re-scans on the .env/config mtime and
+7. **Do not `gateway restart`.** The multiplex watcher re-scans on the .env/config mtime and
    connects the new adapter, so a full restart only blinks every other bot for a minute. Expect
    `Re-scanned profile '<name>' after config/.env change (1 adapter(s) connected)` →
-   `✓ discord connected (profile: <name>)` in `~/.hermes/logs/gateway.log` within ~60 s
-   (watcher cadence observed 5 s poll).
-7. Self-test gates 2–4 without the user: from another profile's bot, POST to a low-traffic
+   `✓ discord connected (profile: <name>)` within ~60 s (watcher cadence observed 5 s poll).
+   The per-profile log `profiles/<name>/logs/gateway.log` is the primary evidence — look for
+   `[Discord] Connected as <bot>#<nnnn>` there; the main `~/.hermes/logs/gateway.log` also
+   mirrors it but the per-profile log is smaller and stays greppable. Confirm with
+   `gateway_state.json`: `platforms.<profile>:<platform>.state == "connected"`.
+8. Self-test gates 2–4 without the user: from another profile's bot, POST to a low-traffic
    channel with an inline `<@bot_id>` mention (`allow_bots: mentions` + `bots_require_inline_mention`
    admit it). Clean up afterwards: the auto-created thread is **not deletable** with either bot's
    token when the channel overwrites withhold MANAGE_THREADS (403 / 50013) — the starter message
    deletes fine (204) and the thread's owner may `PATCH {"archived":true,"locked":true}` (owner =
-   the adapter that created it). Discord's own `type: 4` rename system message inside it cannot be
+   Discord's own `type: 4` rename system message inside it cannot be
    deleted by anyone, so say so instead of claiming a clean sweep.
 
-## 1. Read the log first; it already has the answer
+   ### Three traps in the §0b self-test
+
+   - **The test channel must be one the NEW bot can view.** A mention in a channel the bot cannot see
+     produces **no MESSAGE_CREATE at all** — silent, and it reads exactly like broken wiring. Confirm
+     with the bot's own token first: `GET /channels/<id>/messages?limit=1` → `200` vs
+     `403 Missing Access (50001)`. Do not trust a read made with another bot's token, and do not trust
+     `GET /guilds/<g>/channels` alone — it can list a channel that later 403s on read/message events.
+   - **Never copy a sibling profile's `DISCORD_HOME_CHANNEL` unchecked.** Access is usually granted by
+     a per-role channel set, so a sibling's value can be a channel the new bot cannot see at all
+     (observed: a profile pointing at `📝-工作日志` while every lab-role bot 403s on it). Proactive
+     sends then fail with `403 Missing Access` while the interactive path still looks perfect. Pick
+     home from the channels where the bot's own token reads `200`.
+   - **Wait out the slash-command reconcile before testing.** A newly connected adapter registers ~76
+     slash commands (`Safely reconciled 76 slash command(s) … created=76`); auto-thread creation
+     immediately after trips Discord's limiter: `Auto-thread creation failed after retry. Direct
+     error: Too many requests. Retry in 204.25 seconds.` The bot then replies `⚠️ … 无法为这条消息创建
+     Discord 话题 …` (locale key `auto_create_failed`). That is a 429, **not** a permission or wiring
+     fault — stop hammering the REST API, wait the ~3.5 min out, retest, and the same mention lands.
+
+   ## 1. Read the log first; it already has the answer
 
 `~/.hermes/logs/gateway.log` (same lines mirror into `errors.log` and
 `gateway.error.log`). Search for the platform name and for `parked`.
@@ -163,6 +203,21 @@ the retry backoff climbing 30 → 60 → 120 → 240 → 300 s. The same window 
 `gateway_state.json` flips per-profile bots between `connected` and `fatal` — **`fatal` is not
 terminal**, the watcher re-serves those adapters, so a bot that went fatal a minute ago may be
 connected again now. Nothing in Hermes is broken: the local proxy's outbound is.
+
+### `ack_stale` loop: REST healthy, WebSocket not
+
+A distinct failure mode from the above: the proxy passes REST traffic fine (curl → 200) but
+interferes with WebSocket heartbeat/ACK frames. Log signature:
+`Discord Gateway WebSocket unhealthy (ack_stale, 1/2)` → `(ack_stale, 2/2)` →
+`forcing reconnect` → `Disconnected`, with **no reconnect attempts afterward** (unlike the
+`Cannot connect to host` case which retries at 30/60/120/240/300 s). The bot may connect once
+(`Connected as <bot>#<nnnn>`) then drop 60–90 s later with `ack_stale`. This is a proxy-level
+issue even though REST API calls succeed — the proxy is dropping or delaying WebSocket frames.
+
+Diagnosis: `curl -x http://127.0.0.1:<port> https://discord.com/api/v10/gateway` → 200 proves
+REST is fine but says nothing about WS. Grep the per-profile log for `ack_stale` — if present,
+the proxy is the cause even though the REST probe succeeds. Fix: restart the proxy core, then
+`hermes -p <profile> gateway restart` to force a clean WS handshake.
 
 Do **not** start by picking another node — attribute the fault first, then fix the proxy, then
 restart the gateway once:
@@ -276,6 +331,7 @@ about the suspect one until `-m <model> --provider <name>` was passed explicitly
 | Bot **online**, ignores everyone | Allowlist (§4) |
 | Online, answers others but not you | Allowlist, or mention rules |
 | Processed but you see no reply | Reply landed elsewhere (threading, §4) |
+| Online, no reply anywhere, **no `inbound message` line at all** | It cannot see the channel — channel overwrites / role-gated visibility (§0b step 5, `references/discord-channel-access.md`) |
 | `inbound message` logged, no `response ready:`, `APITimeoutError` in the log | The agent's own egress — its model call never completes (§1, model-API path) |
 
 ## 3. Discord: privileged intents (the offline case)
@@ -402,6 +458,23 @@ Expect Discord bots on every profile to blip for ~1 min during the restart (it i
 restart, not per-platform); a profile whose Discord sits behind a flaky local proxy can take one
 extra `Secondary discord reconnect retry` round. Leave the `.env` credentials in place unless the
 user asks — an explicit `false` already wins, and deleting secrets is a separate decision.
+
+## 4d. `gateway restart` from inside a gateway session: you cannot; hand it over
+
+The terminal tool **refuses it by design** — `Blocked: command or referenced script cannot restart,
+stop, or uninstall the gateway from inside the gateway process`, with the reason in the same line:
+SIGTERM reaches the child mid-command, so the command never completes, and the turn that ordered it
+dies with it. Do not reach for a wrapper to sneak it through (a detached
+`sh -c 'sleep N; hermes gateway restart'`, a `launchctl kickstart` of the gateway job): the same guard
+fires, and a restart that lands *after* the reply reads to the user as a random outage.
+
+Hand it over instead — **first thing in the reply**, with the cost in the same sentence: run
+`hermes gateway restart` in your own terminal → every profile's bot blips ~1 min, and the change (a
+new plugin, a provider switch, a config edit) only takes effect after it.
+
+One case is genuinely optional: switching the active **memory provider** needs only a *new session*
+(the installer prints "new sessions use it" — the provider is resolved when an agent session is
+built), so say which one you are asking for: `/new` in that chat, or the full restart.
 
 ## 5. Which list to send the user to
 

@@ -7,6 +7,7 @@
 # Env:   HERMES_ENV            (default $HERMES_HOME/.env)
 #        HERMES_GATEWAY_LOG    (default ~/.hermes/logs/gateway.log)
 #        DISCORD_PROXY         e.g. the proxy client's loopback mixed port (auto-detected from macOS scutil otherwise)
+#        DISCORD_REF_ENV        another profile's .env holding a KNOWN-WORKING bot token; enables the role diff in gate 2b
 
 set -u
 
@@ -67,6 +68,40 @@ if isinstance(g, list):
     sys.exit(0 if g else 1)
 print("GATE 2  unexpected response (HTTP error?)")
 sys.exit(2)' || fail "gate 2 failed - the bot user is in no guild. Re-invite with scope=bot+applications.commands (the Portal-provided link installs commands only)."
+
+# --- gate 2b: what the bot actually SEES, and the role diff that decides it --------------------
+guild_id=$(printf '%s' "$guilds" | python3 -c 'import sys, json
+g = json.load(sys.stdin)
+print(g[0]["id"] if isinstance(g, list) and g else "")' 2>/dev/null)
+if [ -n "$guild_id" ]; then
+  visible=$("${CURL[@]}" -H "Authorization: Bot $TOKEN" "$API/guilds/$guild_id/channels")
+  printf '%s' "$visible" | python3 -c 'import sys, json
+d = json.load(sys.stdin)
+if not isinstance(d, list):
+    print("GATE 2b channel visibility: unexpected response")
+    raise SystemExit(0)
+text = [c for c in d if c.get("type") in (0, 5)]
+print("GATE 2b channel visibility: {} channel(s) visible ({} text)".format(len(d), len(text)))
+for c in text[:10]:
+    print("          {}".format(c.get("name")))
+raise SystemExit(1 if not d else 0)' || {
+    echo "        FAIL: the bot sees no channel - channel overwrites gate it (a channel-level @everyone"
+    echo "        deny of VIEW_CHANNEL beats the bot's own managed role). Diff its roles against a"
+    echo "        working bot's (DISCORD_REF_ENV) and have the user add the guild's access role -"
+    echo "        references/discord-channel-access.md. No restart is needed once the role is added."
+  }
+  if [ -n "${DISCORD_REF_ENV:-}" ] && [ -f "$DISCORD_REF_ENV" ]; then
+    REF_TOKEN=$(grep -m1 '^DISCORD_BOT_TOKEN=' "$DISCORD_REF_ENV" | cut -d= -f2- | tr -d "\"' " | tr -d '\r')
+    if [ -n "$REF_TOKEN" ]; then
+      new_id=$("${CURL[@]}" -H "Authorization: Bot $TOKEN" "$API/users/@me" | python3 -c 'import sys, json; print(json.load(sys.stdin)["id"])')
+      ref_id=$("${CURL[@]}" -H "Authorization: Bot $REF_TOKEN" "$API/users/@me" | python3 -c 'import sys, json; print(json.load(sys.stdin)["id"])')
+      { "${CURL[@]}" -H "Authorization: Bot $REF_TOKEN" "$API/guilds/$guild_id/members/$new_id"; echo; "${CURL[@]}" -H "Authorization: Bot $REF_TOKEN" "$API/guilds/$guild_id/members/$ref_id"; } \
+        | python3 -c 'import sys, json
+a, b = [json.loads(x).get("roles", []) for x in sys.stdin.read().split("\n")[:2]]
+print("GATE 2b role diff: new bot is MISSING roles -> {}".format(sorted(set(b) - set(a)) or "none"))'
+    fi
+  fi
+fi
 
 # --- gate 3: allowlist + home channel + gateway log ------------------------------------------
 echo "GATE 3  DISCORD_ALLOWED_USERS=$ALLOWED"
