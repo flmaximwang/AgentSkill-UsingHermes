@@ -1,3 +1,0 @@
-# SDS-PAGE Gel Cropper Skill Configuration
-# venv_path: path to the Python virtual environment for this skill
-venv_path: "/Applications/GelCropper/.env"

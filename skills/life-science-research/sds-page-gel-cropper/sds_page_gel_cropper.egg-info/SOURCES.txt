@@ -1,6 +1,0 @@
-pyproject.toml
-sds_page_gel_cropper.egg-info/PKG-INFO
-sds_page_gel_cropper.egg-info/SOURCES.txt
-sds_page_gel_cropper.egg-info/dependency_links.txt
-sds_page_gel_cropper.egg-info/requires.txt
-sds_page_gel_cropper.egg-info/top_level.txt
