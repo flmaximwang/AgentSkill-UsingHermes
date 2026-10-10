@@ -8,7 +8,7 @@ Verb keywords: install, remove, maintain
 - Update: Contact with remote and modify existed content.
 - Recruit: 把一份学习成果收编进它该在的地方（分析现状 → 改已有内容或新增）。学到的那份在会话里 → `recruit-learning-in-session`；只存在于某个 profile 里、无仓库无 lock 条目 → `recruit-learning-in-profile`。
 - Evolve: Recruit 的旧叫法。`evolve-hermes-skills` 已改名为 `recruit-learning-in-session`、`install-hermes-skill-from-a-profile` 已改名为 `recruit-learning-in-profile`，两者的 description 里都保留旧触发词，所以「evolve 这轮会话」「把 profile 里这个 skill 收进仓库」仍会路由到它们。
-- Recruit（批量）: 一次把某个 profile 里**所有没有仓库归属**的本地 skill 收编进包仓库——枚举 → 判断归位（JEV 优先，否则分类子代理）→ 按判据**自动决议**（无人值守：不提问、不等人；判不出来的行留本地进汇报）→ 每包一个 writer 并行写入 → 独立子代理回读 → 整包重装回 profile。→ `dream`（原名 `recruit-profile-skills-in-batch`）。它与单条 Recruit 的判别信号是**「一批 vs 一条」**。
+- Recruit（批量）: 一次把某个 profile 里**所有没有仓库归属**的本地 skill 收编进包仓库——枚举 → 判断归位（JEV 优先，否则分类子代理）→ 按判据**自动决议**（无人值守：不提问、不等人；判不出来的行补一次判官重判、仍拿不准就在汇报里单列——v2 已废除「留本地」，每条都必须有落点）→ 每包一个 writer 并行写入 → 独立子代理回读 → 整包重装回 profile。→ `dream`（原名 `recruit-profile-skills-in-batch`）。它与单条 Recruit 的判别信号是**「一批 vs 一条」**。
 - 不进包（Not in pack）: 有独立上游仓库/发布页的第三方 skill **不并进任何 `AgentSkill-*` 包**（包是用户自己维护的内容）——它的落点是「从上游装回」。例：`darwin-skill`（上游 `alchaincyf/darwin-skill`，装法 `hermes skills install "skills-sh/alchaincyf/darwin-skill/darwin-skill" --category agent-evolution -y`）2026-10-10 已从本包迁出。
 - Load: Read something that exists elsewhere into context — no profile directory, no lock entry.
 - Scan: 扫出本机 Hermes 的某种状态并列表（只读，不动任何库）。例：`manage-global-heartbeat` 扫所有 profile 的 heartbeat（会话级循环指令），列出挂着它的 session 及其累计 token，并可从会话外 clear/pause/set。
