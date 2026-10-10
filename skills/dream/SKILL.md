@@ -39,19 +39,20 @@ JEV 的题面、分块与判读：`references/dream-jev-routing.md`。
 ## 无人值守（本 skill 的唯一模式）
 
 一条批次从枚举跑到整包重装，中间**不问人、不等人、不发要点选的表单**：所有判断落到下面这张表，跑完把汇报贴出来。
-「没判出来」是本 skill 的合法结果（该行留本地），不是停下来问的理由。
+「没判出来」不是停下来问的理由，但**v2 也不再是「留本地」**：每条候选都必须有落点，没判完就回 S2 重判那一条。
 
 | 情形 | 自动动作 |
 |---|---|
 | 判官一致（同一行 ≥2 份 verdicts 同落点）、落点是可用包 | 写入该包（进 S5） |
 | 落点=包内已有技能、且交叉审计给出了 net-new 清单 | 按 net-new 折进那条技能（already there 的部分丢掉） |
-| 置信低 / 判官分歧 / verdicts 缺失 / 判给空壳目录 / `no_category` 但给不出目标类目 | 留本地 + 进汇报「待定」段（写明缺哪条判据） |
-| 落点是**新包**（`__new_pack__`） | **不建仓库**（对外可见的持久动作）→ 进汇报「拟建」段，等有人在的一次会话点名再做 |
-| 上游有独立仓库的技能（见 S1 那一条） | **不并进包**：留本地 + 进汇报「从上游装回」段（给出标识符） |
+| 置信低 / 判官分歧 / verdicts 缺失 / `no_category` 但给不出目标类目 | **v2 没有「留本地」**：这一行是**没判完** → 补一次判官重判；仍拿不准就在汇报里单列一行（写明缺哪条判据），**不进包、也不删它的副本** |
+| 落点是**新包**（`dest.kind:"new"`） | **不建仓库**（对外可见的持久动作）→ 进汇报「拟建」段，等有人在的一次会话点名再做（S5 那段只在点名时才执行） |
+| 上游有独立仓库的技能（见 S1 那一条） | 照常给落点、进包，但**汇报里单列**「该从上游装回」段（给出标识符），由用户决定改走 `install` |
 | 退役（删本地副本）/ 整包重装（S7） | 回读全绿 + `tar czf` 备份落盘之后自动执行 |
 
 汇报即交付（四段：枚举数 · 判定表 · 每行的证据 · ≤3 条要人拍板的事）。要人拍板的那些**不阻塞本批次**：
-要建仓库/造类目的行已经留本地，下次有人在时说一句就能接着做；回读通过的行已经装回 profile 了。
+要建的仓库已经在「拟建」段里列清楚，下次有人在时说一句就能做；回读通过的行已经装回 profile 了。
+**交付验收**：表里不许出现没有落点的行，也不许出现只凭名称/类目/profile 得出的落点——出现一条就得重判。
 
 ## S1 · 枚举（主 agent，一条命令）
 
@@ -66,44 +67,97 @@ JEV 的题面、分块与判读：`references/dream-jev-routing.md`。
 - `hub` — 名字是 `<profile>/skills/.hub/lock.json` 的键 ⇒ 已有仓库与更新路径，跳过。
 - `bundled` — 名字在 `<profile>/skills/.bundled_manifest` 里 ⇒ Hermes 自带的种子，不属于用户，跳过。
 - `local` — 两者都不是 ⇒ 没有 lock 条目、没有 source of truth、没有生命周期 ⇒ 候选。
-- ⚠️ **看着像 `local`、但不该进包的一类：上游有独立仓库的技能**——目录里带 `_meta.json` / `skill-card.md`
+- ⚠️ **看着像 `local`、但该从上游装回的一类：上游有独立仓库的技能**——目录里带 `_meta.json` / `skill-card.md`
   （ClawHub 记号）、正文头部自报 `GitHub: <url>`、或正文里写着 `.claude/skills/<名>/` 这类上游自带的路径。
-  它现在没有 lock 往往只是被手工拷进来过：**落点是「从上游装回」**（`hermes skills install <owner>/<repo>/…`），
-  不是并进包。实测 2026-10-10：`darwin-skill` 上游是 `alchaincyf/darwin-skill`，却被并进本包维护，最后只能再迁出。
-  这类行判官一律填 `__stay_local__`、why 写 `upstream:<owner>/<repo>`；主 agent 在汇报里单列一段「从上游装回」。
+  它现在没有 lock 往往只是被手工拷进来过。实测 2026-10-10：`darwin-skill` 上游是 `alchaincyf/darwin-skill`。
+  **v2 没有「留本地」这个答案**（`__stay_local__` 已废除，见 S2），所以这类行照样要有落点：判官照常判一个包、
+  `why` 以 `upstream:<owner>/<repo>` 开头，主 agent 在汇报里把这类行**单列一段**「该从上游装回
+  （本次先并入 <包>；改走 `hermes skills install <owner>/<repo>/…` 由用户定）」。
 
-产出（全在 `--out` 里）：`inventory.tsv`（全表）、`judge-input.json`（**冻结**的候选表，name+desc）、
-`packs.json`（每个包：路径 / 三段式标识符 / 分支 / 技能清单 / 本 profile 已装的成员与类目 / 是否空壳）、
-`pack-index.txt`（各包 `category/name: desc`）。脚本自报 counts，先核一遍再往下走。
+产出（全在 `--out` 里）：`inventory.tsv`（全表）、`judge-input.json`（**冻结**的候选表：id / skill / category /
+`path` 与 `skill_md` 绝对路径 / `refs` 清单 / 正文字节数——判官拿它去读**全文**）、
+`judge-input-bodies.json`（同一批，另把正文内联，给只会看文本的判官）、
+`packs.json`（每个目录：路径 / 三段式标识符 / 分支 / 技能清单 / 本 profile 已装的成员与类目 / 是否空壳 / 是否可路由）、
+`answer-space.json`（**判官的落点空间**：全部目录名 + 按轴分好的 `tool_dirs`/`topic_dirs` + `routable` 名单 +
+两条新包命名式）、`pack-index.txt`（可路由包的各条 `category/name: desc`）。脚本自报 counts，先核一遍再往下走。
 
 🔴 **没有类目层的 local skill 一条都不许留**（用户要求）：`skills/<名字>/SKILL.md` 直接躺在 skills/ 下就是形状
 缺口 —— `hermes skills list` 的 category 列是空白，谁也说不清它属于哪一族。本机实测 **50 条**（default 16 +
 五个 profile 34，其中几条还是「技能占着类目名」）。脚本把它们标 `no_category=true` 并在汇总里单独报数，
 判官对这类行**必须同时给出目标类目**。
 
-🔴 **落点空间是「非空壳且本机真有 SKILL.md」的包**，不是 `~/Documents/AgentSkill/` 下的全部目录：实测
-285 个 `AgentSkill-*` 里只有 **27** 个能当落点，258 个是只有 `.git`、没有 `SKILL.md` 的半成品壳（其中多数
-连 remote 都没有）。脚本把它们标 `empty` 并从判官候选里剔掉；`merge` 会拒收指向空壳的判定。
-**但这不等于「没有包就留本地」**：值得复用却没有可合并的包时，落点是**新建一个包**（判据与做法见 S2 末与 S5）。
+🔴 **落点空间是 `~/Documents/AgentSkill/` 下的全部 `AgentSkill-*` 目录名**（v2，2026-10-10 用户改口径）：本机
+实测 **291** 个（274 个 `AgentSkill-Using<工具>` + 17 个主题包）。`routable`（有 remote + 本机真有 `SKILL.md`，
+实测约 31 个）**只决定这个落点以后能不能 `install` 回来，不限制它能否当落点**：空壳目录由 writer 在写入前
+`gh repo create <name> --private`（幂等，已存在则复用）或 `git remote set-url` 补上 remote。脚本把全部目录名、
+按轴分好的两组、以及 `routable` 名单写进 `answer-space.json`——**判官的候选空间就是它**，`merge` 会拒收
+指向名单之外的 `repo`。
+**但这不等于「没有包就留本地」**（v2 根本没有这个答案）：值得复用却没有可合并的包时，落点是**新建一个包**
+（两轴命名与判据见 S2，做法见 S5）。
 
-## S2 · 路由判断（JEV 优先）
+## S2 · 路由判断（两轴先判；JEV 优先，无 key 走子代理）
 
-1. **探活**：`$HERMES_HOME/.env` 里有没有 `TYPESAFE_API_KEY`（`grep -c`，不回显值），再打一次探针看 HTTP
-   状态；代理端口不通表现为超时，别误判成 key 失效。
-2. **JEV 在** → 把 `judge-input.json` 的每条按 `choice` 出题（选项 = 27 个包 + `__stay_local__`），
-   第二层问落点技能（该包已有技能名 + `__new__`）；state 里放 `pack-index.txt`。一条请求里多题并行，
-   按 token 预算分块。落 `verdicts-jev.jsonl`，**每条记下回复里的 `model` 字段**才算真机答案。
-3. **JEV 不在**（无 key / 探针非 200 / 429 退避两次仍失败）→ 派分类子代理：每 10–15 条一个，任务书只让它
-   `read_file` 那两个脚本产物，逐条写 `P<k>|<包名或 __stay_local__>`，落盘 `verdicts-task-N.jsonl`。
-4. **标注纪律**：只有带 `model` 字段的算 JEV；子代理/人工填的一律 `source: agent`，报告里两组数字分开写，
-   不许混着当「JEV 的效果」。
-5. **新建包**：判官在「27 个包 + `__stay_local__`」之外还有第三个去处 —— `__new_pack__`。**两条判据都要满足**
-   才准新建：① 这条技能讲的是**一类任务的通用方法**（认的是工具名或学科主题，正文里没有某个 profile 的私有
-   数据路径 / 表名 / 项目名当主语）；② 现有落点包里没有一条覆盖它（S3 审计的 already there 为空或近乎为空）。
-   满足 → 落点是新包，包名按 `AgentSkill-<工具名|主题>`；**本机已有同名半成品目录（有 `.git`、无 `SKILL.md`）
-   就直接用那个仓库名**，没有才新建仓库。不满足（尤其只关某个 profile 的流程或记录）→ 留本地，不为它建包。
+**第一步是二选一，不是挑名字**：这条技能的**主语**是「某个软件/工具」（PyMOL、ATSAS、BioXTASRAW、Dolt、
+git-annex、ComfyUI、Zotero、Discord、Obsidian、VSCode、OBS、Bilibili …）还是「一类任务/学科/项目」（主题）？
+先答这一句，再在对应轴里挑落点：
 
-判据：`merge` 的覆盖率必须是 100%（有未判定的行就 exit 4），且没有任何 `dest_pack` 落在非落点包上。
+- **工具轴** → `AgentSkill-Using<软件名>`：274 个存量名里挑；**本机没有这个工具**才新造 `AgentSkill-Using<X>`。
+- **主题轴** → 17 个存量主题名里挑（AgentEvolution / AgentOrchestration / CloudDrive / CodeExplain / DoingSAXS /
+  HoldingConversations / JobHunt / LabProject / ObsidianManagement / PlasmidEngineer / ProteinDesign /
+  QuantInvestment / SoftwareDev / StructuredResponse / TravelGuide / WatchingVideo / WebInspection）；都不合适才
+  新造主题名，且**主题名要少、同类合并**（一主题一包）。
+`answer-space.json` 的 `tool_dirs` / `topic_dirs` 就是这两组的现成清单（脚本产出，别手抄）。
+
+**三段问法**（一段一问，不许合成一段）：
+
+1. **轴** —— 主语是工具还是主题？（二选一）
+2. **落点** —— 该轴里哪个目录名？（`answer-space.json` 的 `dirs`；要新包就答 `new` 并给轴与名字）
+3. **落点技能** —— 落点是已有目录时，并入它已有的哪条技能（从 `pack-index.txt` 抄），还是 `__new__`。
+
+每条 verdict 一行 JSONL（`verdicts-jev.jsonl` / `verdicts-task-N.jsonl`）：
+
+```json
+{"id":"P12","dest":{"kind":"existing","repo":"AgentSkill-UsingGit","dest_skill":"__new__","action":"move"},
+ "why":"…","evidence":"正文原句：「…」或 file:line","confidence":0.82,"source":"agent"}
+{"id":"P13","dest":{"kind":"new","axis":"tool","topic":"Jev","personal":false,
+ "boundary":"不吃 Cline/Cursor 这类编辑器的接入"},
+ "why":"…","evidence":"…","confidence":0.8,"source":"agent"}
+```
+
+- `kind:"existing"`：`repo` 必须是 `answer-space.json` 里出现过的**目录名**；`dest_skill` 必须是那条目录**已有**
+  的技能名或 `__new__`（脚本拿 `packs.json` 的技能清单核对，编出来的名字当场拒收）；`action` ∈
+  `move` / `merge` / `strengthen`。
+- `kind:"new"`：`axis` ∈ `tool|topic`、`topic` 非空、**`boundary` 必填**（这个包**不吃**什么）、`personal` 布尔。
+  脚本按 `AgentSkill-Using<topic>` / `AgentSkill-<topic>` 命名；归一化（小写、去连字符下划线空格）后撞上已有
+  目录名 → **复用那个仓库**（不建孪生目录）；**同一 topic 的多条合并进一个包**。
+- **`personal:true` 且该 topic 只有 1 条** → 私人仓库，S5 才 `gh repo create --private`，汇报里单列。
+
+🔴 **本版没有 `__stay_local__`**：judge-input 不再出现它，`merge` 收到一律**拒收**（exit 4，文案点明本版禁止
+stay local）。每条候选都必须有落点——判不出来不是「留本地」，是**没判完**。
+
+🔴 **严禁偷懒判法**（用户 2026-10-10 原话：「不能有机械、偷懒、不基于 skill 内容的判断（简单从名称提取关键词、
+简单根据 profile 合并等都属于偷懒行为）」）：
+
+1. **判官必须读 SKILL.md 全文**（含正文点名的 `references/` 段），不许只看 `name` / `description` / `category`；
+2. **每个落点必须回一条正文证据**（正文原句，或 `file:line`）——`evidence` 空的 verdict 视为没判；
+3. **禁止按类目批量套模板**（`obsidian/*` 全进 `ObsidianManagement`、profile 私有 ⇒ `AgentSkill-Private-<Profile>`
+   这类映射已被用户明确驳回）：**每条独立判**，同类目下不同技能可以落不同包，允许新包只吃 1 条。
+
+新建包的两条判据都要满足：① 讲的是**一类任务的通用方法**（认的是工具名或学科主题，正文里没有某个 profile 的
+私有数据路径 / 表名 / 项目名当主语）；② 现有落点里没有一条覆盖它（S3 审计的 already there 为空或近乎为空）。
+**本机已有同名半成品目录（有 `.git`、无 `SKILL.md`）就直接用那个仓库名**，没有才新建仓库。
+
+**走哪条路**：① **探活** `$HERMES_HOME/.env` 里有没有 `TYPESAFE_API_KEY`（`grep -c`，不回显值），再打一次
+探针；**探针返回 451**（`Typesafe is not available in your region`，2026-10-11 本机实测就是）与超时同样算
+「不可用」，直接走子代理，别重试到超时。② **JEV 在** → 把 `judge-input-bodies.json`（正文内联的那份）当
+`state` 分块出题，落 `verdicts-jev.jsonl`，**每条记下回复里的 `model` 字段**才算真机答案。③ **JEV 不在**
+（无 key / 探针非 200 / 451 / 429 退避两次仍失败）→ 派分类子代理：**每 8–12 条一个**（判官要读全文，一条比
+只给 name+desc 贵得多），任务书只让它 `read_file` 指到的那几份产物，落 `verdicts-task-N.jsonl`。
+④ **标注纪律**：只有带 `model` 字段的算 JEV；子代理/人工填的一律 `source: agent`，两组数字分开写，不许混着
+当「JEV 的效果」。
+
+判据：`merge` 的覆盖率必须是 100%（有未判定或被拒收的行就 exit 4），且没有任何 `dest.repo` 落在
+`answer-space.json` 之外。
 
 ## S3 · 交叉审计（只跑「落点=已有技能」的行）
 
@@ -119,12 +173,12 @@ skill 整个目录 + 接收技能整个目录，按 claim（表头 / 实测数�
 … sweep-plan.py merge --dir <scratch>/sweep-<date> --profile <profile>
 ```
 
-`plan.md` 按目标包分组，`install-cmds.sh` 是 S7 的命令清单（脚本按 lock 证据生成，**不执行**）。主 agent 按
-「无人值守」一节的规则**逐行决议、不等人**：明确归位的直接进 S5；拿不准的、判给空壳的、`no_category` 又给不出
-目标类目的行留本地。汇报里四类分开写：① 明确归位（判官一致）② 待定（低置信 / verdicts 缺失 / 判给空壳）
-③ 建议留本地 ④ **拟新建的包**（只报不建）；另把**没有类目**的行单列：迁移型的写清它落进包的哪个类目，
-留本地型的写清该挪进哪个**现有**类目（没有合适的就写「需要新类目」，不硬塞）。要人拍板的事写进汇报即可，
-**不许停在那里等**——批次一路跑到 S8 才收尾。
+`plan.md` 按落点分组（新包 / 复用已有目录 / 已有包三类），`resolved.json` 是逐行的机器可读决议，
+`install-cmds.sh` 是 S7 的命令清单（脚本按 lock 证据生成，**不执行**）。主 agent 按「无人值守」一节的规则
+**逐行决议、不等人**：明确归位的直接进 S5。汇报里分开写：① 明确归位 ② **拟新建的包**（只报不建）
+③ **判官判了新包但归一化后撞上已有目录 → 复用**（单列，因为它改的是既有仓库）④ 上游自有仓库的行
+（单列，见 S1）；另把**没有类目**的行单列：写清它落进包的哪个类目，或该挪进哪个**现有**类目
+（没有合适的就写「需要新类目」，不硬塞）。要人拍板的事写进汇报即可，**不许停在那里等**——批次一路跑到 S8 才收尾。
 
 ## S5 · 写入（每包一个 writer 子代理）
 
@@ -142,12 +196,14 @@ writer 必须回：commit sha、推出去的 sha、扫描 verdict、`git diff --
 **本批若含「没有类目」而留本地的行，writer 顺手补齐形状**：`mv skills/<名字> skills/<类目>/<名字>`
 （没有 lock 条目，`mv` 即可；动完跑一次 `hermes skills list` 确认那一行的 category 不再是空白）。
 
-**落点是新包时，writer 的活多一步：先把仓库建起来**——无人值守下 S4 从不产新包行，所以这一段只在**这次调用
-自己点名要建包**（用户原话里有「建个包」）时才做——`gh repo create <owner>/<name> --private
---description "…"` → **立刻把 remote 换成 SSH**（`git remote set-url origin git@github.com:<owner>/<name>.git`；
-`gh` 建出来是 https，裸 push 会卡在凭据提示直到超时）→ **README 是交付物的一部分**（索引表 + 三段式安装命令 +
-「当前状态：装 / 不装」那一段，照同族包的 README 写）→ 按 `skills/<name>/SKILL.md` 布局写第一条技能 →
-**首推之前必须扫出 `safe`**：这一个 revision 决定这个包以后还能不能被装上。
+**落点是新包时，writer 的活多一步：先把仓库建起来**——`gh repo create <owner>/<name> --private
+--description "…"`（幂等：已存在就复用，退 1 时先 `gh repo view <owner>/<name>` 确认它真在）→ **立刻把 remote
+换成 SSH**（`git remote set-url origin git@github.com:<owner>/<name>.git`；`gh` 建出来是 https，裸 push 会卡在
+凭据提示直到超时）→ **README 是交付物的一部分**（索引表 + 三段式安装命令 +「当前状态：装 / 不装」那一段，
+照同族包的 README 写）→ 按 `skills/<name>/SKILL.md` 布局写第一条技能 → **首推之前必须扫出 `safe`**：这一个
+revision 决定这个包以后还能不能被装上。
+**无人值守下 S4 照常产出这类行（v2 取消了「留本地」，判官的 `dest.kind:"new"` 就是落点）**，但**建仓库这一步
+仍只在这次调用被点名要建包时才做**：名字先落进汇报的「拟建」段，用户点名后再建。
 
 ## S6 · 独立验证（一条只读子代理）
 
@@ -203,14 +259,19 @@ S7 整包重装后，profile 里可能还残留大量与包同名的 local 副�
 - 主 agent 看到报告后判断：是真需要新类目（如 `mcp-server-integration` → 新建 `mcp-server-integration/` 类目），还是归入 `misc/` 兜底
 - 实测 2026-10-10：default 15 条无类目，13 条进已有类目，2 条报告需要新类目
 
+🔴 **`not_in_pack > 0` 是硬错误（exit 5）**：v2 的判据是 **local 必须为 0**——还有 local skill 没有任何仓库归属，
+就说明这批没做完，不许当一句脚注收尾（用户 2026-10-10 改口径）。确实要先收尾再加 `--allow-not-in-pack`
+（它只是把硬错误降级成警告，不改变事实）。
+
 🔴 **先 `--dry-run` 看一遍**，确认数字合理再真跑。备份在 `--backup` 指定的目录。
 
 ## 检查点
 
 | 触发 | 动作 |
 |---|---|
-| 判官分歧 / 置信低 / 判给空壳 / verdicts 缺失 | 该行留本地 + 写进汇报「待定」，**不停下来问**（判不出来是合法结果） |
-| 落点是新包 / 需要新类目 | 只报不做（建仓库、造类目要用户口径，S4 不产这类行） |
+| 判官分歧 / 置信低 / verdicts 缺失 / `no_category` 但给不出目标类目 | **v2 没有「留本地」**：这是**没判完**，补一次判官重判那一条；仍拿不准就在汇报里单列（写明缺哪条判据），**不进包也不删副本** |
+| 判官只凭 name / description 就下了落点（`evidence` 空） | 那条 verdict 不算数：把它连同 `skill_md` 路径退回判官，要求读全文 + 回一条正文原句 |
+| 落点是**新包** | 只报不建：包名与 boundary 进汇报「拟建」段（建仓库是对外可见动作，等有人在的一次会话点名） |
 | 候选 > 30 条 | 分块跑 JEV / 分波派子代理，别一次灌进一个上下文 |
 | 扫描 verdict 非 `safe` | 按手册改写形态再扫；仍 `dangerous` 的那条**不推**，跳过并写进汇报 |
 | 想 `git add -A` / 想顺手带上别人的在途文件 | 只按 pathspec |
@@ -219,8 +280,8 @@ S7 整包重装后，profile 里可能还残留大量与包同名的 local 副�
 
 ## 反例（不要做的事）
 
-- **不要问人、不要等人**：本 skill 是无人值守的 —— 判不出来就留本地并列进汇报，别用 `clarify`、别写
-  「等你批准」、别发要点选的表单（表单会挂在那里等超时）。
+- **不要问人、不要等人**：本 skill 是无人值守的 —— 判不完就在汇报里单列（写明缺哪条判据），别用 `clarify`、
+  别写「等你批准」、别发要点选的表单（表单会挂在那里等超时）。
 
 - **不要在 SKILL.md 正文里写出那对 Generated-by-Scripts 注释的原文**：生成段脚本按文本找分隔符，正文里
   出现一次，它就把从那里到文件末尾整段当成自己的区段**覆盖掉**（本 skill 第一版就被吃掉半篇：S5 后半 +
@@ -238,30 +299,45 @@ S7 整包重装后，profile 里可能还残留大量与包同名的 local 副�
   抢题数一动不动）。要收窄边界只有两条路：改**描述头**（把吸题的词挪出去）或改**题面/gold**（题面缺上下文
   的弱 gold 会一直被别人抢，臂 A 里连它自己的主人都不认领）。改完必须重跑同一轮复核，别只看 diff。
 - **不要留下没有类目的 local skill**：`skills/<名字>/` 直接躺在 skills/ 下，category 列空白（本机实测
-  50 条）。迁移型的随装回落进包的类目；留本地型的当场 `mv` 进现有类目，别只报不修。
-- **不要为「只关某个 profile 的记录或流程」建包**：新包只吃通用方法（S2 第 5 条两条判据都要满足）。
+  50 条）。迁移型的随装回落进包的类目；确实留本地的当场 `mv` 进现有类目，别只报不修。
+- **🚫 判官不许机械 / 偷懒判**（用户 2026-10-10 原话：「不能有机械、偷懒、不基于 skill 内容的判断（简单从名称
+  提取关键词、简单根据 profile 合并等都属于偷懒行为）」）——就这三条，逐条都要在 verdict 里能验：
+  ① 只看 `name` / `description` / `category` 就下结论（**必须读 SKILL.md 全文**——judge-input 已经给了
+  `skill_md` 绝对路径与 `refs` 清单，没有借口）；
+  ② 落点没有正文证据（**每条必须回一条正文原句或 `file:line`**）；
+  ③ **按类目批量套模板**（`obsidian/*` 全进 `ObsidianManagement`、profile 私有 →
+  `AgentSkill-Private-<Profile>` 这类映射本会话已被用户明确驳回）。**每条独立判**：同类目下不同技能可以落
+  不同包，新包只吃 1 条也允许，不为凑整齐牺牲判断。新增包同样受这一条的约束：它要么认工具名、要么认主题，
+  不能是「这个 profile 的杂项」这种垃圾抽屉。
 - **不要给「备选方案」清单**：判据不过就修判据，正路被堵就找官方机制并说明代价。
 
-## 实测基线（2026-10-10，default profile，本机）
+## 实测基线（2026-10-11 01:5x，default profile，本机）
 
 ```
-[sweep-plan] profile=/Users/maxim/.hermes skills=262 local=99 hub=152 bundled=11
-[sweep-plan] packs=288 routable=30 placeholder=258 pack_skills=214 pack_index_est_tokens~38531
-[sweep-plan] no_category=1   candidates=99 judge-input.json 28400 B   （scan 全程 22 s）
+[sweep-plan] profile=/Users/maxim/.hermes skills=261 local=99 hub=151 bundled=11
+[sweep-plan] packs=291 routable=34 placeholder=257 pack_skills=596 pack_index_est_tokens~49561
+[sweep-plan] dest_space=291 个目录名（tool 274 + topic 17）
+[sweep-plan] no_category=1
+[sweep-plan] candidates=99 judge_input 62253 B bodies 1322501 B      （scan 全程 11.6 s）
 ```
 
-- 落点空间的 30 个包里，3 个**没有 remote**（`AgentSkill-HoldingConversations` / `UsingAstra` / `UsingEagle`）：
-  能收内容，但装不回来（没有三段式标识符）——这类行要在汇报里显式列出。
+- **判官输入从 28 kb 涨到 62 kb，内联正文那份 1.32 MB**（99 条 × 平均 13 kb）：这是 v2「必须读全文」的直接代价，
+  也是它换来判断质量的地方。JEV 分块时按 64k token 预算切，别整份塞。
+- **落点空间 291 个目录名，只有 34 个 `routable`**（有 remote + 有 `SKILL.md`）：能当落点的远比能 install 的多，
+  这正是 v2 取消「空壳不能当落点」的原因——空壳由 writer 补 remote。
+- 落点空间的 34 个可路由包里，有几个**没有 remote**（`AgentSkill-HoldingConversations` / `UsingAstra` /
+  `UsingEagle` 一类）或 remote 与目录名不一致：能收内容，但装回 profile 要 MANUAL，这类行要在汇报里显式列出。
 - 99 条候选里 `.archive/` 下的退役件不计（脚本跳过 `.archive`）：那是退役落点，不是候选。
-- 基线是快照：库与 profile 每天在变，收尾时要重测一遍并把数字改掉（带一条说明的提交）。
+- 基线是快照：库与 profile 每天在变（同一份 SKILL.md 前一版写 local=99/hub=152/skills=262，隔天就是
+  99/151/261），收尾时要重测一遍并把数字改掉（带一条说明的提交）。
 
 ## Support files
 
 | 文件 | 承担什么 |
 |---|---|
 | `references/dream-agent-roster.md` | 五种子代理任务书（逐字可抄）、并发与分波、每类必须回的收据、「子代理不许起后台进程」的原因 |
-| `references/dream-jev-routing.md` | JEV 题面模板、两层走树、token 预算分块、判读与 `source` 标注、无 key 时的降级路径 |
-| `scripts/sweep-plan.py` | `scan`（枚举 + 冻结判官输入 + 包索引）与 `merge`（判定 → plan.md + install-cmds.sh）；`--self-test` 跑一个抛掉即弃的三容器样例与 4 个拒收分支 |
+| `references/dream-jev-routing.md` | JEV 题面模板（两轴 + 三段问法）、分块、`dest` 的两种形状与 `source` 标注、451/超时时的降级路径 |
+| `scripts/sweep-plan.py` | `scan`（枚举 + 冻结判官输入（含 `skill_md` 路径与内联正文）+ `answer-space.json`）、`merge`（`dest` 校验 → `plan.md` / `resolved.json` / `install-cmds.sh`）、`dedupe`（S9 去重 + 无类目归位，`not_in_pack` 是 exit 5 硬错误）；`--self-test` 跑一个抛掉即弃的三容器样例、9 个拒收分支、复用/合包两个决议分支、以及 dedupe 的 exit 5 |
 
 ## Skill Structure
 
@@ -269,14 +345,14 @@ S7 整包重装后，profile 里可能还残留大量与包同名的 local 副�
 
 ```
 dream/
-├── SKILL.md  (282 lines)
+├── SKILL.md  (358 lines)
 ├── test-prompts.json  (32 lines)
 ├── test-results.md  (53 lines)
 ├── references/
-│   ├── dream-agent-roster.md  (126 lines)
-│   └── dream-jev-routing.md  (90 lines)
+│   ├── dream-agent-roster.md  (142 lines)
+│   └── dream-jev-routing.md  (123 lines)
 └── scripts/
-    └── sweep-plan.py  (712 lines)
+    └── sweep-plan.py  (894 lines)
 ```
 
 <!-- Generated by Scripts -->

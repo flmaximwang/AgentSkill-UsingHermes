@@ -14,29 +14,45 @@
 4. **只给它该看的东西。** 任务书里写死「只读哪几个文件」，别让它去翻技能目录、翻内存、翻别的包——那是另一
    条子代理的活，串味的判断比没有判断更贵。
 
-## A. 分类子代理（S2，JEV 不可用时；每 10–15 条一个）
+## A. 分类子代理（S2，JEV 不可用时；每 8–12 条一个）
 
 ```
-你是技能归位判官。为每条候选技能选一个落点包，或判它留在本地。
+你是技能归位判官。为每条候选技能判一个落点包 —— **每条都必须有落点，没有「留本地」这个答案**。
 
-只读这两个文件（各一次 read_file，不要读别的）：
-  <SCRATCH>/judge-input.json   候选：id / skill / category / description
-  <SCRATCH>/pack-index.txt     落点空间：每个包现有的技能（category/name: desc）
+材料（只读这几个，不要翻别的目录、不要读内存、不要读别的包）：
+  <SCRATCH>/judge-input.json        候选：id / skill / category / description / **skill_md 绝对路径** / refs
+  <SCRATCH>/answer-space.json       落点空间：dirs / tool_dirs / topic_dirs / routable
+  <SCRATCH>/pack-index.txt          可路由包的各条 category/name: desc（判「并入哪条已有技能」时看它）
 
-规则：
-- 落点包必须是 pack-index.txt 里出现过的包名；不许发明包名、不许写空壳目录。
-- 判据是「这条技能将来在哪个包里被维护」，不是它现在放在哪个类目。
-- 与某个包已有技能的重叠**不要在同一轮里下结论**（正文没给你看），只在 why 里点出可疑的那条名字。
-- 拿不准就判 __stay_local__，并在 why 里写清缺什么信息。
-- 这条技能若**自报上游仓库**（正文头部有 `GitHub: <url>`，或目录里带 `_meta.json` / `skill-card.md`）→
-  仍填 `__stay_local__`，why 以 `upstream:<owner>/<repo>` 开头：它该从上游装回来，不该并进包。
+**纪律（违反其中任何一条，这条 verdict 作废）**
+1. **必须读全文**：对你负责的每一条，用 read_file 打开它 `skill_md` 指的那个 SKILL.md **整篇**
+   （正文点了名的 references/ 文件也要读）。**禁止只看 name / description / category 就下结论**
+   —— 那是机械判法，用户已明确驳回。
+2. **每条都要有一段正文证据**：`evidence` 字段填正文原句，或 `file:line`。填不出来的算没判。
+3. **每条独立判**：同一类目下的技能可以落不同包；**禁止按类目批量套模板**（「obsidian/* 全进
+   ObsidianManagement」「profile 私有 → AgentSkill-Private-<Profile>」这类映射已被用户驳回）。
+
+**三段问法**（一条一条按顺序答，别跳）
+1. **轴**：这条技能的**主语**是「某个软件/工具」还是「一类任务/学科/项目」？
+2. **落点**：该轴里哪个目录名？从 answer-space.json 的 tool_dirs / topic_dirs 里挑（**照抄，不许自己造名字**）。
+   现有目录都不覆盖它才答 new，并给 axis + topic + **boundary（这个包不吃什么，必填）**；
+   主题名要少、同类合并（一主题一包）；这条只关你本地这台机器的私有流程，仍要落主题包，别自己发明
+   `AgentSkill-Private-<Profile>` 这种垃圾抽屉。
+3. **落点技能**：落点是已有目录时，并入它已有的哪条技能（从 pack-index.txt 抄，或答 __new__）。
+   正文没给你接收侧正文，所以**重叠不要在这一轮下结论**，只在 why 里点出可疑的那条名字。
+
+这条例外要标出来：技能**自报上游仓库**（目录里带 `_meta.json` / `skill-card.md`，或正文头部写着
+`GitHub: <url>`）时，照常给落点，但 `why` 以 `upstream:<owner>/<repo>` 开头。
 
 产出：把结果**写进** <SCRATCH>/verdicts-task-<N>.jsonl（每行一条 JSON，不要代码块包裹）：
-{"id":"P12","dest_pack":"AgentSkill-UsingGit","dest_skill":"__new__","action":"move","confidence":0.82,"source":"agent","why":"……"}
-  dest_pack: 包名或 "__stay_local__"
-  dest_skill: 该包已有的技能名（你判断应当并入它）或 "__new__"
-  action: move（整条迁进包）/ merge（内容并进 dest_skill）/ stay（留本地）
-  写完在回答里原样重复这几行。
+{"id":"P12","dest":{"kind":"existing","repo":"AgentSkill-UsingGit","dest_skill":"__new__","action":"move"},
+ "why":"…","evidence":"正文：「…」","confidence":0.82,"source":"agent"}
+{"id":"P13","dest":{"kind":"new","axis":"tool","topic":"Jev","personal":false,"boundary":"不吃编辑器接入"},
+ "why":"…","evidence":"…","confidence":0.8,"source":"agent"}
+  action: move（整条迁进包）/ merge（内容并进 dest_skill）/ strengthen（两边头部各加一句界限声明）
+  source 一律写 agent（你不是 JEV）。写完在回答里原样重复这几行。
+
+**先把 JSONL 写完再回答**：回答里只给「条数 + 每条一行」，正文以落盘文件为准。
 ```
 
 ## B. 交叉审计子代理（S3，**每个目标包一个**）
