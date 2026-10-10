@@ -122,11 +122,35 @@ print(m, rt.get('provider'), rt.get('base_url'), 'key' if rt.get('api_key') else
 "
 ```
 
+## 4c. Creating a job (CLI lane; the agent tool cannot set model/provider)
+
+- Schedule grammar (`cron/jobs.py::parse_schedule`) — the three forms differ in ways `--help` hides:
+  - `2026-10-11T02:00:00` (any `YYYY-MM-DD…`, or anything containing `T`) → **one-shot at that wall-clock time**
+    in the configured Hermes timezone (`{kind: once, run_at: …}`). Use this when the user names a date + hour;
+    never hand-compute a delay.
+  - `30m` / `every 30m` / `every 2h` → **recurring interval** (a bare duration is NOT a one-shot).
+  - `in 30m` / `in 2h` → one-shot delay. `0 9 * * *` / `every monday 9am` → cron.
+  Add `--repeat 1` for the intended single fire.
+- Long or multi-line prompt: write it to a file and pass it through the shell —
+  `hermes cron create "<schedule>" "$(cat /path/prompt.txt)" --name …` (same for
+  `hermes cron edit <id> --prompt "$(cat /path/prompt.txt)"`). Quoted, newlines survive.
+- `--model <id> --provider <name>` works at create time too (same resolution as §4b). A sibling job in the same
+  profile's `jobs.json` is the fastest proof that a provider name resolves for cron in this profile.
+- Deliver into a Discord **thread** by using the thread id as the chat id (`deliver=discord:<thread_id>`) —
+  a thread is a channel. Prefer it over the parent channel when the request came from a thread.
+- The fired agent has no session context: the prompt must name the skills to `skill_view`, carry the user's
+  hard limits verbatim, and end with the acceptance criteria the run has to prove.
+- Read back before calling it configured: the `jobs.json` entry (`schedule` / `next_run_at`, `model` / `provider`,
+  `deliver`, `enabled`, prompt length), `hermes cron doctor`, and the §4b resolution read-back.
+
 ## 5. Answer shape (this user)
 
 - Conclusion first: the resolved profile/job, its current `deliver` value, and what blocks the target — then
   the single decision you need. Mechanism only if asked.
 - One decision per round; when two things are pending, ask the blocking one.
+- **Ambiguous wall-clock in the request** (a bare hour with no 上午/下午, e.g. 「10.11 2 点」): pick the night
+  slot (it matches the existing maintenance jobs) and say it is an assumption with the one-word fix. The work
+  gets done either way, so don't spend a round-trip asking.
 - If a `clarify` prompt returns `undelivered` on the platform, restate the question as a short numbered list
   in the chat instead of waiting — the question still has to reach him.
 
@@ -176,7 +200,7 @@ profile's own bot, and a script edit is its call to approve.
 
 ```
 manage-hermes-cron-jobs/
-├── SKILL.md  (186 lines)
+├── SKILL.md  (210 lines)
 ├── test-prompts.json  (27 lines)
 ├── test-results.md  (58 lines)
 └── references/
