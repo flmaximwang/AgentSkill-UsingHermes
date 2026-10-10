@@ -17,6 +17,15 @@ Contents: §1 The three landing places · §2 A pack of its own · §3 The end-s
 | **a new skill in an existing pack** (the common case) | `skills/<name>/` in the pack the user already keeps for that topic family, in pack shape + the README index row | a lock entry for `<name>` in a pack that already has one per skill |
 | **a pack of its own** | a new repo (§2) — for a topic no existing pack covers | the repo exists, its README carries the install command, and §3's end state is settled |
 
+**One shape leaves this table: a skill that already has an upstream.** A directory shipping `_meta.json` /
+`skill-card.md` (ClawHub markers), stating `GitHub: <url>` in its own body, or carrying upstream-shaped paths
+(`.claude/skills/<name>/`) is not a skill with *no home* — its home is the upstream repo, and its delivery is
+`hermes skills install "<source>/<owner>/<repo>/<skill>"`, not a pack. Recruiting it forks a maintained
+third-party skill into the user's own tree and cuts it off from upstream releases (measured 2026-10-10:
+`darwin-skill` was recruited into `AgentSkill-UsingHermes` and had to be migrated back out — upstream
+`alchaincyf/darwin-skill`, install `skills-sh/alchaincyf/darwin-skill/darwin-skill`). Say "install from
+upstream" with the identifier and move to the next skill.
+
 The **name** comes from the pack's `README.md` verb vocabulary, never from your reading of what the skill
 "really does" — the pack is the naming authority, and a name that avoids the vocabulary is re-litigated at
 the next request. The **category** is the one the pack's skills already occupy (one category per pack is
