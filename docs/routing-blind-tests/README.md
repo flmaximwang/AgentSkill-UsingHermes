@@ -39,6 +39,11 @@ python3 -B docs/routing-blind-tests/score-blind.py --round <轮次> --new-skill 
 
 ## 本目录实测的口径坑
 
+- **候选包里任何一个 `SKILL.md` 没有可读的 description，整轮就被拒件**（生成器自检 2 的候选覆盖那一步）：
+  `/Users/…` 报的是 `skills/<名>/SKILL.md 没有可读的 description`，一行都不写。**根因是那个技能缺 frontmatter**，
+  修法是给它补 `name` + `description`（2026-10-10 r9 前的实测：`sipoon-codegraph-index` 整份没有 frontmatter；
+  r8 当时是用软链镜像把它排除掉绕过去的，那是权宜——它本来就当不了候选，补 frontmatter 才是正解）。
+  补完候选数 +1（r9 起臂 A 52 / 臂 B 53），不要再建镜像绕路。
 - **两个脚本必须从仓库根跑**：`--skills-root` / `--dir` 都是仓库根相对路径，在 `docs/routing-blind-tests/`
   里跑会去找 `docs/routing-blind-tests/skills` 并以 `FileNotFoundError` 结束。
 - **打分器不带 `--new-skill` 会静默按错的技能分组**：它的默认值是 `maintain-hermes-models`，
