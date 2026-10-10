@@ -26,7 +26,7 @@ description: "一键把某个 profile 里没有仓库归属的本地 skill 批�
 | S6 验证 | **一条与所有 writer 不同的验证子代理** | 「自己写自己验」有乐观偏差；回读要有人复核 plan 的每一行 | 只读：`diff -rq` / `check` / lock / 脚本实跑 |
 | S7 整包重装 | **主 agent 跑脚本生成的命令** | 命令由 lock 证据生成、条数与代价要在眼前 | 不装本批没改动的包 |
 | S8 退役与汇报 | **主 agent** | 删除是最后一步，且必须等回读 | 回读没通过不许删 |
-| S9 全库去重 | **主 agent 跑 `scripts/sweep-plan.py dedupe`** | 804 个副本手工比对必错；去重判据是脚本产物（filecmp + 旧名检测） | 不先 `--dry-run`、不备份就删 |
+| S9 全库去重 + 无类目归位 | **主 agent 跑 `scripts/sweep-plan.py dedupe --fix-no-category`** | 804 个副本手工比对必错；去重判据是脚本产物（filecmp + 旧名检测）；无类目归位只能挪进该 profile 已有类目 | 不先 `--dry-run`、不备份就删；给无类目技能硬造类目 |
 
 并发上限 10：>10 个包时按包分波（每波 ≤10 个 writer），别一次全派。所有子代理**前台跑完即结束**——子代理起
 后台进程会把完成通知的会话路由 pin 到子代理身上，人面会话被顶掉（本机上游未修的坑）。子代理不能提问，所以
@@ -154,22 +154,28 @@ sh <scratch>/sweep-<date>/install-cmds.sh     # 先给用户看条数：一包 2
 `hermes skills uninstall <裸名>`。最后汇报四段：枚举数（local/hub/bundled）· 判定表 · **每行对应的证据**（sha /
 verdict / diff / check 原文）· ≤3 条决策点（每条：要你定什么 / 为什么只能你定 / 我的建议与代价）。
 
-## S9 · 全库去重（主 agent，一条命令）
+## S9 · 全库去重 + 无类目归位（主 agent，一条命令）
 
 S7 整包重装后，profile 里可能还残留大量与包同名的 local 副本（实测 2026-10-09：583 个相同 + 84 个有路径修复）。
-这一步把它们清掉，让 profile 里只剩「包没有的」和「hub 装的」。
+这一步把它们清掉，让 profile 里只剩「包没有的」和「hub 装的」。同时把没有类目层的 local skill 挪进现有类目。
 
 ```bash
 ~/.hermes/hermes-agent/venv/bin/python3 -B \
   skills/dream/scripts/sweep-plan.py dedupe \
   --profile all --packs-root ~/Documents/AgentSkill \
+  --fix-no-category \
   --backup ~/.hermes/backups/dream-dedupe-$(date +%Y-%m-%d)
 ```
 
-三种情况：
+去重三种情况：
 - **SKILL.md 相同** → 直接删 local（包是 source of truth）
 - **SKILL.md 不同，local 有旧 profile 路径引用** → 先回移植到包，再删 local
 - **SKILL.md 不同，无路径修复** → 包更新，直接删 local
+
+无类目归位（`--fix-no-category`）：
+- 候选类目**只能是该 profile 自己已有的类目**（用户原话「挪进现有类目，没有合适的就报需要新类目」）
+- 按技能名关键词匹配现有类目；匹配不上就报「需要新类目」，**不硬塞**
+- 实测 2026-10-09：default 15 条无类目，13 条归位，2 条需要新类目（`dedupe-duplicated-folder-trees` → 需 `file-management`；`mcp-server-integration` → 需 `mcp-server-integration`）
 
 🔴 **先 `--dry-run` 看一遍**，确认数字合理再真跑。备份在 `--backup` 指定的目录。
 

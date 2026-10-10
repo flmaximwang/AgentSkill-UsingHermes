@@ -411,6 +411,52 @@ def self_test() -> int:
     return 0
 
 
+def _suggest_category(name: str, local_categories: set) -> str:
+    """Suggest an EXISTING local category for a no-category skill, by name keywords.
+
+    Only ever returns a category that already exists in this profile's own skills tree —
+    the rule is "move it into an existing category; if none fits, report that a new one is
+    needed", never invent a category and never dump it wherever.
+    """
+    name_lower = name.lower()
+    rules = [
+        (["hermes", "skill", "profile", "cron", "gateway", "memory", "plugin", "routing", "blind"], "hermes"),
+        (["git", "github", "dolt", "annex"], "git"),
+        (["saxs", "atsas", "raw", "bioxtas"], "saxs"),
+        (["obsidian", "note", "vault", "moc", "clc", "relayer", "restructure", "classification"], "obsidian"),
+        (["zotero", "paper", "literature", "reference", "evidence", "research", "prove", "verify", "claim"], "research"),
+        (["dolt", "sql", "database", "ledger"], "dolt"),
+        (["macos", "brew", "gui", "app", "network-diagnosis", "install-macos"], "macos"),
+        (["python", "pytest", "test", "debug", "numeric", "validate"], "software-development"),
+        (["image", "comfyui", "figma", "draw", "sketch", "ascii"], "creative"),
+        (["pdf", "docx", "xlsx", "office", "ocr"], "office"),
+        (["nas", "synology", "rsync", "backup"], "infrastructure"),
+        (["protein", "plasmid", "lab", "experiment"], "lab"),
+        (["invest", "quant", "trading", "finance", "stock"], "investment"),
+        (["travel", "hotel", "flight", "trip"], "travel"),
+        (["mcp", "server", "integration"], "mcp-server-integration"),
+        (["cli", "tool", "service", "terminal", "log"], "terminal"),
+        (["dedupe", "duplicate", "folder"], "file-management"),
+        (["explain", "mechanism"], "agent-tooling"),
+        (["macos", "gui", "app", "install"], "code"),
+        (["macos", "network", "diagnosis"], "code"),
+        (["docker", "container", "devops", "ci"], "devops"),
+        (["ml", "model", "llm", "huggingface", "vllm"], "mlops"),
+        (["web", "scrape", "crawl"], "web"),
+        (["media", "video", "audio", "music"], "media"),
+        (["apple", "calendar", "reminder", "shortcut"], "apple"),
+        (["social", "reddit", "twitter", "discord"], "social-media"),
+    ]
+    for keywords, cat in rules:
+        if any(kw in name_lower for kw in keywords) and cat in local_categories:
+            return cat
+    # word-overlap fallback, still restricted to existing local categories
+    for cat in sorted(local_categories):
+        if cat.replace("-", " ") in name_lower:
+            return cat
+    return ""
+
+
 def cmd_dedupe(args) -> int:
     """S9: remove profile-local skills that already exist in packs.
 
@@ -448,8 +494,14 @@ def cmd_dedupe(args) -> int:
     def has_old_refs(text: str) -> bool:
         return any(f"profiles/{n}" in text for n in OLD_NAMES)
 
-    stats = dict(total=0, identical=0, path_fixed=0, newer_pack=0, not_in_pack=0, hub_installed=0)
+    stats = dict(total=0, identical=0, path_fixed=0, newer_pack=0, not_in_pack=0, hub_installed=0,
+                 no_category=0, no_category_moved=0)
     deleted_dirs = []
+    moved_dirs = []
+
+    # Candidate categories for no-category placement = each profile's OWN existing categories.
+    # (The rule is "move it into an existing local category; if none fits, report that a new
+    # one is needed" — never invent a category and never borrow the pack's layout.)
 
     if args.profile == "all":
         profiles = [HERMES_HOME] + sorted(profiles_dir.glob("*/"))
@@ -466,6 +518,11 @@ def cmd_dedupe(args) -> int:
         lock = read_lock(prof_root)
         bundled = read_bundled(prof_root)
 
+        # This profile's own existing categories — the only legal destinations for a no-category skill
+        local_categories = {md.relative_to(skills_dir).parts[0]
+                            for md in walk_skill_dirs(skills_dir)
+                            if len(md.relative_to(skills_dir).parts) > 2}
+
         for md in walk_skill_dirs(skills_dir):
             name = md.parent.name
             stats["total"] += 1
@@ -473,6 +530,34 @@ def cmd_dedupe(args) -> int:
             if name in lock or name in bundled:
                 stats["hub_installed"] += 1
                 continue
+
+            rel = md.relative_to(skills_dir)
+            no_cat = len(rel.parts) == 2
+
+            # Fix no-category skills: move skills/<name>/ into skills/<existing-category>/
+            if no_cat and args.fix_no_category:
+                stats["no_category"] += 1
+                suggested = _suggest_category(name, local_categories)
+                if suggested:
+                    src_dir = md.parent
+                    dst_dir = skills_dir / suggested / name
+                    if not dst_dir.exists():
+                        dst_dir.parent.mkdir(parents=True, exist_ok=True)
+                        if args.backup:
+                            bak = pathlib.Path(args.backup) / prof_name / "no-category" / name
+                            if not bak.exists():
+                                bak.parent.mkdir(parents=True, exist_ok=True)
+                                shutil.copytree(str(src_dir), str(bak))
+                        if not args.dry_run:
+                            shutil.move(str(src_dir), str(dst_dir))
+                        moved_dirs.append((prof_name, name, suggested))
+                        stats["no_category_moved"] += 1
+                    else:
+                        print(f"  ⚠ {prof_name}/{name}: target {suggested}/{name} already exists, skip")
+                else:
+                    print(f"  ⚠ {prof_name}/{name}: 没有匹配的现有类目，需要新类目（不硬塞）")
+                continue
+
             if name not in pack_index:
                 stats["not_in_pack"] += 1
                 continue
@@ -526,13 +611,20 @@ def cmd_dedupe(args) -> int:
 
     print(f"[dedupe] total={stats['total']} identical={stats['identical']} "
           f"path_fixed={stats['path_fixed']} newer_pack={stats['newer_pack']} "
-          f"not_in_pack={stats['not_in_pack']} hub_installed={stats['hub_installed']}")
+          f"not_in_pack={stats['not_in_pack']} hub_installed={stats['hub_installed']} "
+          f"no_category={stats['no_category']} no_category_moved={stats['no_category_moved']}")
     if deleted_dirs:
         print(f"[dedupe] deleted {len(deleted_dirs)} local copies")
         for prof, name, reason in deleted_dirs[:10]:
             print(f"  {prof:24s} {name:30s} {reason}")
         if len(deleted_dirs) > 10:
             print(f"  ... 还有 {len(deleted_dirs)-10} 个")
+    if moved_dirs:
+        print(f"[dedupe] moved {len(moved_dirs)} no-category skills into categories")
+        for prof, name, cat in moved_dirs[:10]:
+            print(f"  {prof:24s} {name:30s} → {cat}/")
+        if len(moved_dirs) > 10:
+            print(f"  ... 还有 {len(moved_dirs)-10} 个")
     return 0
 
 
@@ -559,6 +651,8 @@ def main() -> int:
     d.add_argument("--packs-root", default="~/Documents/AgentSkill")
     d.add_argument("--backup", default="~/.hermes/backups/dream-dedupe", help="backup dir before deletion")
     d.add_argument("--dry-run", action="store_true", help="report only, no deletion")
+    d.add_argument("--fix-no-category", action="store_true",
+                   help="move skills/<name>/ into skills/<category>/ for no-category local skills")
     d.set_defaults(func=cmd_dedupe)
     args = ap.parse_args()
     return args.func(args)
