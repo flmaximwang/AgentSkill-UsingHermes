@@ -6,7 +6,8 @@ description: "改某个或所有 profile 的默认模型、换模型 provider �
 # 切 profile 的默认模型（一个 / 全库）
 
 一条命令改完 N 份 `config.yaml` 的**顶层 `model:` 块**，免重启生效；再按**计费字段**回读「真在用」，
-而不是只把文件读回来。全流程两个脚本、四条命令，秒级。
+而不是只把文件读回来。**一键** = `scripts/switch-all-models.sh`（探活 → 报名 → 真写 → 回读四步串起来）；
+真正写文件的还是底下那支 `switch-profile-models.py`，秒级。
 
 ## When to Use（触发与边界）
 
@@ -20,6 +21,16 @@ description: "改某个或所有 profile 的默认模型、换模型 provider �
 ```bash
 S=<本 skill 目录>/scripts
 
+# 一键：探活端点 → 报名(--dry-run) → 真写 → 回读（config 侧 + 运行侧 + profile list）
+bash $S/switch-all-models.sh <模型 id> <provider 名> <base_url>
+#   例：bash $S/switch-all-models.sh deepseek-flash deepseek https://api.deepseek.com/v1
+#   加 --dry-run 只报名不落盘；providers/base_url 省掉即默认 deepseek + https://api.deepseek.com/v1
+```
+
+它只**编排**下面那两支脚本，自己一个字节都不写；key 只从环境变量取（默认 `<PROVIDER 大写>_API_KEY`，
+没设就跳过探活并明说是跳过，不当成功）。要分步跑：
+
+```bash
 # ① 先探活端点（一行），确认模型别名真的存在 —— 别拿 N 份文件当探针
 curl -s --noproxy '*' -m 30 <base_url>/chat/completions \
   -H "Authorization: Bearer <key>" -H "Content-Type: application/json" \
@@ -36,6 +47,13 @@ hermes profile list                                   # Model 列：应全是目
 python3 -B $S/verify-profile-models.py --expect-model <模型 id> --expect-base-url <base_url>
 ```
 
+实测一条（2026-10-10，本机 16 个 profile 从 `monk` / ARK 全切回内置 `deepseek` 的 `deepseek-flash`，
+走的就是上面那条一键命令）：探活返回体自报 `"model":"deepseek-flash"`；`changed 15` + `already 1`
+（default 本来就在）· `failed 0`；16/16 config 侧就位、`hermes profile list` 无一个 `--`；
+16 份 `.env` 的 `DEEPSEEK_API_KEY` 同值（sha256 全部 `137a839e…`）⇒ 只打一次探针
+（`hermes -p lab-protein-design -z …`，留下一条 `source='oneshot'` 会话）即验到运行侧
+✅ `https://api.deepseek.com/v1`。数字属于那一次实例，不是通用常量。
+
 实测一条（2026-10-08，本机 16 个 profile 从 deepseek 官方全切到 ARK 的 `deepseek-v4-1-flash`）：
 `changed 12`（其中 2 个连 `providers:` 段都没有，被脚本补上）+ `already 4`；复跑 `--dry-run` = `changed 0`；
 `verify-profile-models.py --expect-model deepseek-v4-1-flash` = 16 个 config 侧就位、3 个 ✅（真实调用已算到
@@ -44,16 +62,21 @@ ARK 端点）。数字属于那一次实例，不是通用常量。
 ## 两个脚本的旗标与退出码
 
 ```bash
+bash scripts/switch-all-models.sh <id> [provider] [base_url] [--key-env <变量名>] [--dry-run] [--selftest]
 python3 -B scripts/switch-profile-models.py --model <id> --provider <名> [--base-url <url>]
-        [--api-mode chat_completions] [--profiles all|default|a,b] [--home ~/.hermes] [--dry-run]
+        [--api-mode chat_completions] [--profiles all|default|a,b] [--home ~/.hermes] [--dry-run] [--selftest]
 python3 -B scripts/verify-profile-models.py [--profiles …] [--home ~/.hermes]
         [--expect-model <id>] [--expect-base-url <url>] [--require-live] [--json]
 ```
 
 | 脚本 | 退出码 | 含义 |
 |---|---|---|
+| switch-all（一键） | 0 / 1 / 2 | 四步全绿 / 探活没 key 或有任一失败项 / 用法错或缺兄弟脚本 |
 | switch | 0 / 1 / 2 | 全部就绪（含「本来就在目标上」）/ 有失败项（逐条打印理由，含坏文件）/ 找不到 home 或没匹配到 profile |
 | verify | 0 / 1 / 2 | config 侧都对（给了 `--expect-model` 才判）/ 有 ❌，或 `--require-live` 下没验到运行侧 / 找不到 home |
+
+- `--selftest`（一键脚本与 switch 脚本都有）：不读任何 config，只断言**结构**——四步的相对顺序、
+  返参形状（内置 provider 必须返回两个空表）、重复顶层键抓得住。改这两支脚本后先跑它，别拿全库当试纸。
 
 - 两个脚本**只用标准库**：前台与后台 shell 解析到的 `python3` 可能不是同一个，不能假设 PyYAML 存在。
 - verify **只读**打开 `state.db`（`file:…?mode=ro`），不加锁；跑多少遍都不会动数据。
@@ -76,7 +99,7 @@ python3 -B scripts/verify-profile-models.py [--profiles …] [--home ~/.hermes]
    「能不能解析」。脚本已把这条做成写前拒绝。
 2. **profile 不继承主 home 的 `providers:` 段。** provider 是**本机自定义名字**时，该 profile 必须自己有
    `providers.<名字>:`（凭证就地取）；缺了就是「provider 无法解析凭证」。脚本会自动把主 home 那一整块复制进
-   脚本会自动把主 home 那一整块复制进缺它的 profile（实测：artist、game-research 在切换时被补上）。
+   缺它的 profile（实测：artist、game-research 在切换时被补上）。
       **profile 里已经有顶层 `providers:`**（本机几乎每份都带着 volcengine 那一段）时，脚本只把 `  <名字>:`
       子块插到那个块的块尾、**不**再拼一个 `providers:` 头 —— 旧版整段插入会造出**重复顶层键**，实测 15 份
       profile 会被写前自检全部拒写（`写后顶层键重复：providers`）。
@@ -108,6 +131,13 @@ for d in <home>/backups/model-switch-<ts>/*/; do l=$(basename "$d"); \
                      || cp "$d/config.yaml" <home>/profiles/$l/config.yaml; done
 ```
 
+9. **改一支脚本的返参形状时，早退路径最容易漏。** 2026-10-10 实测：`provider_block` 被改成返回
+   `(整块, 子块)` 两元组，主流程那条 `return` 改了，两条**早退**路径（主 home 没有 `providers:` /
+   没有 `providers.<名字>:`）还是 `return []` —— 这两条恰好就是**内置 provider** 走的路，于是
+   `deepseek` 目标当场 `ValueError: not enough values to unpack`，而 `volcengine` 那类自定义 provider
+   一点事没有（本地测试若只测后者就发现不了）。判据是脚本自己的 `--selftest`（断言结构，不读 config），
+   不是拿全库当试纸；改完先跑它。
+
 ## 检查点
 
 | 触发 | 动作 |
@@ -121,6 +151,7 @@ for d in <home>/backups/model-switch-<ts>/*/; do l=$(basename "$d"); \
 
 | 文件 | 承担什么 |
 |---|---|
+| `scripts/switch-all-models.sh` | 一键入口：串联探活 → 报名 → 真写 → 回读；`--selftest` 断言四步顺序与兄弟脚本在场 |
 | `references/maintain-hermes-models-fleet-mechanism.md` | 免重启的代码链与实测、重复键静默回落的实况、`providers` 继承边界、2026-10-08 那次全库切换的实测基线 |
 
 ## Skill Structure
@@ -129,13 +160,14 @@ for d in <home>/backups/model-switch-<ts>/*/; do l=$(basename "$d"); \
 
 ```
 maintain-hermes-models/
-├── SKILL.md  (134 lines)
+├── SKILL.md  (174 lines)
 ├── test-prompts.json  (27 lines)
 ├── test-results.md  (46 lines)
 ├── references/
 │   └── maintain-hermes-models-fleet-mechanism.md  (119 lines)
 └── scripts/
-    ├── switch-profile-models.py  (197 lines)
+    ├── switch-all-models.sh  (96 lines)
+    ├── switch-profile-models.py  (244 lines)
     └── verify-profile-models.py  (163 lines)
 ```
 

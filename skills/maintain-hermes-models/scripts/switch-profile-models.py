@@ -62,7 +62,7 @@ def parse_flat(lines: list[str]) -> dict[str, str]:
     return out
 
 
-def provider_block(main_lines: list[str], provider: str) -> list[str]:
+def provider_block(main_lines: list[str], provider: str) -> tuple[list[str], list[str]]:
     """从主 home 的 config.yaml 取 `providers.<provider>:` 子树，还原成一段可插入的 `providers:` 块。
 
     返回 `(带 providers: 头的整块, 只有子块的片段)`：目标文件**没有**顶层 `providers:` 时插前者，
@@ -74,11 +74,11 @@ def provider_block(main_lines: list[str], provider: str) -> list[str]:
     """
     start = next((i for i, l in enumerate(main_lines) if l.rstrip() == "providers:"), None)
     if start is None:
-        return []
+        return [], []
     sub = next((i for i in range(start + 1, len(main_lines))
                 if main_lines[i].rstrip() == "  %s:" % provider), None)
     if sub is None:
-        return []
+        return [], []
     end = len(main_lines)
     for i in range(sub + 1, len(main_lines)):
         line = main_lines[i]
@@ -88,19 +88,55 @@ def provider_block(main_lines: list[str], provider: str) -> list[str]:
     return ["providers:\n"] + main_lines[sub:end], main_lines[sub:end]
 
 
+def selftest() -> int:
+    """合成两份 config 片段自检 provider_block 的返参形状与「不造重复顶层键」。
+
+    返参形状与调用点漂开过一次（内置 provider 的两条早退路径 `return []`、调用点却解包两个值 ⇒
+    ValueError），所以这里断言的是**结构**，不是文本：内置 provider 必须返回两个空表。
+    """
+    checks = []
+    builtin = ["model:\n", "  default: x\n", "agent:\n"]
+    got = provider_block(builtin, "deepseek")
+    checks.append(("内置 provider → 两个空表", got == ([], [])))
+
+    main_cfg = ["model:\n", "  default: x\n", "providers:\n",
+                "  volcengine:\n", "    api_key: k\n", "    base_url: https://x/v1\n",
+                "agent:\n", "  x: 1\n"]
+    whole, sub = provider_block(main_cfg, "volcengine")
+    checks.append(("自定义 provider → 整块带头、子块无头",
+                   whole[:1] == ["providers:\n"] and sub[:1] == ["  volcengine:\n"]
+                   and len(whole) == len(sub) + 1))
+    checks.append(("子块只到下一个 4 空格缩进前", sub[-1].startswith("    base_url")))
+
+    dup = dup_top_keys(["model:\n", "providers:\n", "providers:\n"])
+    checks.append(("重复顶层键抓得住", dup == ["providers"]))
+
+    bad = 0
+    for name, ok in checks:
+        print("%s %s" % ("ok  " if ok else "FAIL", name))
+        bad += 0 if ok else 1
+    return 1 if bad else 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(
         description="把某个/所有 profile 的默认模型指向同一个目标",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     ap.add_argument("--home", default="~/.hermes", help="Hermes home（所有 profile 的家）")
-    ap.add_argument("--model", required=True, help="目标模型 id（如 deepseek-v4-1-flash）")
-    ap.add_argument("--provider", required=True, help="provider 名，不带 `custom:` 前缀")
+    ap.add_argument("--model", help="目标模型 id（如 deepseek-v4-1-flash）")
+    ap.add_argument("--provider", help="provider 名，不带 `custom:` 前缀")
     ap.add_argument("--base-url", default="", help="该 provider 的 base_url")
     ap.add_argument("--api-mode", default="chat_completions", help="留空则不动这一行")
     ap.add_argument("--profiles", default="all", help="`all`、`default` 或逗号分隔的 profile 名")
     ap.add_argument("--dry-run", action="store_true", help="只报会改什么，不落盘")
+    ap.add_argument("--selftest", action="store_true", help="只跑自带的结构自检，不读任何 config")
     args = ap.parse_args()
+
+    if args.selftest:
+        return selftest()
+    if not args.model or not args.provider:
+        ap.error("--model / --provider 是必填（除非 --selftest）")
 
     home = Path(args.home).expanduser()
     main_cfg = home / "config.yaml"
