@@ -106,6 +106,18 @@ git commit -m "docs(skills): …"
 git push origin main
 ```
 
+- **Read the pack's own `README.md` for gates beyond the shape rules.** This family's packs gate a NEW skill
+  on more than frontmatter: `AgentSkill-UsingHermes` requires a routing blind-test round for every new skill,
+  which is what `test-prompts.json` (positive cases plus at least one decoy naming the sibling that should
+  answer it) and `test-results.md` (that round's account) exist for, and the round's row also goes into the
+  pack `README.md`'s routing table. Those files are part of the shipped revision, so run the round **before**
+  the install — an installed copy that lacks them is a stale revision the next `check` reports as drift.
+- **When a gate refuses because of a sibling skill, repair that sibling minimally in its own commit.** A
+  candidate `SKILL.md` with no readable `description` fails the blind-test generator's candidate-coverage
+  self-check, because the candidate table must cover every skill in the pack; add the missing frontmatter,
+  commit it alone, and name the file in the report. That is *not* the same signal as a pack-wide generator
+  `--check` failing on someone's stale generated tree — there, report it and touch nothing.
+
 The push is part of Phase 2, not a later courtesy: the hub fetches from GitHub, so an unpushed edit is
 invisible to Phase 3 and an install run against it fails in a way that reads like a broken identifier.
 
@@ -158,6 +170,11 @@ missing step. Full five-phase runbook and the failure branches:
   scan reports every `.git/hooks/*.sample` as an `unexpected_executable` medium finding (14 of them
   measured) — the verdict is still `safe`, but the finding count invites a rewriting pass nothing needs.
   The install route fetches the skill directory alone, so that is the unit that has to scan `safe`.
+- **Never rewrite a file you did not author with a text-mode read + write when you only mean to add lines.**
+  Text mode normalizes line endings and control bytes, so prepending frontmatter to a sibling's file silently
+  re-writes content lines nobody asked you to touch (measured: a stray carriage return inside one line came
+  back as a line split, and the commit showed deletions). Read bytes, prepend bytes, write bytes, and check
+  `git show --stat` — a minimal fix must be insertions only.
 - **Never hand-copy the skill into the repo and stop there.** A copy with no lock entry is invisible to
   `check` / `update` / `uninstall` for the rest of its life, and two directories holding one skill name is
   the drift state to check for at the end.
@@ -186,10 +203,10 @@ missing step. Full five-phase runbook and the failure branches:
 
 ```
 recruit-learning-in-profile/
-├── SKILL.md  (196 lines)
+├── SKILL.md  (213 lines)
 ├── test-prompts.json  (17 lines)
 └── references/
-    ├── recruit-learning-in-profile-pipeline.md  (182 lines)
+    ├── recruit-learning-in-profile-pipeline.md  (200 lines)
     └── recruit-learning-in-profile-placement.md  (127 lines)
 ```
 

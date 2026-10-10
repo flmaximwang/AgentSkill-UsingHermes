@@ -82,6 +82,22 @@ machine). Order, with the pack's own rules applied at landing time:
    command when the pack has one. The conventions are
    `maintain-hermes-skills` → `references/maintain-hermes-skills-authoring-conventions.md`; the verb
    vocabulary in the pack's `README.md` is the naming authority.
+3b. **Run the pack's own gates when it has any** — `AgentSkill-UsingHermes` keeps the routing blind test in
+   `docs/routing-blind-tests/` and runs it from the repo root:
+
+```bash
+python3 -B docs/routing-blind-tests/make-blind-round.py --round r<N>-<name> --new-skill <name> \
+        --decoy-ids <id> --decoy-pick <sibling>      # three self-checks must pass before it writes
+# 2 arms × 2 judges via delegate_task — A/C = the arm WITHOUT the new skill, B/D = with it; each judge reads
+# one judge-input-<round>-<A|B>.txt and lands its picks in blind-judge{A..D}-<round>.txt (batch summaries
+# truncate; score the landed file only)
+python3 -B docs/routing-blind-tests/score-blind.py --round r<N>-<name> --new-skill <name>
+```
+
+   Carry the skill name in the round name (a bare `rN` is silently overwritten by a concurrent session in
+   the same clone), never omit `--new-skill` (its default groups your positives as if they were old
+   questions), then write `test-results.md` here and add the round's row to that directory's `README.md`
+   **and** the pack `README.md`. All of it belongs in the same revision as the skill.
 4. Generate and lint, then predict the verdict **before the push**:
 
 ```bash
@@ -180,3 +196,5 @@ in `references/recruit-learning-in-profile-placement.md` §3.
 | the clone is missing, or its `HEAD` is behind the installed revision | `git clone <repo_url>` / `git pull --ff-only`; report the divergence before editing | clone the exact `source_revision` from the lock so the diff is real |
 | the generator's `--check` fails on a skill you did not touch | name it in the report, touch nothing — another writer owns it | `git status --short` before staging; commit with a pathspec |
 | a moved directory still holds the old `name:` in frontmatter | the move did not cascade — the full cascade is in `install-hermes-skills` → `references/install-hermes-skills-renaming-a-skill-pack.md` | verify the whole tree at once with `grep -m1 '^name:' "$HERMES_HOME/skills/<cat>"/*/SKILL.md` |
+| the pack's blind-test generator refuses: `skills/<sibling>/SKILL.md 没有可读的 description` | that sibling is unroutable (no description = absent from the routing index); add its frontmatter minimally, commit it **alone**, name the file in the report | if the sibling is another session's in-flight edit, stop and ask — do not widen the candidate table to dodge it |
+| `git show --stat` on a minimal sibling fix reports deletions | the edit went through a text-mode read + write, which normalized line endings or control bytes in lines you never meant to touch | redo it byte-exact (read bytes → prepend → write bytes) and amend the unpushed commit |
