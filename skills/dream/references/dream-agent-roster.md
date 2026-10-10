@@ -9,7 +9,8 @@
    长命令用高 timeout 的前台调用。
 2. **只认落盘产物。** 批次完成通知里的摘要会把长 picks 截成 `…(+100 chars)`，live transcript 也可能被截；
    判官/分类子代理一律 `write_file` 落盘，回答里再原样重复一遍。
-3. **子代理不能提问。** 任何需要用户拍板的事都不许写进任务书；它们只返回事实与建议，闸口在主 agent。
+3. **子代理不能提问，主 agent 也不提问。** 本 skill 无人值守：任务书里不许出现「等用户确认 / 等批准」；
+   子代理只返回事实与建议，决议按 S4 的规则做；需要人拍板的行留本地并列进汇报。
 4. **只给它该看的东西。** 任务书里写死「只读哪几个文件」，别让它去翻技能目录、翻内存、翻别的包——那是另一
    条子代理的活，串味的判断比没有判断更贵。
 
@@ -27,6 +28,8 @@
 - 判据是「这条技能将来在哪个包里被维护」，不是它现在放在哪个类目。
 - 与某个包已有技能的重叠**不要在同一轮里下结论**（正文没给你看），只在 why 里点出可疑的那条名字。
 - 拿不准就判 __stay_local__，并在 why 里写清缺什么信息。
+- 这条技能若**自报上游仓库**（正文头部有 `GitHub: <url>`，或目录里带 `_meta.json` / `skill-card.md`）→
+  仍填 `__stay_local__`，why 以 `upstream:<owner>/<repo>` 开头：它该从上游装回来，不该并进包。
 
 产出：把结果**写进** <SCRATCH>/verdicts-task-<N>.jsonl（每行一条 JSON，不要代码块包裹）：
 {"id":"P12","dest_pack":"AgentSkill-UsingGit","dest_skill":"__new__","action":"move","confidence":0.82,"source":"agent","why":"……"}
@@ -66,7 +69,7 @@
 ```
 你只负责 <PACK>（clone: <路径>，标识符 <owner/repo>，类目 <category>）。别的包、别的会话的文件一个字都不要动。
 
-被批准的行（来自 plan.md，逐字照做，不要自行增减）：
+按规则决议后的行（来自 plan.md，逐字照做，不要自行增减）：
   <P 12> localskill → 新技能 skills/localskill；内容来源 <PROFILE>/skills/<类目>/localskill/（整目录读完）
   <P 30> otherskill → 并入已有技能 skills/<接收名>（overlap-<id>.md 里 net-new 的那一节才是要折进的内容）
 

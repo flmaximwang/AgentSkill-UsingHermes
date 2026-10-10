@@ -1,18 +1,19 @@
 ---
 name: dream
-description: "一键把某个 profile 里没有仓库归属的本地 skill 批量收编进包仓库：枚举（脚本）→ 判断每条归哪个包、与哪个已有技能交叉（JEV 在就优先用 JEV，否则派分类子代理）→ 迁移 → 整包重装回 profile。不属于本 skill 的：单个 skill 的收编（→ recruit-learning-in-profile）、装/更/卸的机制（→ install-/update-/remove-hermes-skills）、跨 profile 补齐（→ maintain-hermes-profile-skill-parity）、一轮会话自己的收获（→ recruit-learning-in-session）。触发：「一键收编」「把 local 里的技能批量迁到包仓库」「sweep profile skills into packs」「扫一遍这个 profile 的本地技能」"
+description: "一键把某个 profile 里没有仓库归属的本地 skill 批量收编进包仓库：枚举（脚本）→ 判断每条归哪个包、与哪个已有技能交叉（JEV 在就优先用 JEV，否则派分类子代理）→ 迁移 → 整包重装回 profile。**全程无人值守**（不问人、不等人；判不出来的行留并列进汇报）。不属于本 skill 的：单个 skill 的收编（→ recruit-learning-in-profile）、装/更/卸的机制（→ install-/update-/remove-hermes-skills）、跨 profile 补齐（→ maintain-hermes-profile-skill-parity）、一轮会话自己的收获（→ recruit-learning-in-session）。触发：「一键收编」「无人值守地收编」「把 local 里的技能批量迁到包仓库」「sweep profile skills into packs」「扫一遍这个 profile 的本地技能」"
 ---
 
 # 批量收编一个 profile 的本地 skill
 
-一条命令启动，交付是一张**用户批准过的归位表** + 每一行落在包仓库里、并从远端重新装回 profile。它不新增
-机制：单个 skill 的五阶段流程（定位 / 评估 / 迁移 / 安装 / 退役）归 `recruit-learning-in-profile`，重叠审计
-的方法归 `maintain-hermes-skills`，安装与退役的工具归 `install-` / `update-` / `remove-hermes-skills`。
-本 skill 独占的是**批次**：一次枚举、一次判断、一次批准、按包并发、一次整包重装。
+一条命令启动，**全程无人值守**（不问人、不等人）：交付是一张按判据自动决议的归位表 + 每一行落在包仓库里、
+并从远端重新装回 profile。它不新增机制：单个 skill 的五阶段流程（定位 / 评估 / 迁移 / 安装 / 退役）归
+`recruit-learning-in-profile`，重叠审计的方法归 `maintain-hermes-skills`，安装与退役的工具归
+`install-` / `update-` / `remove-hermes-skills`。本 skill 独占的是**批次**：一次枚举、一次判断、一次按规则决议、
+按包并发、一次整包重装。
 
 **为什么必须有这个 skill（而不是把单条流程跑 N 遍）**：单条流程在每个 skill 前要一次 `clarify`，129 条
-就是 129 次询问；而批次能一次算完、一次拍板。代价是**每行的判断质量不能靠主 agent 一个人兜**——所以下面
-这张分工表是硬约束，不是建议。
+就是 129 次询问；而批次能一次算完、一次按同一套规则决议。代价是**每行的判断质量不能靠主 agent 一个人兜**——
+所以下面这张分工表是硬约束，不是建议。
 
 ## Agent 分工（本 skill 的主体，先读这张表）
 
@@ -21,7 +22,7 @@ description: "一键把某个 profile 里没有仓库归属的本地 skill 批�
 | S1 枚举 | **主 agent 跑 `scripts/sweep-plan.py scan`** | 129 个候选手抄必错；判官输入必须是**脚本产物**（凭记忆转写的题面曾逐条 10/10 与源文件不同，整轮结论作废） | 不读技能正文、不判断归属 |
 | S2 路由 | **JEV**（一次请求多题）；无 key → **分类子代理**，每 10–15 条一个 | 判断要独立视角：主 agent 刚枚举完，对「这条像哪个包」已有先入之见；JEV 只看 name+desc，比子代理更快更省 | 子代理只写自己的 `verdicts-task-N.jsonl`，不写包、不装、不起后台进程 |
 | S3 交叉审计 | **每条「落点=已有技能」的行一个子代理** | 只有它能 grep 正文、给出接收侧 `file:line` 证明 already-there / net-new；JEV 从没看过正文 | 不改任何文件；只出两张清单 + 一个建议 |
-| S4 决定表 | **主 agent + 用户** | 落点是用户的口径（「这条该不该进包」他一句话拍板），agent 推不出来 | 未获批准前不写任何包、不删任何副本 |
+| S4 自动决议 | **主 agent 跑规则**（见「无人值守」一节） | 无人值守下没有闸口：规则把「明确归位」与「拿不准」分开 | 不问人、不等人；拿不准的行不写包 |
 | S5 写入 | **每个目标包一个 writer 子代理**，包内串行、跨包并行 | 同一 clone 里两个 writer 会互相踩 README、生成段与提交；跨包并行没有共享文件 | 不许 `git add -A`、不许后台进程、不许碰本包之外的路径、不许替别人提交在途文件 |
 | S6 验证 | **一条与所有 writer 不同的验证子代理** | 「自己写自己验」有乐观偏差；回读要有人复核 plan 的每一行 | 只读：`diff -rq` / `check` / lock / 脚本实跑 |
 | S7 整包重装 | **主 agent 跑脚本生成的命令** | 命令由 lock 证据生成、条数与代价要在眼前 | 不装本批没改动的包 |
@@ -29,11 +30,28 @@ description: "一键把某个 profile 里没有仓库归属的本地 skill 批�
 | S9 全库去重 + 无类目归位 | **主 agent 跑 `scripts/sweep-plan.py dedupe --fix-no-category`** | 804 个副本手工比对必错；去重判据是脚本产物（filecmp + 旧名检测）；无类目归位只能挪进该 profile 已有类目 | 不先 `--dry-run`、不备份就删；给无类目技能硬造类目 |
 
 并发上限 10：>10 个包时按包分波（每波 ≤10 个 writer），别一次全派。所有子代理**前台跑完即结束**——子代理起
-后台进程会把完成通知的会话路由 pin 到子代理身上，人面会话被顶掉（本机上游未修的坑）。子代理不能提问，所以
-**所有用户闸口都留在主 agent**（S4 一次批准覆盖全批，S5/S6 只认那一份批准过的 plan）。
+后台进程会把完成通知的会话路由 pin 到子代理身上，人面会话被顶掉（本机上游未修的坑）。子代理不能提问，
+**主 agent 也不提问**：本 skill 没有任何用户闸口，S5/S6 只认 S4 规则产出的那份 plan。
 
 每条子代理任务书怎么写、必须回哪几件收据：`references/dream-agent-roster.md`。
 JEV 的题面、分块与判读：`references/dream-jev-routing.md`。
+
+## 无人值守（本 skill 的唯一模式）
+
+一条批次从枚举跑到整包重装，中间**不问人、不等人、不发要点选的表单**：所有判断落到下面这张表，跑完把汇报贴出来。
+「没判出来」是本 skill 的合法结果（该行留本地），不是停下来问的理由。
+
+| 情形 | 自动动作 |
+|---|---|
+| 判官一致（同一行 ≥2 份 verdicts 同落点）、落点是可用包 | 写入该包（进 S5） |
+| 落点=包内已有技能、且交叉审计给出了 net-new 清单 | 按 net-new 折进那条技能（already there 的部分丢掉） |
+| 置信低 / 判官分歧 / verdicts 缺失 / 判给空壳目录 / `no_category` 但给不出目标类目 | 留本地 + 进汇报「待定」段（写明缺哪条判据） |
+| 落点是**新包**（`__new_pack__`） | **不建仓库**（对外可见的持久动作）→ 进汇报「拟建」段，等有人在的一次会话点名再做 |
+| 上游有独立仓库的技能（见 S1 那一条） | **不并进包**：留本地 + 进汇报「从上游装回」段（给出标识符） |
+| 退役（删本地副本）/ 整包重装（S7） | 回读全绿 + `tar czf` 备份落盘之后自动执行 |
+
+汇报即交付（四段：枚举数 · 判定表 · 每行的证据 · ≤3 条要人拍板的事）。要人拍板的那些**不阻塞本批次**：
+要建仓库/造类目的行已经留本地，下次有人在时说一句就能接着做；回读通过的行已经装回 profile 了。
 
 ## S1 · 枚举（主 agent，一条命令）
 
@@ -48,6 +66,11 @@ JEV 的题面、分块与判读：`references/dream-jev-routing.md`。
 - `hub` — 名字是 `<profile>/skills/.hub/lock.json` 的键 ⇒ 已有仓库与更新路径，跳过。
 - `bundled` — 名字在 `<profile>/skills/.bundled_manifest` 里 ⇒ Hermes 自带的种子，不属于用户，跳过。
 - `local` — 两者都不是 ⇒ 没有 lock 条目、没有 source of truth、没有生命周期 ⇒ 候选。
+- ⚠️ **看着像 `local`、但不该进包的一类：上游有独立仓库的技能**——目录里带 `_meta.json` / `skill-card.md`
+  （ClawHub 记号）、正文头部自报 `GitHub: <url>`、或正文里写着 `.claude/skills/<名>/` 这类上游自带的路径。
+  它现在没有 lock 往往只是被手工拷进来过：**落点是「从上游装回」**（`hermes skills install <owner>/<repo>/…`），
+  不是并进包。实测 2026-10-10：`darwin-skill` 上游是 `alchaincyf/darwin-skill`，却被并进本包维护，最后只能再迁出。
+  这类行判官一律填 `__stay_local__`、why 写 `upstream:<owner>/<repo>`；主 agent 在汇报里单列一段「从上游装回」。
 
 产出（全在 `--out` 里）：`inventory.tsv`（全表）、`judge-input.json`（**冻结**的候选表，name+desc）、
 `packs.json`（每个包：路径 / 三段式标识符 / 分支 / 技能清单 / 本 profile 已装的成员与类目 / 是否空壳）、
@@ -90,18 +113,18 @@ skill 整个目录 + 接收技能整个目录，按 claim（表头 / 实测数�
 边界都不同，另起一条）/ `strengthen`（重叠少但话题相邻 ⇒ 在两边头部各加一句界限声明）。方法归
 `maintain-hermes-skills-overlap-and-merge.md`，本 skill 只规定**先证明再动手**这个顺序。
 
-## S4 · 决定表 → 一次闸口
+## S4 · 自动决议（无人值守）
 
 ```bash
 … sweep-plan.py merge --dir <scratch>/sweep-<date> --profile <profile>
 ```
 
-`plan.md` 按目标包分组，`install-cmds.sh` 是 S7 的命令清单（脚本按 lock 证据生成，**不执行**）。主 agent 把
-plan 汇成一段话贴进回复，**四类分开报**：① 明确归位（判官一致）② 待定（低置信 / JEV 缺失 / 判给空壳）
-③ 建议留本地 ④ **拟新建的包**；另把**没有类目**的行单列：迁移型的写清它落进包的哪个类目，
-留本地型的写清建议挪进哪个**现有**类目（没有合适的就报「需要新类目」，别硬塞）（给出拟用的仓库名、它要吃几条、为什么现有 27 个包都不合适 —— 建仓库是对外
-可见的持久动作，单独获批，别混在①里）。🔴 **STOP 等用户一句话**——决策点写在回复里，不做成要点选的表单题
-（表单会挂在那里等超时）。
+`plan.md` 按目标包分组，`install-cmds.sh` 是 S7 的命令清单（脚本按 lock 证据生成，**不执行**）。主 agent 按
+「无人值守」一节的规则**逐行决议、不等人**：明确归位的直接进 S5；拿不准的、判给空壳的、`no_category` 又给不出
+目标类目的行留本地。汇报里四类分开写：① 明确归位（判官一致）② 待定（低置信 / verdicts 缺失 / 判给空壳）
+③ 建议留本地 ④ **拟新建的包**（只报不建）；另把**没有类目**的行单列：迁移型的写清它落进包的哪个类目，
+留本地型的写清该挪进哪个**现有**类目（没有合适的就写「需要新类目」，不硬塞）。要人拍板的事写进汇报即可，
+**不许停在那里等**——批次一路跑到 S8 才收尾。
 
 ## S5 · 写入（每包一个 writer 子代理）
 
@@ -119,7 +142,8 @@ writer 必须回：commit sha、推出去的 sha、扫描 verdict、`git diff --
 **本批若含「没有类目」而留本地的行，writer 顺手补齐形状**：`mv skills/<名字> skills/<类目>/<名字>`
 （没有 lock 条目，`mv` 即可；动完跑一次 `hermes skills list` 确认那一行的 category 不再是空白）。
 
-**落点是新包时，writer 的活多一步：先把仓库建起来**（获批之后才动）——`gh repo create <owner>/<name> --private
+**落点是新包时，writer 的活多一步：先把仓库建起来**——无人值守下 S4 从不产新包行，所以这一段只在**这次调用
+自己点名要建包**（用户原话里有「建个包」）时才做——`gh repo create <owner>/<name> --private
 --description "…"` → **立刻把 remote 换成 SSH**（`git remote set-url origin git@github.com:<owner>/<name>.git`；
 `gh` 建出来是 https，裸 push 会卡在凭据提示直到超时）→ **README 是交付物的一部分**（索引表 + 三段式安装命令 +
 「当前状态：装 / 不装」那一段，照同族包的 README 写）→ 按 `skills/<name>/SKILL.md` 布局写第一条技能 →
@@ -136,7 +160,7 @@ FAIL 的行回 S5 修，不静默放过。
 ## S7 · 整包重装（主 agent）
 
 ```bash
-sh <scratch>/sweep-<date>/install-cmds.sh     # 先给用户看条数：一包 20 行 = 20 个 prompt 行，是代价
+sh <scratch>/sweep-<date>/install-cmds.sh     # 先数一遍条数写进汇报：一包 20 行 = 20 个 prompt 行，是代价
 ```
 
 先 `install` 新成员，再 `update` 改动过的与**本包既有成员**（整包重装）。回读三件（同 S6 的判据）。
@@ -150,9 +174,10 @@ sh <scratch>/sweep-<date>/install-cmds.sh     # 先给用户看条数：一包 2
 
 ## S8 · 退役与汇报
 
-退役**只在回读通过之后**：先 `tar czf` 备份并说明备份在哪，lockless 的直接删目录，hub 装的走
-`hermes skills uninstall <裸名>`。最后汇报四段：枚举数（local/hub/bundled）· 判定表 · **每行对应的证据**（sha /
-verdict / diff / check 原文）· ≤3 条决策点（每条：要你定什么 / 为什么只能你定 / 我的建议与代价）。
+退役**只在回读通过之后**（这是自动闸，不是人闸）：先 `tar czf` 备份并把备份路径写进汇报，lockless 的直接删目录，
+hub 装的走 `hermes skills uninstall <裸名>`；回读有 FAIL 的行先修，修不动的那行跳过（副本不删）。最后汇报四段：
+枚举数（local/hub/bundled）· 判定表 · **每行对应的证据**（sha / verdict / diff / check 原文）· ≤3 条要人拍板的事
+（每条：要你定什么 / 为什么只能你定 / 我的建议与代价）——不等人回话，本批次到此结束。
 
 ## S9 · 全库去重 + 无类目归位（主 agent，一条命令）
 
@@ -184,14 +209,18 @@ S7 整包重装后，profile 里可能还残留大量与包同名的 local 副�
 
 | 触发 | 动作 |
 |---|---|
-| 要写任何包、建任何仓库、删任何副本 | 🔴 STOP：先出 plan + 命令条数，等用户一句话 |
+| 判官分歧 / 置信低 / 判给空壳 / verdicts 缺失 | 该行留本地 + 写进汇报「待定」，**不停下来问**（判不出来是合法结果） |
+| 落点是新包 / 需要新类目 | 只报不做（建仓库、造类目要用户口径，S4 不产这类行） |
 | 候选 > 30 条 | 分块跑 JEV / 分波派子代理，别一次灌进一个上下文 |
-| 扫描 verdict 非 `safe` | 🔴 STOP：按手册改写形态再推，`dangerous` 不可覆盖 |
-| 想 `git add -A` / 想顺手带上别人的在途文件 | 🔴 STOP：只按 pathspec |
-| 想把子代理填的选项当 JEV 结论 | 🔴 STOP：标 `source: agent`，两组数字分开报 |
-| 回读没过就想删副本 | 🔴 STOP：先修，删是最后一步 |
+| 扫描 verdict 非 `safe` | 按手册改写形态再扫；仍 `dangerous` 的那条**不推**，跳过并写进汇报 |
+| 想 `git add -A` / 想顺手带上别人的在途文件 | 只按 pathspec |
+| 想把子代理填的选项当 JEV 结论 | 标 `source: agent`，两组数字分开报 |
+| 回读没过 | 先修；修不动就跳过那一行并写进汇报，**不删它的副本** |
 
 ## 反例（不要做的事）
+
+- **不要问人、不要等人**：本 skill 是无人值守的 —— 判不出来就留本地并列进汇报，别用 `clarify`、别写
+  「等你批准」、别发要点选的表单（表单会挂在那里等超时）。
 
 - **不要在 SKILL.md 正文里写出那对 Generated-by-Scripts 注释的原文**：生成段脚本按文本找分隔符，正文里
   出现一次，它就把从那里到文件末尾整段当成自己的区段**覆盖掉**（本 skill 第一版就被吃掉半篇：S5 后半 +
@@ -213,17 +242,17 @@ S7 整包重装后，profile 里可能还残留大量与包同名的 local 副�
 - **不要为「只关某个 profile 的记录或流程」建包**：新包只吃通用方法（S2 第 5 条两条判据都要满足）。
 - **不要给「备选方案」清单**：判据不过就修判据，正路被堵就找官方机制并说明代价。
 
-## 实测基线（2026-10-09，default profile，本机）
+## 实测基线（2026-10-10，default profile，本机）
 
 ```
-[sweep-plan] profile=/Users/maxim/.hermes skills=292 local=149 hub=132 bundled=11
-[sweep-plan] packs=285 routable=27 placeholder=258 pack_skills=164 pack_index_est_tokens~18775
-[sweep-plan] candidates=149 judge-input.json 44526 B   （scan 全程 21 s）
+[sweep-plan] profile=/Users/maxim/.hermes skills=262 local=99 hub=152 bundled=11
+[sweep-plan] packs=288 routable=30 placeholder=258 pack_skills=214 pack_index_est_tokens~38531
+[sweep-plan] no_category=1   candidates=99 judge-input.json 28400 B   （scan 全程 22 s）
 ```
 
-- 落点空间的 27 个包里，3 个**没有 remote**（`AgentSkill-HoldingConversations` / `UsingAstra` / `UsingEagle`）：
-  能收内容，但装不回来（没有三段式标识符）——这类行要在 S4 显式报给用户。
-- 149 条候选里 `.archive/` 下的退役件不计（脚本跳过 `.archive`）：那是退役落点，不是候选。
+- 落点空间的 30 个包里，3 个**没有 remote**（`AgentSkill-HoldingConversations` / `UsingAstra` / `UsingEagle`）：
+  能收内容，但装不回来（没有三段式标识符）——这类行要在汇报里显式列出。
+- 99 条候选里 `.archive/` 下的退役件不计（脚本跳过 `.archive`）：那是退役落点，不是候选。
 - 基线是快照：库与 profile 每天在变，收尾时要重测一遍并把数字改掉（带一条说明的提交）。
 
 ## Support files
@@ -240,14 +269,14 @@ S7 整包重装后，profile 里可能还残留大量与包同名的 local 副�
 
 ```
 dream/
-├── SKILL.md  (226 lines)
-├── test-prompts.json  (27 lines)
+├── SKILL.md  (282 lines)
+├── test-prompts.json  (32 lines)
 ├── test-results.md  (53 lines)
 ├── references/
-│   ├── dream-agent-roster.md  (123 lines)
+│   ├── dream-agent-roster.md  (126 lines)
 │   └── dream-jev-routing.md  (90 lines)
 └── scripts/
-    └── sweep-plan.py  (437 lines)
+    └── sweep-plan.py  (712 lines)
 ```
 
 <!-- Generated by Scripts -->
