@@ -20,127 +20,35 @@ and layer table apply to every platform.
 A bot that "doesn't work" is almost never one problem. Diagnose in this order and name
 the layer explicitly — never infer the layer from what the UI shows.
 
-## 0. Setting up a bot from scratch (ordered path)
+## 0. 上线一个 Discord bot（拿到 app id + token 就照这个走）
 
-1. <https://discord.com/developers/applications> → **New Application** → copy the **Application ID**
-   (it equals the bot user's id; confirm with `GET /users/@me`).
-2. **Bot** page → **Privileged Gateway Intents**: enable `MESSAGE_CONTENT` (mandatory) and
-   `GUILD_MEMBERS`, then click **Save Changes** (details and the Portal-free `PATCH` path in §3).
-3. Same page → **Reset Token** (shown once) → store as `DISCORD_BOT_TOKEN` in the profile's env file,
-   written here as `$HERMES_HOME/.env` — a literal home-relative path trips the install scan
-   (`hermes_env_access`) and blocks the skill, so this pack never writes it that way.
-4. Invite with an explicit-scope URL (§6) — never the Portal-provided link.
-5. `hermes gateway setup` → Discord, which writes `DISCORD_BOT_TOKEN`, `DISCORD_ALLOWED_USERS`,
-   `DISCORD_HOME_CHANNEL`; then `hermes gateway restart` (parked platforms never self-retry).
-6. Verify with the four gates below, or run `scripts/discord_check.sh` (read-only, tested).
+**这一节只有 5 步，没有研究。** 不查 `flags`、不解析权限整数、不 diff 角色、不探频道、不跑自测、
+不去别的 profile 里抄值 —— 这些都不属于上线流程。第 5 步失败时才进 §1–§7。
 
-### Four gates — stop at the first failure
+- app 还没建：<https://discord.com/developers/applications> → **New Application**（复制 Application ID）→
+  **Bot** 页开 `MESSAGE_CONTENT` + `GUILD_MEMBERS`、点 **Save Changes** → **Reset Token** →
+  用 §6 的显式 scope 链接邀请。做完进第 1 步。
+- app 已建好：凭证文件两行 —— 第一行 app id、第二行 bot token。
 
-| Gate | Evidence | If it fails |
-|---|---|---|
-| 1 connected | `✓ discord connected` + `[Discord] Connected as <bot>#<nnnn>` | intents missing → §3, then restart |
-| 2 message arrives | `inbound message: platform=discord …` after you send | allowlist §4, or the mention was typed rather than picked |
-| 3 agent ran | `response ready: platform=discord … api_calls=N` | agent/tool error — read the log tail |
-| 4 reply visible | message in the channel **or the thread** | `Unknown Channel` → §4 home channel; else the thread |
+1. **`clarify` 一次问完这四项**，由用户给，不许自己推、不许抄别的 profile：
+   - `DISCORD_ALLOWED_USERS` —— 谁能 @ 这个 bot（user id，逗号分隔）
+   - `DISCORD_HOME_CHANNEL` —— 主动推送（cron 投递、关机通知）落哪个频道
+   - `DISCORD_HOME_CHANNEL_NAME` —— 上面那个频道的显示名
+   - `DISCORD_ALLOW_BOTS` —— 建议 `mentions`
+2. 追加写 `$HERMES_HOME/profiles/<name>/.env`：`DISCORD_BOT_TOKEN`、`DISCORD_APPLICATION_ID`，
+   加上第 1 步那四项。
+3. 写 `profiles/<name>/config.yaml` 的 `discord:` 段：`require_mention: true`、
+   `thread_require_mention: true`、`auto_thread: true`、`allow_bots: <第 1 步的值>`。
+   **不要**加 `platforms.discord.enabled` —— 有 token 就自动启用（§4c）。
+4. 等 multiplex watcher 自己接上（约 60 s），**不要 `gateway restart`**（那会把所有 bot 一起闪掉一分钟）。
+   接上的唯一证据是一行 `✓ discord connected (profile: <name>)`。
+5. 请用户在那个频道 @ 一次 bot。日志出现 `inbound message` + `response ready` 即完成，报告到此为止。
 
-### Permission integers (decoded with `discord.Permissions`)
+> 第 5 步没反应，最常见的原因是**频道对该 bot 不可见**：频道级 `@everyone` deny 掉 VIEW_CHANNEL 会盖过
+> bot 自己的角色，症状是**一条 `inbound message` 都没有**（与 allowlist 丢弃不可分）。手法、权限解码与
+> 用户侧点击路径见 `references/discord-channel-access.md`；其余按 §1 的日志优先顺序排查。
 
-| Tier | Integer | Permissions |
-|---|---|---|
-| minimal | `117760` | View Channels, Send Messages, Embed Links, Attach Files, Read Message History |
-| recommended | `274878286912` | + Add Reactions, Use External Emojis, Send Messages in Threads |
-
-The docs' prose lists 7 names for the recommended integer; the integer carries **8** (extra
-`USE_EXTERNAL_EMOJIS`, `1<<18` = `262144`). Trust the integer. Judge the bot's **managed role**,
-not effective permissions: the effective value is the union with `@everyone`
-(observed bot role 8 + `@everyone` 29 → effective 31), so a large number proves nothing — read
-per-role data from `GET /guilds/<id>/roles`.
-
-### Worked example (2026-09-29, verified end to end)
-
-| Item | Value |
-|---|---|
-| App / bot user id | `1554354291987451955` (`Hermes_WFL-MacBook2022`) |
-| Guild / text channel | `1554352200313085962` (`WFL-MacBook2022`) / `1554352200950612001` (`常规`) |
-| `flags` broken → fixed | `0` → `8945664` |
-| Failure chain | intents off → 4014 → parked; then the allowlist held the wrong user id; then a proxy outage swallowed the mention |
-
-## 0b. Wiring an app that already exists into a profile
-
-When the app/bot already exists and you are handed `app id` + `token` (a token file), the Portal
-steps are done — verify them by read, then write only the profile side:
-
-1. Token/id sanity + identity: `GET /users/@me` (discord.com API needs the local proxy on this
-   machine — without it curl exits 000; never `--noproxy`), then `GET /applications/@me` for
-   `name`/`flags`. Do these reads with `curl`: a Python stdlib client (`urllib`) picks up no proxy
-   here and can answer with a Cloudflare body (`error code: 1010`) that reads like a 403
-   permission error.
-2. Intents already on? `flags & 557056` = both limited bits (32768 members + 524288 message
-   content). `557056` exactly is the clean case.
-3. Already in the guild? `GET /users/@me/guilds` (bot's own token) lists every guild the bot
-   has joined — the simplest membership check. For a specific guild's member detail (managed
-   role, permissions), use `GET /guilds/<guild>/members/<bot_user_id>` — **not**
-   `/users/@me/guilds/<guild>/member`, which answers `Bots cannot use this endpoint` (20001)
-   for the bot itself. Use another bot's token in the guild. Look for a `managed: true` role
-   named after the app: that role's creation is the second proof of membership.
-4. Permission decode: the managed role usually lacks `VIEW_CHANNEL` / `SEND_MESSAGES_IN_THREADS`
-   and the @everyone union supplies them (observed artist bot role `343597500480` + @everyone
-   `2248473465835073` → effective set includes both). Judge the union, not the role integer.
-5. **Channel-visibility gate — run it before the self-test in step 8.** A connected bot can still
-   see nothing: a channel/category override that `deny`s VIEW_CHANNEL (`1024`) for `@everyone`
-   **beats** the bot's own managed role, and access comes from a custom role the new bot does not
-   carry yet. Probe read-only: `GET /guilds/<g>/channels` with the **bot's own** token (only the
-   channels it can see come back — zero visible = gated) and `GET /channels/<id>` with it
-   (`403 Missing Access`, code `50001`). Then diff roles: `GET /guilds/<g>/members/<new_bot_id>`
-   against the same call for a bot that already works in this guild — the set difference of `roles`
-   is exactly the missing grant (`GET /guilds/<g>/roles` names it, and all working bots carry it).
-   Adding a role needs MANAGE_ROLES, which the guild's gateway bots do **not** have
-   (`274878024768` has no `1<<28`) — hand the user one click path (Server → member list → the bot →
-   right-click → Roles → the access role); it applies live, no restart, no adapter rescan.
-   Recipes, decode table and the observed guild layout: `references/discord-channel-access.md`.
-6. Profile side: `profiles/<name>/.env` gets `DISCORD_BOT_TOKEN`, `DISCORD_APPLICATION_ID`,
-   `DISCORD_ALLOWED_USERS` (the human's user id — resolve it with
-   `GET /guilds/<g>/members/search?query=<discord_username>` using a token already in the guild,
-   rather than copying another profile's value), `DISCORD_HOME_CHANNEL` (+ `_NAME`);
-   `profiles/<name>/config.yaml` gets `discord: {require_mention: true, thread_require_mention:
-   true, auto_thread: true, allow_bots: mentions}`. No `platforms.discord.enabled: true` needed —
-   the token alone auto-enables (§4c).
-7. **Do not `gateway restart`.** The multiplex watcher re-scans on the .env/config mtime and
-   connects the new adapter, so a full restart only blinks every other bot for a minute. Expect
-   `Re-scanned profile '<name>' after config/.env change (1 adapter(s) connected)` →
-   `✓ discord connected (profile: <name>)` within ~60 s (watcher cadence observed 5 s poll).
-   The per-profile log `profiles/<name>/logs/gateway.log` is the primary evidence — look for
-   `[Discord] Connected as <bot>#<nnnn>` there; the main `~/.hermes/logs/gateway.log` also
-   mirrors it but the per-profile log is smaller and stays greppable. Confirm with
-   `gateway_state.json`: `platforms.<profile>:<platform>.state == "connected"`.
-8. Self-test gates 2–4 without the user: from another profile's bot, POST to a low-traffic
-   channel with an inline `<@bot_id>` mention (`allow_bots: mentions` + `bots_require_inline_mention`
-   admit it). Clean up afterwards: the auto-created thread is **not deletable** with either bot's
-   token when the channel overwrites withhold MANAGE_THREADS (403 / 50013) — the starter message
-   deletes fine (204) and the thread's owner may `PATCH {"archived":true,"locked":true}` (owner =
-   Discord's own `type: 4` rename system message inside it cannot be
-   deleted by anyone, so say so instead of claiming a clean sweep.
-
-   ### Three traps in the §0b self-test
-
-   - **The test channel must be one the NEW bot can view.** A mention in a channel the bot cannot see
-     produces **no MESSAGE_CREATE at all** — silent, and it reads exactly like broken wiring. Confirm
-     with the bot's own token first: `GET /channels/<id>/messages?limit=1` → `200` vs
-     `403 Missing Access (50001)`. Do not trust a read made with another bot's token, and do not trust
-     `GET /guilds/<g>/channels` alone — it can list a channel that later 403s on read/message events.
-   - **Never copy a sibling profile's `DISCORD_HOME_CHANNEL` unchecked.** Access is usually granted by
-     a per-role channel set, so a sibling's value can be a channel the new bot cannot see at all
-     (observed: a profile pointing at `📝-工作日志` while every lab-role bot 403s on it). Proactive
-     sends then fail with `403 Missing Access` while the interactive path still looks perfect. Pick
-     home from the channels where the bot's own token reads `200`.
-   - **Wait out the slash-command reconcile before testing.** A newly connected adapter registers ~76
-     slash commands (`Safely reconciled 76 slash command(s) … created=76`); auto-thread creation
-     immediately after trips Discord's limiter: `Auto-thread creation failed after retry. Direct
-     error: Too many requests. Retry in 204.25 seconds.` The bot then replies `⚠️ … 无法为这条消息创建
-     Discord 话题 …` (locale key `auto_create_failed`). That is a 429, **not** a permission or wiring
-     fault — stop hammering the REST API, wait the ~3.5 min out, retest, and the same mention lands.
-
-   ## 1. Read the log first; it already has the answer
+## 1. Read the log first; it already has the answer
 
 `~/.hermes/logs/gateway.log` (same lines mirror into `errors.log` and
 `gateway.error.log`). Search for the platform name and for `parked`.
@@ -331,7 +239,7 @@ about the suspect one until `-m <model> --provider <name>` was passed explicitly
 | Bot **online**, ignores everyone | Allowlist (§4) |
 | Online, answers others but not you | Allowlist, or mention rules |
 | Processed but you see no reply | Reply landed elsewhere (threading, §4) |
-| Online, no reply anywhere, **no `inbound message` line at all** | It cannot see the channel — channel overwrites / role-gated visibility (§0b step 5, `references/discord-channel-access.md`) |
+| Online, no reply anywhere, **no `inbound message` line at all** | It cannot see the channel — channel overwrites / role-gated visibility (§0 末段, `references/discord-channel-access.md`) |
 | `inbound message` logged, no `response ready:`, `APITimeoutError` in the log | The agent's own egress — its model call never completes (§1, model-API path) |
 
 ## 3. Discord: privileged intents (the offline case)
@@ -589,12 +497,11 @@ Hermes-side reference: `https://hermes-agent.nousresearch.com/docs/user-guide/me
 
 ```
 maintain-hermes-gateway/
-├── SKILL.md  (527 lines)
-├── references/
-│   ├── local-proxy-outbound-triage.md  (113 lines)
-│   └── multiplex-config-apply.md  (89 lines)
-└── scripts/
-    └── discord_check.sh  (93 lines)
+├── SKILL.md  (507 lines)
+└── references/
+    ├── discord-channel-access.md  (84 lines)
+    ├── local-proxy-outbound-triage.md  (113 lines)
+    └── multiplex-config-apply.md  (89 lines)
 ```
 
 <!-- Generated by Scripts -->

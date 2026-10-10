@@ -1,8 +1,8 @@
 # Discord channel access: why a connected bot can see nothing
 
-The gate that decides whether a freshly wired bot is usable at all — run it before the mention
-self-test in §0b, because an invisible channel cannot deliver a test message and the symptom
-(silence, **no `inbound message` line**) is identical to an allowlist drop.
+The diagnosis for "the bot is connected but nothing ever happens" — i.e. §0 step 5 produced no
+reply. An invisible channel never delivers `MESSAGE_CREATE` at all, so the symptom (silence,
+**no `inbound message` line**) is identical to an allowlist drop.
 
 ## Symptoms
 
@@ -52,7 +52,6 @@ curl -s -H "Authorization: Bot $REF" "$API/guilds/$G/roles"                 # id
 ```
 
 The `roles` set difference between a working bot and the new one **is** the missing grant.
-`scripts/discord_check.sh` gate 2b does steps 1 and 3 (`DISCORD_REF_ENV=<working profile>/.env`).
 
 ## Fix and handover
 
