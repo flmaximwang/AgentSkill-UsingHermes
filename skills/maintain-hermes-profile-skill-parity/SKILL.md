@@ -85,7 +85,17 @@ clawhub / url). Exit 0 all identical, 1 drift found, 2 usage or unreadable input
 - **Lock entries only.** A hand copy has no lock entry and is never compared here — use
   `where-do-a-profiles-skills-come-from.py` (same `scripts/`) to guess provenance for those.
 - `<profile>` accepts `default` (the drift script resolves `$HERMES_HOME/skills`); the provenance
-  sibling reads named profiles only, so pass it a named one.
+  sibling reads named profiles only, so either pass it a named profile, or shim a home: symlink
+  `<fake>/.hermes/profiles/default` → `~/.hermes` plus `<fake>/Documents/AgentSkill` and
+  `<fake>/Repositories/Repo` → the real roots, then import the script and override its module-level
+  `H` / `PACK_ROOTS` / `CODE_ROOT` before calling `main()` with `argv = ['x','default']`. Without the
+  shim it reads a non-existent `profiles/default/skills` and reports an empty tree, not an error.
+- **Read its `local only — no external repo` bucket as 「没有可测的归属」, never as 「没有仓库」.** It merges
+  three states — a hand copy, a nested child of a multi-skill install, and a skill that truly has no repo.
+  The nested child is the one it gets wrong: provenance is matched by exact `install_path`, while a child
+  skill's path lives in the parent entry's `files[]`. Before concluding anything, run two cheap checks:
+  is some lock entry's `install_path` a prefix of that path, and does the pack's remote tree ship a dir of
+  that name (`gh api repos/<owner>/<repo>/git/trees/main?recursive=1 --jq '.tree[].path'`).
 - The script loads that sibling for the clone-root table, so both files ship together; a missing
   sibling exits 2 naming the directory it looked in.
 - Read the two numbers on the repo line before calling a `DRIFT` a local edit: `HEAD=<sha>` against
@@ -181,7 +191,7 @@ Same question, different artifact ("只有 default 装了这个插件吗?") — 
 
 ```
 maintain-hermes-profile-skill-parity/
-├── SKILL.md  (190 lines)
+├── SKILL.md  (200 lines)
 └── scripts/
     ├── where-a-profiles-skills-drift-from-their-repos.py  (305 lines)
     └── where-do-a-profiles-skills-come-from.py  (210 lines)
