@@ -48,10 +48,9 @@ def clone_root(repo):
 
 
 def repo_key(repo):
-    """Canonical grouping key: an AgentSkill-* clone is the same repo whether it arrives as
-    'flmaximwang/AgentSkill-X' (lock identifier) or 'AgentSkill-X' (inferred from the clone)."""
-    short = repo.split('/')[-1]
-    return short if short.startswith('AgentSkill-') else repo
+    """Group by repo, not by spelling: 'flmaximwang/Loomerto' (lock identifier) and 'Loomerto'
+    (inferred from the clone dir) are the same repo, as are 'owner/AgentSkill-X' and 'AgentSkill-X'."""
+    return repo.split('/')[-1] if '/' in repo else repo
 
 
 def cat_of(path, root):
@@ -164,14 +163,18 @@ def main():
                  if len(cats) > 1 and r != BUNDLED_REPO}
     # bundled skills legitimately span categories; only a *pack* repo is expected to be coherent
     partial = []
+    everywhere = {rel.split('/')[-1] for items in by_repo.values() for v in items.values() for rel in v}
     for repo, cats in by_repo.items():
         inv = repo_inventory(repo)
         if not inv:
             continue
         have = {rel.split('/')[-1] for items in cats.values() for rel in items}
-        missing = sorted(set(inv) - have)
-        if missing:
-            partial.append((repo, len(have), len(inv), missing))
+        gone = set(inv) - have
+        # a name installed from ANOTHER repo is not missing -- say where it came from instead
+        elsewhere = sorted(n for n in gone if n in everywhere)
+        missing = sorted(gone - set(elsewhere))
+        if missing or elsewhere:
+            partial.append((repo, len(have), len(inv), missing, elsewhere))
 
     if as_json:
         print(json.dumps({'groups': {f'{r} | {c}': v for (r, c), v in groups.items()},
@@ -196,9 +199,11 @@ def main():
         for rel, repo, cat, rcat in drift:
             print(f"   {rel:52} installed=[{cat}]  repo=[{rcat}]  <- {repo}")
     print(f"\n## partially installed repos ({len(partial)})")
-    for repo, have, total, missing in sorted(partial, key=lambda t: len(t[3])):
-        print(f"   {repo}: {have}/{total} installed; missing {len(missing)}")
-        print(f"      {', '.join(missing[:12])}{' …' if len(missing) > 12 else ''}")
+    for repo, have, total, missing, elsewhere in sorted(partial, key=lambda t: len(t[3])):
+        extra = f"; {len(elsewhere)} present from another repo: {', '.join(elsewhere[:6])}" if elsewhere else ''
+        print(f"   {repo}: {have}/{total} installed; missing {len(missing)}{extra}")
+        if missing:
+            print(f"      {', '.join(missing[:12])}{' …' if len(missing) > 12 else ''}")
 
 
 if __name__ == '__main__':
