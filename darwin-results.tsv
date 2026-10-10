@@ -1,0 +1,24 @@
+timestamp	commit	skill	old_score	new_score	status	dimension	note	eval_mode
+2026-09-30T17:15	a28ca32	install-hermes-skills	-	76.8	baseline	-	9维基线 dim5=7 dim4=5 dim8=7 是加权短板；dim8=1 full_test+1 dry_run	full_test
+2026-09-30T17:18	65be0e4	install-hermes-skills	76.8	3-0 better	keep	dim5	paired 3-0 clear：rung 2 步骤 1b 可执行化（解释器/HERMES_HOME/目标目录）	paired
+2026-09-30T17:19	4907b00	install-hermes-skills	(paired)	3-0 better	keep	dim3	paired 3-0（2 clear/1 slight）：rung 2 补无-lock 失败分支	paired
+2026-09-30T17:20	483109f	install-hermes-skills	(paired)	3-0 better	keep	dim4	paired 3-0（全 slight）：🔴/🛑 显性检查点；三轮用满按 HL-4 收工	paired
+2026-09-30T17:20	483109f	install-hermes-skills	76.8	84.5	post	-	dim5 7→9 dim4 5→7 dim3 9→9.5 dim8 7→8（重评按已消除的 3 处摩擦推演，非二次 full_test）	dry_run
+2026-09-30T17:40	07ff969	maintain-hermes-skills	(paired)	3-0 better	keep	dim4	paired 3-0（1 clear/2 slight）：三处 🔴 检查点（落地前 clarify / 回读后才退役 / body 点名）+ 回读命令	paired
+2026-09-30T17:40	ecc504d	remove-hermes-skills	(paired)	3-0 better	keep	dim4	paired 3-0（全 slight）：不可逆操作前置检查点（读条目→审计 delta→备份）	paired
+2026-09-30T17:40	af9658a	update-hermes-skills	(paired)	3-0 better	keep	dim4	paired 3-0（全 slight）：--force 前置检查点（先做 copy-ahead 检查）	paired
+2026-09-30T17:40	3f8f686	maintain-hermes-skills	-	79.8	baseline	-	9维基线（dim8 用 full_test 两臂+盲比较者：带技能 9 / 不带 4，clear，比较者已在磁盘核验主张）；加权短板 dim4=3.6 dim5=3.6 dim9=2.4	full_test
+2026-09-30T17:40	07ff969	remove-hermes-skills	-	74.6	baseline	-	9维基线；dim8 干跑推演（未跑子agent）→ 按规则标 dry_run；加权短板 dim4=4.2 dim5=3.6 dim9=2.4	dry_run
+2026-09-30T17:40	ecc504d	update-hermes-skills	-	74.6	baseline	-	9维基线；dim8 干跑推演 → dry_run；加权短板 dim4=4.2 dim3=3.6 dim9=3.0	dry_run
+2026-09-30T17:41	5964abd	maintain-hermes-skills	(paired)	3-0 better	keep	dim5	paired 3-0（全 slight）：§4 交付顺序落成可执行命令块；两名 judge 指出丢了中文 commit 约定（r3 已修）	paired
+2026-09-30T17:41	1a0c2a7	remove-hermes-skills	(paired)	3-0 better	keep	dim3	paired 3-0（全 slight）：卸载失败梯子表（触发/一线修复/兜底）；judge 提示与既有表格轻度重叠	paired
+2026-09-30T17:41	0f6fd74	update-hermes-skills	(paired)	3-0 better	keep	dim3	paired 3-0（全 slight）：拦截投递三级梯子 + 显式 no-force 反例	paired
+2026-09-30T17:41	d1838b1	maintain-hermes-skills	(paired)	3-0 better	keep	dim3	paired 3-0（全 slight）：重开的合并失败分支 + 修回 commit 约定；三轮用满，dim3/dim5 均已动	paired
+2026-09-30T17:41	d1838b1	maintain-hermes-skills	79.8	85.2	post	-	dim4 显性检查点 + dim5/dim3 按轮补：dim4 8/dim5 9/dim3 9；重评按已消除摩擦推演（非二次 full_test）	dry_run
+2026-09-30T17:41	1a0c2a7	remove-hermes-skills	74.6	78.2	post	-	dim4 显性检查点 + dim5/dim3 按轮补：dim4 7/dim5 8/dim3 9；重评按已消除摩擦推演（非二次 full_test）	dry_run
+2026-09-30T17:41	0f6fd74	update-hermes-skills	74.6	79.4	post	-	dim4 显性检查点 + dim5/dim3 按轮补：dim4 7/dim5 9/dim3 9；重评按已消除摩擦推演（非二次 full_test）	dry_run
+2026-09-30T17:52	04b262a	evolve-hermes-skills	-	83.0	baseline	-	9维基线：dim8=7（dry_run，参考本轮真实运行）dim5=8 dim4=8；无 full_test	dry_run
+2026-09-30T19:06	e2755ed	evolve-hermes-skills	83.0	3-0 better	keep	dim3	paired 3-0（2 clear/1 slight）：并发兄弟 run + 退役判定失败分支	paired
+2026-09-30T19:07	8d24465	evolve-hermes-skills	(paired)	3-0 better	keep	dim4	paired 3-0（2 slight/1 clear）：检查点超时=hold	paired
+2026-09-30T19:08	ef66bcf	evolve-hermes-skills	(paired)	3-0 better	keep	dim5	paired 3-0（1 clear/2 slight）：活会话传 id + 结项报告先计数	paired
+2026-09-30T19:08	ef66bcf	evolve-hermes-skills	83.0	88.6	post	-	dim3 9→9.5 dim4 8→9 dim5 8→9 dim8 7→8（dry_run 推演，无二次 full_test）	dry_run

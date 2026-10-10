@@ -53,6 +53,19 @@ curl -s -H "Authorization: Bot $REF" "$API/guilds/$G/roles"                 # id
 
 The `roles` set difference between a working bot and the new one **is** the missing grant.
 
+## The same gate silently kills the *home channel*
+
+`DISCORD_HOME_CHANNEL` is read at send time and is never checked against what the bot can see, so a
+home channel the bot cannot view fails **only on proactive sends** — cron delivery, shutdown
+notices — with `Failed to send Discord message: 403 Missing Access`. The interactive path keeps
+working (the bot answers mentions in the channels it *can* see), so the bot looks healthy and the
+failure surfaces hours later as silence on a schedule.
+
+Concretely: **never carry a sibling profile's home-channel value across to a new bot without
+probing it first.** Channel access here comes from a per-role channel set, so a sibling's value can
+be a channel the new bot is denied. Probe `GET /channels/<home>` with the **new bot's own token**
+(`200` vs `403 Missing Access`) before writing it into the profile's env file.
+
 ## Fix and handover
 
 Adding the role is a guild mutation needing MANAGE_ROLES, and the gateway bots do not have it
