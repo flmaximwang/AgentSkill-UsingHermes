@@ -1,0 +1,187 @@
+=== 臂 A（blind-judgeA-r8-manage-global-heartbeat.txt, blind-judgeC-r8-manage-global-heartbeat.txt） ===
+题    kind               owner / 正确 pick                判官 picks                       结
+P1   should_trigger     install-a-hermes-plugin        install-hermes-skills,install-hermes-skills ✗
+     题面：帮我把 AgentSkill-UsingHermes 里那个 install-a-hermes-plugin 装到 default profile，类目 hermes
+P2   should_trigger     dream                          dream,dream                    ✓
+P3   should_trigger     remove-a-hermes-plugin         remove-a-hermes-plugin,remove-a-hermes-plugin ✓
+P4   should_trigger     load-external-skill-index      load-external-skill-index,load-external-skill-index ✓
+P5   should_trigger     manage-global-heartbeat        none,hermes-session-routing-forensics ✗  (两判官不一致)
+     题面：给我一份 heartbeat 一览表，看看有没有该清掉的
+P6   should_trigger     maintain-hermes-models         maintain-hermes-gateway,maintain-hermes-gateway ✗
+     题面：我把模型的 provider 换成了 volcengine-agent-plan，结果 hermes gateway status 说服务定义与当前安装不匹配、网关起不来，怎么修？
+P7   should_trigger     dispatch-work-to-another-profile dispatch-work-to-another-profile,dispatch-work-to-another-profile ✓
+P8   should_not_trigger manage-global-heartbeat（不该）→ maintain-hermes-gateway maintain-hermes-gateway,maintain-hermes-gateway ✓  [落在正确答案上的判官：2/2]
+P9   should_trigger     maintain-hermes-skills         maintain-hermes-skills,dream   ✗  (两判官不一致)
+     题面：profile 里有个本地技能跟我仓库里交付的技能内容重叠，我是删掉它还是并进去？先说怎么判断。
+P10  should_trigger     update-hermes-skills           update-hermes-skills,update-hermes-skills ✓
+P11  should_trigger     remove-a-hermes-plugin         remove-a-hermes-plugin,remove-a-hermes-plugin ✓
+P12  should_trigger     recruit-learning-in-session    recruit-learning-in-session,recruit-learning-in-session ✓
+P13  should_trigger     maintain-hermes-models         maintain-hermes-models,maintain-hermes-models ✓
+P14  should_trigger     maintain-hermes-skills         maintain-hermes-skills,update-hermes-skills ✗  (两判官不一致)
+     题面：并进去以后，原来那个本地技能呢？我还能 update 它吗？
+P15  should_trigger     remove-a-hermes-plugin         maintain-hermes-gateway,maintain-hermes-gateway ✗
+     题面：我把插件 disable 掉之后 hermes gateway restart 起不来了，hermes gateway status 说服务定义与当前安装不匹配，是这个插件把它弄坏
+P16  should_trigger     remove-a-hermes-plugin         remove-a-hermes-plugin,remove-a-hermes-plugin ✓
+P17  should_trigger     diagnose-a-failed-hermes-update maintain-hermes-desktop-app,maintain-hermes-desktop-app ✗
+     题面：Hermes Desktop 刚更新完，我之前装的那个插件面板就打不开了，页面上报 Plugin not found（404），是不是这次更新把它弄坏了？
+P18  should_trigger     install-hermes-skills          install-hermes-skills,install-hermes-skills ✓
+P19  should_trigger     install-hermes-skills          install-hermes-skills,install-hermes-skills ✓
+P20  should_trigger     install-a-hermes-plugin        install-a-hermes-plugin,install-a-hermes-plugin ✓
+P21  should_trigger     maintain-hermes-models         maintain-hermes-models,maintain-hermes-models ✓
+P22  should_trigger     dream                          dream,dream                    ✓
+P23  should_trigger     leave-and-rejoin-a-discord-thread leave-and-rejoin-a-discord-thread,leave-and-rejoin-a-discord-thread ✓
+P24  should_trigger     recruit-learning-in-profile    update-hermes-skills,update-hermes-skills ✗
+     题面：这个 skill 我之前手拷进 profile 的，没有 lock 条目，怎么让它以后能 update？
+P25  should_trigger     leave-and-rejoin-a-discord-thread leave-and-rejoin-a-discord-thread,leave-and-rejoin-a-discord-thread ✓
+P26  should_trigger     manage-global-heartbeat        none,none                      ✗
+     题面：那条心跳太频繁了，帮我从 10 分钟改成 2 小时
+P27  should_trigger     dream                          dream,dream                    ✓
+P28  should_trigger     maintain-hermes-models         maintain-hermes-models,maintain-hermes-models ✓
+P29  should_trigger     diagnose-a-failed-hermes-update diagnose-a-failed-hermes-update,diagnose-a-failed-hermes-update ✓
+P30  should_trigger     recruit-learning-in-session    recruit-learning-in-session,recruit-learning-in-session ✓
+P31  should_trigger     recruit-learning-in-profile    dream,dream                    ✗
+     题面：迁进仓库以后，profile 里原来那份怎么办？要装到别的 profile 又该怎么做？
+P32  should_trigger     update-hermes-skills           update-hermes-skills,update-hermes-skills ✓
+P33  should_trigger     maintain-hermes-models         maintain-hermes-models,maintain-hermes-models ✓
+P34  should_trigger     remove-hermes-skills           remove-hermes-skills,remove-hermes-skills ✓
+P35  should_trigger     recruit-learning-in-profile    dream,recruit-learning-in-profile ✗  (两判官不一致)
+     题面：profile 里又冒出个新 skill（curator 建的，没 lock 条目），先评估它跟已有技能的关系，再迁到仓库里、从远程重装一遍
+P36  should_trigger     manage-global-heartbeat        none,hermes-session-routing-forensics ✗  (两判官不一致)
+     题面：是不是有哪个线程在每 10 分钟自己烧 token？帮我扫一遍
+P37  should_trigger     dream                          dream,recruit-learning-in-profile ✗  (两判官不一致)
+     题面：我 profile 里刚学到的一个新技能，想把它收进对应的包仓库，以后好维护
+P38  should_trigger     diagnose-a-failed-hermes-update diagnose-a-failed-hermes-update,diagnose-a-failed-hermes-update ✓
+P39  should_trigger     manage-global-heartbeat        none,none                      ✗
+     题面：我不想让那个每 10 分钟往线程里塞消息的心跳再跑了，但我不想进那条会话里发命令，从这边把它停掉
+P40  should_not_trigger manage-global-heartbeat（不该）→ hermes-session-routing-forensics hermes-session-routing-forensics,hermes-session-routing-forensics ✓  [落在正确答案上的判官：2/2]
+P41  should_trigger     manage-global-heartbeat        none,none                      ✗
+     题面：把 session 20261010_094556_f55873 的那条 heartbeat 清掉
+P42  should_trigger     hermes-session-routing-forensics hermes-session-routing-forensics,hermes-session-routing-forensics ✓
+P43  should_trigger     leave-and-rejoin-a-discord-thread leave-and-rejoin-a-discord-thread,leave-and-rejoin-a-discord-thread ✓
+P44  should_trigger     leave-and-rejoin-a-discord-thread leave-and-rejoin-a-discord-thread,leave-and-rejoin-a-discord-thread ✓
+P45  should_trigger     diagnose-a-failed-hermes-update diagnose-a-failed-hermes-update,diagnose-a-failed-hermes-update ✓
+P46  should_trigger     load-external-skill-index      load-external-skill-index,load-external-skill-index ✓
+P47  should_trigger     maintain-hermes-skills         recruit-learning-in-session,recruit-learning-in-session ✗
+     题面：本次会话修补了：skill-library-consolidation。我觉得这个功能应该在 maintain-hermes-skills 技能中。调用 recruit-learn
+P48  should_trigger     dispatch-work-to-another-profile dispatch-work-to-another-profile,dispatch-work-to-another-profile ✓
+P49  should_trigger     leave-and-rejoin-a-discord-thread leave-and-rejoin-a-discord-thread,leave-and-rejoin-a-discord-thread ✓
+P50  should_trigger     manage-global-heartbeat        none,hermes-session-routing-forensics ✗  (两判官不一致)
+     题面：我有哪些对话挂着 heartbeat？
+P51  should_trigger     manage-global-heartbeat        none,hermes-session-routing-forensics ✗  (两判官不一致)
+     题面：把所有带 heartbeat 的 session 列出来给我看看
+P52  should_trigger     recruit-learning-in-session    darwin-skill,darwin-skill      ✗
+     题面：evolve了几个skill？合并了几个skill？
+P53  should_trigger     remove-hermes-skills           install-hermes-skills,remove-hermes-skills ✗  (两判官不一致)
+     题面：删除 paper2agent 并重新安装到 agent-evolution category. /skill remove-hermes-skills. /skill instal
+P54  should_trigger     install-a-hermes-plugin        remove-a-hermes-plugin,remove-a-hermes-plugin ✗
+     题面：limbic 装是装上了，但我不想用了 —— 怎么把它从所有 profile 里连 config.yaml 里的残留一起清干净？
+P55  should_trigger     hermes-session-routing-forensics hermes-session-routing-forensics,hermes-session-routing-forensics ✓
+P56  should_trigger     remove-a-hermes-plugin         remove-a-hermes-plugin,remove-a-hermes-plugin ✓
+P57  should_trigger     dispatch-work-to-another-profile dispatch-work-to-another-profile,dispatch-work-to-another-profile ✓
+P58  should_trigger     install-a-hermes-plugin        maintain-hermes-memory,maintain-hermes-memory ✗
+     题面：limbic 依赖装好了、memory.provider 也写了 limbic，可它好像还没在工作，我还差哪一步？
+P59  should_trigger     dream                          dream,dream                    ✓
+P60  should_trigger     hermes-session-routing-forensics maintain-hermes-profiles,maintain-hermes-profiles ✗
+     题面：两个 profile 的 bot 抢同一个频道会怎样
+P61  should_trigger     load-external-skill-index      load-external-skill-index,load-external-skill-index ✓
+P62  should_trigger     diagnose-a-failed-hermes-update diagnose-a-failed-hermes-update,diagnose-a-failed-hermes-update ✓
+P63  should_trigger     install-a-hermes-plugin        install-a-hermes-plugin,install-a-hermes-plugin ✓
+分组：旧题 38/54 · 新能力 0/7 · 兄弟干扰项 2/2
+
+=== 臂 B（blind-judgeB-r8-manage-global-heartbeat.txt, blind-judgeD-r8-manage-global-heartbeat.txt） ===
+题    kind               owner / 正确 pick                判官 picks                       结
+P1   should_trigger     install-a-hermes-plugin        install-hermes-skills,install-hermes-skills ✗
+     题面：帮我把 AgentSkill-UsingHermes 里那个 install-a-hermes-plugin 装到 default profile，类目 hermes
+P2   should_trigger     dream                          dream,dream                    ✓
+P3   should_trigger     remove-a-hermes-plugin         remove-a-hermes-plugin,remove-a-hermes-plugin ✓
+P4   should_trigger     load-external-skill-index      load-external-skill-index,load-external-skill-index ✓
+P5   should_trigger     manage-global-heartbeat        manage-global-heartbeat,manage-global-heartbeat ✓
+P6   should_trigger     maintain-hermes-models         maintain-hermes-gateway,maintain-hermes-gateway ✗
+     题面：我把模型的 provider 换成了 volcengine-agent-plan，结果 hermes gateway status 说服务定义与当前安装不匹配、网关起不来，怎么修？
+P7   should_trigger     dispatch-work-to-another-profile dispatch-work-to-another-profile,dispatch-work-to-another-profile ✓
+P8   should_not_trigger manage-global-heartbeat（不该）→ maintain-hermes-gateway maintain-hermes-gateway,maintain-hermes-gateway ✓  [落在正确答案上的判官：2/2]
+P9   should_trigger     maintain-hermes-skills         maintain-hermes-skills,dream   ✗  (两判官不一致)
+     题面：profile 里有个本地技能跟我仓库里交付的技能内容重叠，我是删掉它还是并进去？先说怎么判断。
+P10  should_trigger     update-hermes-skills           update-hermes-skills,update-hermes-skills ✓
+P11  should_trigger     remove-a-hermes-plugin         remove-a-hermes-plugin,remove-a-hermes-plugin ✓
+P12  should_trigger     recruit-learning-in-session    recruit-learning-in-session,recruit-learning-in-session ✓
+P13  should_trigger     maintain-hermes-models         maintain-hermes-models,maintain-hermes-models ✓
+P14  should_trigger     maintain-hermes-skills         update-hermes-skills,dream     ✗  (两判官不一致)
+     题面：并进去以后，原来那个本地技能呢？我还能 update 它吗？
+P15  should_trigger     remove-a-hermes-plugin         maintain-hermes-gateway,maintain-hermes-gateway ✗
+     题面：我把插件 disable 掉之后 hermes gateway restart 起不来了，hermes gateway status 说服务定义与当前安装不匹配，是这个插件把它弄坏
+P16  should_trigger     remove-a-hermes-plugin         remove-a-hermes-plugin,remove-a-hermes-plugin ✓
+P17  should_trigger     diagnose-a-failed-hermes-update maintain-hermes-desktop-app,maintain-hermes-desktop-app ✗
+     题面：Hermes Desktop 刚更新完，我之前装的那个插件面板就打不开了，页面上报 Plugin not found（404），是不是这次更新把它弄坏了？
+P18  should_trigger     install-hermes-skills          install-hermes-skills,install-hermes-skills ✓
+P19  should_trigger     install-hermes-skills          install-hermes-skills,install-hermes-skills ✓
+P20  should_trigger     install-a-hermes-plugin        install-a-hermes-plugin,install-a-hermes-plugin ✓
+P21  should_trigger     maintain-hermes-models         maintain-hermes-models,maintain-hermes-models ✓
+P22  should_trigger     dream                          dream,dream                    ✓
+P23  should_trigger     leave-and-rejoin-a-discord-thread leave-and-rejoin-a-discord-thread,leave-and-rejoin-a-discord-thread ✓
+P24  should_trigger     recruit-learning-in-profile    update-hermes-skills,update-hermes-skills ✗
+     题面：这个 skill 我之前手拷进 profile 的，没有 lock 条目，怎么让它以后能 update？
+P25  should_trigger     leave-and-rejoin-a-discord-thread leave-and-rejoin-a-discord-thread,leave-and-rejoin-a-discord-thread ✓
+P26  should_trigger     manage-global-heartbeat        manage-global-heartbeat,manage-global-heartbeat ✓
+P27  should_trigger     dream                          dream,dream                    ✓
+P28  should_trigger     maintain-hermes-models         maintain-hermes-models,maintain-hermes-models ✓
+P29  should_trigger     diagnose-a-failed-hermes-update diagnose-a-failed-hermes-update,diagnose-a-failed-hermes-update ✓
+P30  should_trigger     recruit-learning-in-session    recruit-learning-in-session,recruit-learning-in-session ✓
+P31  should_trigger     recruit-learning-in-profile    dream,dream                    ✗
+     题面：迁进仓库以后，profile 里原来那份怎么办？要装到别的 profile 又该怎么做？
+P32  should_trigger     update-hermes-skills           update-hermes-skills,update-hermes-skills ✓
+P33  should_trigger     maintain-hermes-models         maintain-hermes-models,maintain-hermes-models ✓
+P34  should_trigger     remove-hermes-skills           update-hermes-skills,remove-hermes-skills ✗  (两判官不一致)
+     题面：我删完之后 hermes skills check <name> 说 No hub-installed skills to check.，是不是整个 lock 都没了？
+P35  should_trigger     recruit-learning-in-profile    dream,dream                    ✗
+     题面：profile 里又冒出个新 skill（curator 建的，没 lock 条目），先评估它跟已有技能的关系，再迁到仓库里、从远程重装一遍
+P36  should_trigger     manage-global-heartbeat        manage-global-heartbeat,manage-global-heartbeat ✓
+P37  should_trigger     dream                          dream,dream                    ✓
+P38  should_trigger     diagnose-a-failed-hermes-update diagnose-a-failed-hermes-update,diagnose-a-failed-hermes-update ✓
+P39  should_trigger     manage-global-heartbeat        manage-global-heartbeat,manage-global-heartbeat ✓
+P40  should_not_trigger manage-global-heartbeat（不该）→ hermes-session-routing-forensics hermes-session-routing-forensics,hermes-session-routing-forensics ✓  [落在正确答案上的判官：2/2]
+P41  should_trigger     manage-global-heartbeat        manage-global-heartbeat,manage-global-heartbeat ✓
+P42  should_trigger     hermes-session-routing-forensics hermes-session-routing-forensics,hermes-session-routing-forensics ✓
+P43  should_trigger     leave-and-rejoin-a-discord-thread leave-and-rejoin-a-discord-thread,leave-and-rejoin-a-discord-thread ✓
+P44  should_trigger     leave-and-rejoin-a-discord-thread leave-and-rejoin-a-discord-thread,leave-and-rejoin-a-discord-thread ✓
+P45  should_trigger     diagnose-a-failed-hermes-update diagnose-a-failed-hermes-update,diagnose-a-failed-hermes-update ✓
+P46  should_trigger     load-external-skill-index      load-external-skill-index,load-external-skill-index ✓
+P47  should_trigger     maintain-hermes-skills         recruit-learning-in-session,recruit-learning-in-session ✗
+     题面：本次会话修补了：skill-library-consolidation。我觉得这个功能应该在 maintain-hermes-skills 技能中。调用 recruit-learn
+P48  should_trigger     dispatch-work-to-another-profile dispatch-work-to-another-profile,dispatch-work-to-another-profile ✓
+P49  should_trigger     leave-and-rejoin-a-discord-thread leave-and-rejoin-a-discord-thread,leave-and-rejoin-a-discord-thread ✓
+P50  should_trigger     manage-global-heartbeat        manage-global-heartbeat,manage-global-heartbeat ✓
+P51  should_trigger     manage-global-heartbeat        manage-global-heartbeat,manage-global-heartbeat ✓
+P52  should_trigger     recruit-learning-in-session    darwin-skill,darwin-skill      ✗
+     题面：evolve了几个skill？合并了几个skill？
+P53  should_trigger     remove-hermes-skills           remove-hermes-skills,remove-hermes-skills ✓
+P54  should_trigger     install-a-hermes-plugin        remove-a-hermes-plugin,remove-a-hermes-plugin ✗
+     题面：limbic 装是装上了，但我不想用了 —— 怎么把它从所有 profile 里连 config.yaml 里的残留一起清干净？
+P55  should_trigger     hermes-session-routing-forensics hermes-session-routing-forensics,hermes-session-routing-forensics ✓
+P56  should_trigger     remove-a-hermes-plugin         remove-a-hermes-plugin,remove-a-hermes-plugin ✓
+P57  should_trigger     dispatch-work-to-another-profile dispatch-work-to-another-profile,dispatch-work-to-another-profile ✓
+P58  should_trigger     install-a-hermes-plugin        install-a-hermes-plugin,maintain-hermes-memory ✗  (两判官不一致)
+     题面：limbic 依赖装好了、memory.provider 也写了 limbic，可它好像还没在工作，我还差哪一步？
+P59  should_trigger     dream                          dream,dream                    ✓
+P60  should_trigger     hermes-session-routing-forensics maintain-hermes-gateway,maintain-hermes-gateway ✗
+     题面：两个 profile 的 bot 抢同一个频道会怎样
+P61  should_trigger     load-external-skill-index      load-external-skill-index,load-external-skill-index ✓
+P62  should_trigger     diagnose-a-failed-hermes-update diagnose-a-failed-hermes-update,diagnose-a-failed-hermes-update ✓
+P63  should_trigger     install-a-hermes-plugin        install-a-hermes-plugin,install-a-hermes-plugin ✓
+分组：旧题 39/54 · 新能力 7/7 · 兄弟干扰项 2/2
+
+=== 臂间对照（各取第一份判官） ===
+旧题被新技能抢走：0 条 
+A→B 落点变化的题：12 条 ['P5', 'P14', 'P26', 'P34', 'P36', 'P39', 'P41', 'P50', 'P51', 'P53', 'P58', 'P60']（应全部落在既有兄弟之间 = 判官噪声）
+  P5  none → manage-global-heartbeat   题面：给我一份 heartbeat 一览表，看看有没有该清掉的
+  P14  maintain-hermes-skills → update-hermes-skills   题面：并进去以后，原来那个本地技能呢？我还能 update 它吗？
+  P26  none → manage-global-heartbeat   题面：那条心跳太频繁了，帮我从 10 分钟改成 2 小时
+  P34  remove-hermes-skills → update-hermes-skills   题面：我删完之后 hermes skills check <name> 说 No hub-installed skills t
+  P36  none → manage-global-heartbeat   题面：是不是有哪个线程在每 10 分钟自己烧 token？帮我扫一遍
+  P39  none → manage-global-heartbeat   题面：我不想让那个每 10 分钟往线程里塞消息的心跳再跑了，但我不想进那条会话里发命令，从这边把它停掉
+  P41  none → manage-global-heartbeat   题面：把 session 20261010_094556_f55873 的那条 heartbeat 清掉
+  P50  none → manage-global-heartbeat   题面：我有哪些对话挂着 heartbeat？
+  P51  none → manage-global-heartbeat   题面：把所有带 heartbeat 的 session 列出来给我看看
+  P53  install-hermes-skills → remove-hermes-skills   题面：删除 paper2agent 并重新安装到 agent-evolution category. /skill remov
+  P58  maintain-hermes-memory → install-a-hermes-plugin   题面：limbic 依赖装好了、memory.provider 也写了 limbic，可它好像还没在工作，我还差哪一步？
+  P60  maintain-hermes-profiles → maintain-hermes-gateway   题面：两个 profile 的 bot 抢同一个频道会怎样

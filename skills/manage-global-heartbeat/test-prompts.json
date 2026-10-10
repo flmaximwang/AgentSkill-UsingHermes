@@ -1,0 +1,47 @@
+[
+  {
+    "id": 1,
+    "prompt": "我有哪些对话挂着 heartbeat？",
+    "expected": "走本技能：跑 skills/hermes/manage-global-heartbeat/scripts/scan-heartbeats.py，扫 default 与所有 profile 的 state.db，把 state_meta 里 heartbeat:<session> 的行列成表（status / 间隔 / 触发次数 / 最近触发 / 所属会话标题与 chat id / 累计输入 token），active 排最前。只读；要清再走 Step 4 的 heartbeatctl.py。"
+  },
+  {
+    "id": 2,
+    "prompt": "把所有带 heartbeat 的 session 列出来给我看看",
+    "expected": "同上：state_meta 的 heartbeat:<session_id> 行，按 profile 扫一遍（default 在 <HERMES_HOME>/state.db，其余在 profiles/<名>/state.db）。要报出：哪条 active、挂在哪个 Discord 线程、触发多少次、那个 session 的累计输入 token。她是 session 级的，所以同一 chat 下会出现多条（迁移遗留的 cleared 行）。"
+  },
+  {
+    "id": 3,
+    "prompt": "是不是有哪个线程在每 10 分钟自己烧 token？帮我扫一遍",
+    "expected": "用本技能定位：只有 status=active 的那条在跑，报出它属于哪条会话/线程、间隔、以及该 session 的 IN_TOK（心跳每触发一次要重发整段历史，所以成本 ≈ 会话长度 × 每小时次数）。可以顺手对一下 logs/agent.log 里的 API call 与 429 行来指认 provider 侧的限流。别把 gateway 的活体心跳当答案。"
+  },
+  {
+    "id": 4,
+    "prompt": "给我一份 heartbeat 一览表，看看有没有该清掉的",
+    "expected": "本技能给出表 + 判读：active / paused / cleared / unparsable 各几条（unparsable 是早期格式残留，不等于在跑）。给出「谁开的、挂在哪个对话、烧了多少 token」这些事实，把「停不停、清哪条」留给用户；真要动就走 Step 4（heartbeatctl.py --session <id> clear|pause）。"
+  },
+  {
+    "id": 5,
+    "prompt": "网关目录里那个 gateway.heartbeat 文件一直在更新，能说明网关进程还活着吗？",
+    "expected": "不是本技能：问的是网关进程的活体，走 maintain-hermes-gateway（gateway.heartbeat / gateway_heartbeats / monitoring 那套）。本技能只管会话里的循环指令（state_meta 的 heartbeat:<session_id>），两者同名不同物。"
+  },
+  {
+    "id": 6,
+    "prompt": "把 session 20261010_094556_f55873 的那条 heartbeat 清掉",
+    "expected": "走本技能的写侧：scripts/heartbeatctl.py --session 20261010_094556_f55873 clear（官方 HeartbeatManager，不是手写 state_meta）。动作前后都要看 before/after，after 应为 no heartbeat；clear 会保留那一行、status=cleared，fire_count 冻结。说清代价：不可恢复，要重建得重新 set。"
+  },
+  {
+    "id": 7,
+    "prompt": "我不想让那个每 10 分钟往线程里塞消息的心跳再跑了，但我不想进那条会话里发命令，从这边把它停掉",
+    "expected": "先 scan-heartbeats.py 定位是哪条 session（不是 chat id），再 heartbeatctl.py --session <id> pause（想彻底停就 clear）。这不是「在别的会话里发 /heartbeat」能办到的事；也不要手改 state_meta 那一行。若目标会话是交互式 CLI 开着的那种，要提醒内存态会把它写回来、得在会话里 clear。"
+  },
+  {
+    "id": 8,
+    "prompt": "那条心跳太频繁了，帮我从 10 分钟改成 2 小时",
+    "expected": "本技能写侧：heartbeatctl.py --session <id> set 2h \"<原 prompt>\"（间隔解析走 parse_interval，下限 60s），改完 load 回读确认 every=120m。原 prompt 从扫描表里那条记录的 PROMPT 列取，别自己编。"
+  },
+  {
+    "id": 9,
+    "prompt": "心跳消息跑到别的 Discord 线程里去了，是不是路由错了？",
+    "expected": "不是本技能：问的是消息被投到错误的 agent/会话，走 hermes-session-routing-forensics（路由键、session_switch 那套）。本技能只负责列出/停掉 heartbeat 本身，不做路由归属判断。"
+  }
+]
