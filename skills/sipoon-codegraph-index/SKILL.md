@@ -1,3 +1,8 @@
+---
+name: sipoon-codegraph-index
+description: "当要在大型代码库里快速定位符号/调用关系/结构、或某个工作区源码超过 200 个文件时用：用 tree-sitter 预索引成代码知识图谱（符号表、调用图、导入关系），经 MCP Server 供 Agent 查询，平均减少 57% token、71% 更少的工具调用。"
+---
+
 # codegraph-index
 
 > **借鉴来源**：CodeGraph (colbymchenry/codegraph)
