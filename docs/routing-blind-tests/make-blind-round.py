@@ -66,7 +66,7 @@ def main() -> int:
     ap.add_argument("--skills-root", default="skills")
     ap.add_argument("--new-skill", required=True, help="本轮新增的 skill 名（多个用逗号分隔）")
     ap.add_argument("--decoy-pick-map", default="",
-                    help="多新技能时每个技能各自的诱饵答案：skill=answer,skill=answer")
+                    help="诱饵答案：skill=answer（整轮同一个）或 skill#id=answer（逐条；同一技能有多条诱饵且答案不同时用这个）")
     ap.add_argument("--decoy-ids", default="", help="新技能 test-prompts 里属于诱饵的 id（逗号分隔）")
     ap.add_argument("--decoy-pick", default="", help="诱饵题的正确答案（某个既有 skill 名）")
     ap.add_argument("--out-dir", default="docs/routing-blind-tests")
@@ -87,8 +87,8 @@ def main() -> int:
         if ns not in all_skills:
             problems.append("新技能 %s 不在 skills 根下" % ns)
     for ns in new_skills:
-        if decoy_ids and ns not in decoy_map:
-            problems.append("新技能 %s 没给诱饵答案（--decoy-pick-map）" % ns)
+        if decoy_ids and ns not in decoy_map and not any(k.startswith(ns + "#") for k in decoy_map):
+            problems.append("新技能 %s 没给诱饵答案（--decoy-pick，或按 skill#id=answer 逐条给）" % ns)
     descs = {name: read_desc(root / name) for name in all_skills}
     for name, desc in descs.items():
         if not desc:
@@ -123,7 +123,8 @@ def main() -> int:
             seen[text] = ns
             if entry["kind"] == "should_not_trigger" or entry["id"] in decoy_ids:
                 item = {"prompt": text, "owner": ns, "kind": "should_not_trigger",
-                        "expect_pick": decoy_map.get(ns, ""), "origin": "%s#%s" % (ns, entry["id"])}
+                        "expect_pick": decoy_map.get("%s#%s" % (ns, entry["id"])) or decoy_map.get(ns, ""),
+                        "origin": "%s#%s" % (ns, entry["id"])}
             else:
                 item = {"prompt": text, "owner": ns, "kind": "should_trigger",
                         "origin": "%s#%s" % (ns, entry["id"])}
