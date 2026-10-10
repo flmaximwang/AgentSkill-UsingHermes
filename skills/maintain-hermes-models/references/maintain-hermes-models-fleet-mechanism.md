@@ -81,6 +81,20 @@ model:
 - 主 home 的 provider 段里那份 `models:` 清单是给模型选择器看的，跟取件/鉴权无关；复制它是为了 profile 内
   也能选到同一个 provider 的其它模型，不是运行必需。
 
+### 内置 provider：没有 `providers:` 段才是正常态
+
+怎么认：内置 provider 在 hermes 安装树里有 `plugins/model-providers/<名字>/__init__.py`，里面一行
+`ProviderProfile(name="<名字>", env_vars=("<NAME>_API_KEY",), base_url="…")` —— 名字、凭证来源、默认端点
+都写死在这里，所以主 home 的 `config.yaml` 里**本来就没有** `providers.<名字>:` 这一段（对比
+`volcengine-agent-plan` 这类本机自定义名字：它只有靠 `providers:` 段才解析得出凭证）。
+脚本对这类 provider **不注入任何东西**，只改 `model:` 块；硬要在 N 份 config 里补一段 `providers.deepseek:`，
+等于把 key 从 `.env` 复制进 N 份文件，凭空多出 N-1 处要轮换的东西。
+
+凭证落在哪：**每个 profile home 有自己的 `.env`**（`profiles/<名>/.env`），不继承主 home 的。想知道「要不要
+给每个 profile 都发一条消息验一遍」，先把 `<home>/.env` 与每份 `profiles/*/.env` 里那行 `<NAME>_API_KEY`
+取 sha256 比一遍：**全同值 ⇒ 一份实测即代表全库**（同一个内置 provider、同一个端点、同一把 key，解析路径没有
+任何按 profile 分叉的地方）；有异值的那几份才各自验。
+
 ## 四、端点探活：别名写错时你要改的是 N 份文件
 
 ```bash
